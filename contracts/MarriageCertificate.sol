@@ -25,13 +25,14 @@ contract MarriageCertificate {
     struct Spouse {
         address spouseAddress;
         string spouseID;
+        string idType;
         string spouseFirstName;
         string spouseLastName;
     }
     
     constructor() public {
         owner = msg.sender;
-        certificateFee = 0.21 ether;
+        certificateFee = 0.1 ether;
         certificateTotal = 0;
     }
     
@@ -48,18 +49,21 @@ contract MarriageCertificate {
     function createNewCertificate(
         string memory firstName, 
         string memory lastName, 
-        string memory id, 
+        string memory id,  
+        string memory idType, 
         string memory country, 
         string memory city, 
         address otherSpouseAddress,
         string memory otherSpouseFirstName,
         string memory otherSpouseLastName,
-        string memory otherSpouseID) public payable returns (bytes32) {
+        string memory otherSpouseID,
+        string memory otherSpouseIdType) public payable returns (bytes32) {
         require(msg.value >= certificateFee, "Invalid certificate fee");
         /// @notice creates struct with info from first spouse initiating the certificate
         Spouse memory spouse1 = Spouse({
             spouseAddress: msg.sender,
             spouseID: id,
+            idType: idType,
             spouseFirstName: firstName,
             spouseLastName: lastName
         });
@@ -68,12 +72,13 @@ contract MarriageCertificate {
         Spouse memory spouse2 = Spouse({
             spouseAddress: otherSpouseAddress,
             spouseID: otherSpouseID,
+            idType: otherSpouseIdType,
             spouseFirstName: otherSpouseFirstName,
             spouseLastName: otherSpouseLastName
         });
         
         /// @notice creates new certificate
-        bytes32 certificateID = keccak256(abi.encodePacked(firstName, lastName, id, country, city, otherSpouseAddress));
+        bytes32 certificateID = keccak256(abi.encodePacked(firstName, lastName, id, idType, country, city, otherSpouseAddress));
         Certificate memory c = Certificate({
             id: certificateID,
             country: country,

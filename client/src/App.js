@@ -186,6 +186,13 @@ class App extends Component {
                   <Divider horizontal>
                     <Header as="h4">Last marriage</Header>
                   </Divider>
+                  <p>Last marriage details</p>
+                </Segment>
+                <Segment>
+                  <Divider horizontal>
+                    <Header as="h4">Exchange</Header>
+                  </Divider>
+                  <p>Exchange Bitcoin for Ethereum</p>
                 </Segment>
               </Grid.Column>
             </Grid.Row>

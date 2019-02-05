@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Form, Modal, Message, Button } from "semantic-ui-react";
+import { Form, Modal, Message, Button, Dropdown } from "semantic-ui-react";
 
 class NewCertificateForm extends Component {
   state = {
@@ -12,7 +12,11 @@ class NewCertificateForm extends Component {
     secondSpouseDetails: { firstName: "", lastName: "", id: "", address: "" },
     idNumberInfo: false,
     spouse1InfoModalOpen: false,
-    spouse2InfoModalOpen: false
+    spouse2InfoModalOpen: false,
+    idOptions: [
+      { key: "passport", text: "Passport", value: "passport" },
+      { key: "id", text: "ID", value: "id" }
+    ]
   };
 
   updateSpouseInfo = event => {
@@ -28,18 +32,37 @@ class NewCertificateForm extends Component {
     } else if (spouse === "secondspouse") {
       const newDetails = { ...this.state.secondSpouseDetails };
       newDetails[infoToUpdate] = val;
-      console.log(newDetails);
       this.setState({ secondSpouseDetails: newDetails });
+    }
+  };
+
+  // controls submit button state in single form
+  submitButtonState = spouse => {
+    if (spouse === "firstSpouse") {
+      return !Object.keys(this.state.firstSpouseDetails)
+        .map(key => this.state.firstSpouseDetails[key].trim().length > 0)
+        .reduce((a, b) => a && b);
+    } else if (spouse === "secondSpouse") {
+      return !Object.keys(this.state.secondSpouseDetails)
+        .map(key => this.state.secondSpouseDetails[key].trim().length > 0)
+        .reduce((a, b) => a && b);
     }
   };
 
   submitUserInfo = event => {
     event.preventDefault();
+    if (event.target.id === "firstspouse") {
+    } else if (event.target.id === "secondspouse") {
+    }
+
     this.setState({ spouse1InfoModalOpen: false, spouse2InfoModalOpen: false });
   };
 
   componentDidUpdate() {
-    if (this.props.userAddress !== this.state.firstSpouseDetails.address) {
+    if (
+      this.props.userAddress !== this.state.firstSpouseDetails.address &&
+      this.state.firstSpouseDetails.address.length === 0
+    ) {
       this.setState({
         firstSpouseDetails: {
           ...this.state.firstSpouseDetails,
@@ -125,6 +148,14 @@ class NewCertificateForm extends Component {
                   icon="id card"
                   iconPosition="left"
                   id="firstspouse-idNumber"
+                  action={
+                    <Dropdown
+                      button
+                      floating
+                      options={this.state.idOptions}
+                      defaultValue="passport"
+                    />
+                  }
                   value={this.state.firstSpouseDetails.id}
                   onChange={this.updateSpouseInfo}
                   onFocus={() => this.setState({ idNumberInfo: true })}
@@ -149,8 +180,10 @@ class NewCertificateForm extends Component {
                 />
                 <Form.Button
                   content="Submit"
+                  id="submit-firstspouse"
                   fluid
                   onClick={this.submitUserInfo}
+                  disabled={this.submitButtonState("firstSpouse")}
                 />
               </Form>
             </Modal.Description>
@@ -213,6 +246,14 @@ class NewCertificateForm extends Component {
                   icon="id card"
                   iconPosition="left"
                   id="secondspouse-idNumber"
+                  action={
+                    <Dropdown
+                      button
+                      floating
+                      options={this.state.idOptions}
+                      defaultValue="passport"
+                    />
+                  }
                   value={this.state.secondSpouseDetails.id}
                   onChange={this.updateSpouseInfo}
                   onFocus={() => this.setState({ idNumberInfo: true })}
@@ -235,7 +276,13 @@ class NewCertificateForm extends Component {
                   value={this.state.secondSpouseDetails.address}
                   onChange={this.updateSpouseInfo}
                 />
-                <Form.Button content="Submit" fluid />
+                <Form.Button
+                  content="Submit"
+                  id="submit-secondspouse"
+                  fluid
+                  onClick={this.submitUserInfo}
+                  disabled={this.submitButtonState("secondSpouse")}
+                />
               </Form>
             </Modal.Description>
           </Modal.Content>
