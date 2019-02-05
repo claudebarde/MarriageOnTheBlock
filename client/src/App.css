@@ -1,0 +1,34 @@
+@import url("https://fonts.googleapis.com/css?family=Just+Another+Hand");
+
+:root {
+  --THEME_COLOR: #ff6347;
+  --THEME_COLOR_DARK: #ff2600;
+}
+
+html,
+body {
+  background-color: #f9fbfd;
+}
+
+.title {
+  font-family: "Just Another Hand", cursive;
+  font-size: 2.5rem;
+}
+
+.modal-header {
+  background-color: var(--THEME_COLOR) !important;
+  color: white !important;
+}
+
+.navbar-icon {
+  color: var(--THEME_COLOR);
+}
+
+.submit-button {
+  color: white !important;
+  background-color: var(--THEME_COLOR) !important;
+}
+
+.submit-button:hover {
+  background-color: var(--THEME_COLOR_DARK) !important;
+}
