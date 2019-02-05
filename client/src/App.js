@@ -28,17 +28,21 @@ class App extends Component {
       certificatesTotal: 0,
       userAddress: "",
       addressChangeListener: null,
+      city: "",
+      country: "",
       spousesDetails: {
         firstSpouseDetails: {
           firstName: "",
           lastName: "",
           idNumber: "",
+          idType: "",
           address: ""
         },
         secondSpouseDetails: {
           firstName: "",
           lastName: "",
-          id: "",
+          idNumber: "",
+          idType: "",
           address: ""
         }
       }
@@ -57,49 +61,46 @@ class App extends Component {
     }
   };
 
+  updateSpouseDetails = (
+    spouse,
+    city,
+    country,
+    { firstName, lastName, idNumber, idType, address }
+  ) => {
+    if (spouse === "firstSpouse") {
+      this.setState({
+        spousesDetails: {
+          ...this.state.spousesDetails,
+          city,
+          country,
+          firstSpouseDetails: {
+            firstName,
+            lastName,
+            idNumber,
+            idType,
+            address
+          }
+        }
+      });
+    } else if (spouse === "secondSpouse") {
+      this.setState({
+        spousesDetails: {
+          ...this.state.spousesDetails,
+          city,
+          country,
+          secondSpouseDetails: {
+            firstName,
+            lastName,
+            idNumber,
+            idType,
+            address
+          }
+        }
+      });
+    }
+  };
+
   componentDidMount = () => {
-    // Modern dapp browsers...
-    /*if (window.ethereum) {
-      App.web3Provider = window.ethereum;
-      try {
-        // Request account access
-        await window.ethereum.enable();
-      } catch (error) {
-        // User denied account access...
-        console.error("User denied account access");
-      }
-    }
-    // Legacy dapp browsers...
-    else if (window.web3) {
-      App.web3Provider = window.web3.currentProvider;
-    }
-    // If no injected web3 instance is detected, fall back to Ganache
-    // TODO: remove that for production
-    else {
-      App.web3Provider = new Web3.providers.HttpProvider(
-        "http://localhost:7545"
-      );
-    }
-    web3 = new Web3(App.web3Provider);
-    // we create the contract
-    contract = new web3.eth.Contract(
-      compiledContract.abi,
-      compiledContract.address
-    );
-    // we update the state with info
-    // fee for registration
-    const feeInWei = await contract.methods.certificateFee().call();
-    const feeInEther = web3.utils.fromWei(feeInWei, "ether");
-    // number of certificates
-    const certificatesTotal = await contract.methods.certificateTotal().call();
-    // address change listener
-    const addressChangeListener = setInterval(this.userAddressChange, 500);
-    this.setState({
-      isConnected: true,
-      fee: feeInEther,
-      certificatesTotal,
-      addressChangeListener
-    });*/
     getWeb3().then(async getWeb3 => {
       web3 = getWeb3;
       // we create the contract
@@ -169,7 +170,11 @@ class App extends Component {
                   <Segment secondary basic>
                     Fill in the form to register a new marriage.
                   </Segment>
-                  <NewCertificateForm userAddress={this.state.userAddress} />
+                  <NewCertificateForm
+                    userAddress={this.state.userAddress}
+                    updateSpouseDetails={this.updateSpouseDetails}
+                    spousesDetails={this.state.spousesDetails}
+                  />
                 </Segment>
               </Grid.Column>
               <Grid.Column>
