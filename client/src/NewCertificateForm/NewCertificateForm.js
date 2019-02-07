@@ -13,6 +13,8 @@ import {
 } from "semantic-ui-react";
 import _ from "lodash";
 
+import { checkIfDetailsAreValid } from "../utils/functions";
+
 class NewCertificateForm extends Component {
   state = {
     city: "",
@@ -72,15 +74,6 @@ class NewCertificateForm extends Component {
     }
   };
 
-  // controls submit button state in single form
-  submitButtonState = spouse => {
-    if (spouse === "firstSpouse") {
-      return this.checkIfDetailsAreValid(this.state.firstSpouseDetails);
-    } else if (spouse === "secondSpouse") {
-      return this.checkIfDetailsAreValid(this.state.secondSpouseDetails);
-    }
-  };
-
   submitUserInfo = event => {
     if (event.target.id === "submit-firstSpouse") {
       this.props.updateSpouseDetails(
@@ -103,12 +96,6 @@ class NewCertificateForm extends Component {
       secondSpouseInfoModalOpen: false,
       idNumberInfo: false
     });
-  };
-
-  checkIfDetailsAreValid = details => {
-    return !Object.keys(details)
-      .map(key => details[key].trim().length > 0)
-      .reduce((a, b) => a && b);
   };
 
   componentDidUpdate() {
@@ -178,6 +165,7 @@ class NewCertificateForm extends Component {
                     idNumberInfo: false
                   })
                 }
+                centered={false}
                 closeIcon
               >
                 <Modal.Header className="modal-header">
@@ -260,15 +248,17 @@ class NewCertificateForm extends Component {
                         id={`submit-${spouse}`}
                         fluid
                         onClick={this.submitUserInfo}
-                        disabled={this.submitButtonState(spouse)}
+                        disabled={
+                          !checkIfDetailsAreValid(
+                            this.state[`${spouse}Details`]
+                          )
+                        }
                       />
                     </Form>
                   </Modal.Description>
                 </Modal.Content>
               </Modal>
-              {!this.checkIfDetailsAreValid(
-                spousesDetails[`${spouse}Details`]
-              ) && (
+              {checkIfDetailsAreValid(spousesDetails[`${spouse}Details`]) && (
                 <Segment
                   size="mini"
                   textAlign="left"

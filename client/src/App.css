@@ -3,6 +3,7 @@
 :root {
   --THEME_COLOR: #ff6347;
   --THEME_COLOR_DARK: #ff2600;
+  --THEME_COLOR_LIGHTER: #ffa599;
 }
 
 html,
