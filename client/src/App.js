@@ -30,7 +30,8 @@ import {
 import DisplayCertificateCheck from "./DisplayCertificateCheck/DisplayCertificateCheck";
 
 let web3 = null;
-let contractCreator;
+let contractCreator,
+  subscribedEvents = {};
 
 class App extends Component {
   constructor(props) {
@@ -59,6 +60,7 @@ class App extends Component {
         address: "0xEA45Ce0d2Cd49ee96F816F47b29261D54De2F73F",
         timestamp: "",
         location: "",
+        isMarriageValid: {},
         spousesDetails: {
           firstSpouseDetails: {
             firstName: "",
@@ -80,6 +82,8 @@ class App extends Component {
       errorMessage: false,
       showCertificateCheckDetails: false,
       fetchingCertificateDetails: false,
+      congratulationModalOpen: false,
+      newCertificateTxHash: "",
       /*city: "",
       country: "",
       spousesDetails: {
@@ -210,7 +214,8 @@ class App extends Component {
               confirmationModal: {
                 ...this.state.confirmationModal,
                 open: false
-              }
+              },
+              newCertificateTxHash: txHash
             });
           }
         }
@@ -225,49 +230,95 @@ class App extends Component {
       this.setState({
         certificateCheck: {
           ...this.state.certificateCheck,
-          address: newCertificateAddress
+          address: newCertificateAddress.toLowerCase()
         },
         lastMarriage: {
           0: fcd[1],
           1: fcd[2],
           2: fcd[0]
         },
-        certificatesTotal: parseInt(this.state.certificatesTotal) + 1
+        certificatesTotal: parseInt(this.state.certificatesTotal) + 1,
+        congratulationModalOpen: true
       });
+    }
+  };
+
+  subscribeLogEvent = (contract, eventName) => {
+    if (subscribedEvents.hasOwnProperty(eventName) === false) {
+      const eventJsonInterface = web3.utils._.find(
+        contract._jsonInterface,
+        o => o.name === eventName && o.type === "event"
+      );
+      const subscription = web3.eth.subscribe(
+        "logs",
+        {
+          address: contract.options.address,
+          topics: [eventJsonInterface.signature]
+        },
+        (error, result) => {
+          if (!error) {
+            const eventObj = web3.eth.abi.decodeLog(
+              eventJsonInterface.inputs,
+              result.data,
+              result.topics.slice(1)
+            );
+            console.log(`New ${eventName}!`, eventObj);
+            // we update the state with new contract state
+            if (
+              eventName === "MarriageValidity" ||
+              eventName === "DivorcePetition"
+            ) {
+              this.setState({
+                certificateCheck: {
+                  ...this.state.certificateCheck,
+                  isMarriageValid: {
+                    0: eventObj.validity[0],
+                    1: eventObj.validity[1]
+                  }
+                }
+              });
+            }
+          }
+        }
+      );
+      subscribedEvents[eventName] = subscription;
     }
   };
 
   fetchCertificateDetails = async () => {
     this.setState({ fetchingCertificateDetails: true });
     const address = this.state.certificateCheck.address;
-    const details = await checkCertificate(address, web3);
-    if (details.return === "OK") {
+    const certificate = await checkCertificate(address, web3);
+    if (certificate.return === "OK") {
       // we lowercase the address to compare it later with current user address
-      let spouse1details = JSON.parse(details.spouse1);
-      let spouse2details = JSON.parse(details.spouse2);
+      let spouse1details = JSON.parse(certificate.spouse1);
+      let spouse2details = JSON.parse(certificate.spouse2);
       spouse1details.address = spouse1details.address.toLowerCase();
       spouse2details.address = spouse2details.address.toLowerCase();
       // we update the state with the data
       this.setState({
         certificateCheck: {
           ...this.state.certificateCheck,
-          timestamp: details.timestamp,
-          location: JSON.parse(details.location),
+          timestamp: certificate.timestamp,
+          location: JSON.parse(certificate.location),
           spousesDetails: {
             firstSpouseDetails: spouse1details,
             secondSpouseDetails: spouse2details
           },
-          isMarriageValid: details.isMarriageValid,
+          isMarriageValid: certificate.isMarriageValid,
           error: null
         },
         showCertificateCheckDetails: true,
         fetchingCertificateDetails: false
       });
+      // subscription to events
+      this.subscribeLogEvent(certificate.instance, "MarriageValidity");
+      this.subscribeLogEvent(certificate.instance, "DivorcePetition");
     } else {
       this.setState({
         certificateCheck: {
           ...this.state.certificateCheck,
-          error: details.error
+          error: certificate.error
         },
         showCertificateCheckDetails: true,
         fetchingCertificateDetails: false
@@ -324,10 +375,6 @@ class App extends Component {
             </Menu.Item>
 
             <Menu.Menu position="right">
-              <Menu.Item link>
-                <Icon name="gem outline" className="navbar-icon" />
-                Get married!
-              </Menu.Item>
               <Menu.Item
                 link
                 onClick={() =>
@@ -395,9 +442,9 @@ class App extends Component {
                   <p>
                     {this.state.certificatesTotal > 1
                       ? `There are ${this.state.certificatesTotal} registered
-                    marriages at the moment.`
+                    marriages around the world.`
                       : `There is ${this.state.certificatesTotal} registered
-                    marriage at the moment.`}
+                    marriage around the world.`}
                   </p>
                 </Segment>
                 <Segment>
@@ -442,7 +489,12 @@ class App extends Component {
           open={this.state.checkCertificateModalOpen}
           size="small"
           centered={false}
-          onClose={() => this.setState({ checkCertificateModalOpen: false })}
+          onClose={() =>
+            this.setState({
+              checkCertificateModalOpen: false,
+              showCertificateCheckDetails: false
+            })
+          }
           closeIcon
         >
           <Modal.Header className="modal-header">
@@ -484,6 +536,7 @@ class App extends Component {
                 <DisplayCertificateCheck
                   details={this.state.certificateCheck}
                   currentUser={this.state.userAddress}
+                  web3={web3}
                 />
               ) : (
                 <Message
@@ -492,6 +545,36 @@ class App extends Component {
                   error
                 />
               ))}
+          </Modal.Content>
+        </Modal>
+        <Modal
+          open={this.state.congratulationModalOpen}
+          size="small"
+          centered={false}
+          closeIcon
+        >
+          <Modal.Header className="modal-header">Congratulations!</Modal.Header>
+          <Modal.Content image>
+            <Image wrapped size="small" src="/images/undraw_wedding_t1yl.svg" />
+            <Modal.Description>
+              <Header as="h3">
+                You are now officially married on the Ethereum blockchain!
+              </Header>
+              <Segment basic style={{ wordBreak: "break-all" }}>
+                <p>
+                  The transaction number is: {this.state.newCertificateTxHash}
+                </p>
+                <p>
+                  Your certificate address is:{" "}
+                  {this.state.certificateCheck.address.toLowerCase()}.
+                </p>
+                <p>
+                  Please keep the certificate address in a safe place as you
+                  cannot access your certificate without it.
+                </p>
+                <p>Download a PDF copy of the certificate</p>
+              </Segment>
+            </Modal.Description>
           </Modal.Content>
         </Modal>
       </Container>

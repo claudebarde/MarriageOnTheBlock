@@ -25,7 +25,8 @@ export const checkCertificate = async (certificateAddress, web3) => {
       spousesAddresses: await certificate.methods
         .returnSpousesAddresses()
         .call(),
-      timestamp: await certificate.methods.timestamp().call()
+      timestamp: await certificate.methods.timestamp().call(),
+      instance: certificate
     };
   } catch (error) {
     result = {
