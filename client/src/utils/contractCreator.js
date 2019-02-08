@@ -1,4 +1,4 @@
-const deployedAddress = "0xd0c6fD39CAB96329BD3e1cC5B749583835898fCE";
+const deployedAddress = "0xBE4F913aAEf39650b9A722De3DA9bcD97607798c";
 
 const deployedAbi = require("../contracts/MarriageCertificateCreator.json").abi;
 

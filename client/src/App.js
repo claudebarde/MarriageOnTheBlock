@@ -11,7 +11,9 @@ import {
   Modal,
   Message,
   Form,
-  Input
+  Input,
+  Dimmer,
+  Loader
 } from "semantic-ui-react";
 import "./App.css";
 //import Web3 from "web3";
@@ -20,7 +22,11 @@ import getWeb3 from "./utils/getWeb3";
 import compiledContract from "./utils/contractCreator";
 import NewCertificateForm from "./NewCertificateForm/NewCertificateForm";
 import DetailsValidation from "./DetailsValidation/DetailsValidation";
-import { checkIfDetailsAreValid, checkCertificate } from "./utils/functions";
+import {
+  checkIfDetailsAreValid,
+  checkCertificate,
+  lastMarriageDisplay
+} from "./utils/functions";
 import DisplayCertificateCheck from "./DisplayCertificateCheck/DisplayCertificateCheck";
 
 let web3 = null;
@@ -33,6 +39,7 @@ class App extends Component {
       isConnected: false,
       fee: "0",
       certificatesTotal: 0,
+      lastMarriage: { 0: "", 1: "", 2: "" },
       userAddress: "",
       addressChangeListener: null,
       confirmationModal: {
@@ -49,7 +56,7 @@ class App extends Component {
       },
       checkCertificateModal: { open: false },
       certificateCheck: {
-        address: "0x94FE29395E3F3D8E197B3318053E512D3f5f5fec",
+        address: "0xEA45Ce0d2Cd49ee96F816F47b29261D54De2F73F",
         timestamp: "",
         location: "",
         spousesDetails: {
@@ -72,6 +79,7 @@ class App extends Component {
       },
       errorMessage: false,
       showCertificateCheckDetails: false,
+      fetchingCertificateDetails: false,
       /*city: "",
       country: "",
       spousesDetails: {
@@ -118,7 +126,7 @@ class App extends Component {
       this.state.userAddress
     ) {
       this.setState({
-        userAddress: web3.eth.accounts.currentProvider.selectedAddress
+        userAddress: web3.eth.accounts.currentProvider.selectedAddress.toLowerCase()
       });
     }
   };
@@ -179,7 +187,7 @@ class App extends Component {
       .createNewCertificate(
         fcd[1],
         fcd[2],
-        this.state.spousesDetails.secondSpouseDetails.address,
+        this.state.spousesDetails.secondSpouseDetails.address.toLowerCase(),
         fcd[0]
       )
       .send(
@@ -218,29 +226,42 @@ class App extends Component {
         certificateCheck: {
           ...this.state.certificateCheck,
           address: newCertificateAddress
-        }
+        },
+        lastMarriage: {
+          0: fcd[1],
+          1: fcd[2],
+          2: fcd[0]
+        },
+        certificatesTotal: parseInt(this.state.certificatesTotal) + 1
       });
     }
   };
 
   fetchCertificateDetails = async () => {
+    this.setState({ fetchingCertificateDetails: true });
     const address = this.state.certificateCheck.address;
     const details = await checkCertificate(address, web3);
-    console.log(details);
     if (details.return === "OK") {
+      // we lowercase the address to compare it later with current user address
+      let spouse1details = JSON.parse(details.spouse1);
+      let spouse2details = JSON.parse(details.spouse2);
+      spouse1details.address = spouse1details.address.toLowerCase();
+      spouse2details.address = spouse2details.address.toLowerCase();
+      // we update the state with the data
       this.setState({
         certificateCheck: {
           ...this.state.certificateCheck,
           timestamp: details.timestamp,
           location: JSON.parse(details.location),
           spousesDetails: {
-            firstSpouseDetails: JSON.parse(details.spouse1),
-            secondSpouseDetails: JSON.parse(details.spouse2)
+            firstSpouseDetails: spouse1details,
+            secondSpouseDetails: spouse2details
           },
           isMarriageValid: details.isMarriageValid,
           error: null
         },
-        showCertificateCheckDetails: true
+        showCertificateCheckDetails: true,
+        fetchingCertificateDetails: false
       });
     } else {
       this.setState({
@@ -248,7 +269,8 @@ class App extends Component {
           ...this.state.certificateCheck,
           error: details.error
         },
-        showCertificateCheckDetails: true
+        showCertificateCheckDetails: true,
+        fetchingCertificateDetails: false
       });
     }
   };
@@ -269,12 +291,17 @@ class App extends Component {
       const certificatesTotal = await contractCreator.methods
         .returnNumberOfContracts()
         .call();
+      // last marriage
+      const lastMarriage = await contractCreator.methods
+        .getLastMarriage()
+        .call();
       // address change listener
       const addressChangeListener = setInterval(this.userAddressChange, 500);
       this.setState({
         isConnected: true,
         fee: feeInEther,
         certificatesTotal,
+        lastMarriage,
         addressChangeListener
       });
     });
@@ -366,15 +393,22 @@ class App extends Component {
                     <Header as="h4">Number of registered marriages</Header>
                   </Divider>
                   <p>
-                    There are {this.state.certificatesTotal} registered
-                    marriages at the moment.
+                    {this.state.certificatesTotal > 1
+                      ? `There are ${this.state.certificatesTotal} registered
+                    marriages at the moment.`
+                      : `There is ${this.state.certificatesTotal} registered
+                    marriage at the moment.`}
                   </p>
                 </Segment>
                 <Segment>
                   <Divider horizontal>
                     <Header as="h4">Last marriage</Header>
                   </Divider>
-                  <p>Last marriage details</p>
+                  {checkIfDetailsAreValid(this.state.lastMarriage) ? (
+                    <p>{lastMarriageDisplay(this.state.lastMarriage)}</p>
+                  ) : (
+                    <p>No marriage to show.</p>
+                  )}
                 </Segment>
                 <Segment>
                   <Divider horizontal>
@@ -437,10 +471,19 @@ class App extends Component {
                 }
               />
             </Form>
+            {this.state.fetchingCertificateDetails && (
+              <Segment>
+                <Dimmer active inverted>
+                  <Loader inverted content="Loading" />
+                </Dimmer>
+                <Image src="/images/short-paragraph.png" />
+              </Segment>
+            )}
             {this.state.showCertificateCheckDetails &&
               (this.state.certificateCheck.error === null ? (
                 <DisplayCertificateCheck
                   details={this.state.certificateCheck}
+                  currentUser={this.state.userAddress}
                 />
               ) : (
                 <Message

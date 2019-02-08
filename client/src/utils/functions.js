@@ -1,3 +1,4 @@
+import _ from "lodash";
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 
 export const checkIfDetailsAreValid = details => {
@@ -34,4 +35,18 @@ export const checkCertificate = async (certificateAddress, web3) => {
   }
 
   return result;
+};
+
+export const lastMarriageDisplay = lastMarriage => {
+  const spouse1 = JSON.parse(lastMarriage["0"]);
+  const spouse2 = JSON.parse(lastMarriage["1"]);
+  const location = JSON.parse(lastMarriage["2"]);
+
+  return `${_.upperFirst(spouse1.firstName)} ${_.upperFirst(
+    spouse1.lastName
+  )} and ${_.upperFirst(spouse2.firstName)} ${_.upperFirst(
+    spouse2.lastName
+  )} got married in ${_.upperFirst(location.city)}, ${_.upperFirst(
+    location.country
+  )}.`;
 };
