@@ -13,8 +13,10 @@ import {
   Form,
   Input,
   Dimmer,
-  Loader
+  Loader,
+  List
 } from "semantic-ui-react";
+import CryptoJS from "crypto-js";
 import "./App.css";
 //import Web3 from "web3";
 import getWeb3 from "./utils/getWeb3";
@@ -82,8 +84,15 @@ class App extends Component {
       errorMessage: false,
       showCertificateCheckDetails: false,
       fetchingCertificateDetails: false,
-      congratulationModalOpen: false,
+      congratulationModalOpen: true,
       newCertificateTxHash: "",
+      idEncodingKey:
+        Math.random()
+          .toString(36)
+          .substring(2, 9) +
+        Math.random()
+          .toString(36)
+          .substring(2, 9),
       /*city: "",
       country: "",
       spousesDetails: {
@@ -125,10 +134,8 @@ class App extends Component {
 
   // updates user address in case of change
   userAddressChange = () => {
-    if (
-      web3.eth.accounts.currentProvider.selectedAddress !==
-      this.state.userAddress
-    ) {
+    const currentAddress = web3.eth.accounts.currentProvider.selectedAddress;
+    if (currentAddress && currentAddress !== this.state.userAddress) {
       this.setState({
         userAddress: web3.eth.accounts.currentProvider.selectedAddress.toLowerCase()
       });
@@ -174,72 +181,93 @@ class App extends Component {
     }
   };
 
-  formatCertificateDetails = () => [
-    JSON.stringify({ city: this.state.city, country: this.state.country }),
-    JSON.stringify(this.state.spousesDetails.firstSpouseDetails),
-    JSON.stringify(this.state.spousesDetails.secondSpouseDetails)
-  ];
+  formatCertificateDetails = () => {
+    const firstSpouseDetails = this.state.spousesDetails.firstSpouseDetails;
+    //  we encrypt the id number with sha256 and the random key
+    let hash = CryptoJS.SHA256(
+      firstSpouseDetails.idNumber.toString() +
+        this.state.idEncodingKey.toString()
+    ).toString();
+    firstSpouseDetails.idNumber = hash;
+
+    const secondSpouseDetails = this.state.spousesDetails.secondSpouseDetails;
+    hash = CryptoJS.SHA256(
+      this.state.randomKey + secondSpouseDetails.idNumber
+    ).toString();
+    secondSpouseDetails.idNumber = hash;
+
+    return [
+      JSON.stringify({ city: this.state.city, country: this.state.country }),
+      JSON.stringify(firstSpouseDetails),
+      JSON.stringify(secondSpouseDetails)
+    ];
+  };
 
   confirmRegistration = async () => {
-    // modal displayed while the new certificate is created
-    this.setState({
-      confirmationModal: { ...this.state.confirmationModal, open: true }
-    });
-    // creating the new certificate
-    const fcd = this.formatCertificateDetails();
-    const newCertificateTx = await contractCreator.methods
-      .createNewCertificate(
-        fcd[1],
-        fcd[2],
-        this.state.spousesDetails.secondSpouseDetails.address.toLowerCase(),
-        fcd[0]
-      )
-      .send(
-        {
-          from: this.state.userAddress,
-          gas: "5000000",
-          value: web3.utils.toWei(this.state.fee)
-        },
-        (error, txHash) => {
-          if (error) {
-            this.setState({
-              confirmationModal: {
-                ...this.state.confirmationModal,
-                open: false
-              },
-              errorMessage: true
-            });
-          } else {
-            this.setState({
-              confirmationModal: {
-                ...this.state.confirmationModal,
-                open: false
-              },
-              newCertificateTxHash: txHash
-            });
-          }
-        }
-      );
-    // listening to event newCertificateCreated to get contract address
-    const newCertificateAddress =
-      newCertificateTx.events.NewCertificateCreated.returnValues
-        .newCertificateAddress;
-    console.log(newCertificateAddress);
-
-    if (newCertificateAddress) {
+    console.log(this.formatCertificateDetails());
+    try {
+      // modal displayed while the new certificate is created
       this.setState({
-        certificateCheck: {
-          ...this.state.certificateCheck,
-          address: newCertificateAddress.toLowerCase()
-        },
-        lastMarriage: {
-          0: fcd[1],
-          1: fcd[2],
-          2: fcd[0]
-        },
-        certificatesTotal: parseInt(this.state.certificatesTotal) + 1,
-        congratulationModalOpen: true
+        confirmationModal: { ...this.state.confirmationModal, open: true }
       });
+      // creating the new certificate
+      const fcd = this.formatCertificateDetails();
+      const newCertificateTx = await contractCreator.methods
+        .createNewCertificate(
+          fcd[1],
+          fcd[2],
+          this.state.spousesDetails.secondSpouseDetails.address.toLowerCase(),
+          fcd[0]
+        )
+        .send(
+          {
+            from: this.state.userAddress,
+            gas: "5000000",
+            value: web3.utils.toWei(this.state.fee)
+          },
+          (error, txHash) => {
+            if (error) {
+              this.setState({
+                confirmationModal: {
+                  ...this.state.confirmationModal,
+                  open: false
+                },
+                errorMessage: true
+              });
+            } else {
+              this.setState({
+                confirmationModal: {
+                  ...this.state.confirmationModal,
+                  open: false
+                },
+                newCertificateTxHash: txHash
+              });
+            }
+          }
+        );
+      // listening to event newCertificateCreated to get contract address
+      const newCertificateAddress =
+        newCertificateTx.events.NewCertificateCreated.returnValues
+          .newCertificateAddress;
+      console.log(newCertificateAddress);
+
+      if (newCertificateAddress) {
+        this.setState({
+          certificateCheck: {
+            ...this.state.certificateCheck,
+            address: newCertificateAddress.toLowerCase()
+          },
+          lastMarriage: {
+            0: fcd[1],
+            1: fcd[2],
+            2: fcd[0]
+          },
+          certificatesTotal: parseInt(this.state.certificatesTotal) + 1,
+          congratulationModalOpen: true
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -327,35 +355,48 @@ class App extends Component {
   };
 
   componentDidMount = () => {
-    getWeb3().then(async getWeb3 => {
-      web3 = getWeb3;
-      // we create the contract
-      contractCreator = await new web3.eth.Contract(
-        compiledContract.abi,
-        compiledContract.address
-      );
-      // we update the state with info
-      // fee for registration
-      const feeInWei = await contractCreator.methods.certificateFee().call();
-      const feeInEther = web3.utils.fromWei(feeInWei, "ether");
-      // number of certificates
-      const certificatesTotal = await contractCreator.methods
-        .returnNumberOfContracts()
-        .call();
-      // last marriage
-      const lastMarriage = await contractCreator.methods
-        .getLastMarriage()
-        .call();
-      // address change listener
-      const addressChangeListener = setInterval(this.userAddressChange, 500);
-      this.setState({
-        isConnected: true,
-        fee: feeInEther,
-        certificatesTotal,
-        lastMarriage,
-        addressChangeListener
-      });
-    });
+    getWeb3()
+      .then(async getWeb3 => {
+        web3 = getWeb3;
+        try {
+          await web3.eth.net.isListening();
+          console.log("web3 started!");
+          // we create the contract
+          contractCreator = await new web3.eth.Contract(
+            compiledContract.abi,
+            compiledContract.address
+          );
+          // we update the state with info
+          // fee for registration
+          const feeInWei = await contractCreator.methods
+            .certificateFee()
+            .call();
+          const feeInEther = web3.utils.fromWei(feeInWei, "ether");
+          // number of certificates
+          const certificatesTotal = await contractCreator.methods
+            .returnNumberOfContracts()
+            .call();
+          // last marriage
+          const lastMarriage = await contractCreator.methods
+            .getLastMarriage()
+            .call();
+          // address change listener
+          const addressChangeListener = setInterval(
+            this.userAddressChange,
+            500
+          );
+          this.setState({
+            isConnected: true,
+            fee: feeInEther,
+            certificatesTotal,
+            lastMarriage,
+            addressChangeListener
+          });
+        } catch (error) {
+          console.log("Error while instantiating web3: ", error);
+        }
+      })
+      .catch(err => console.log(err));
   };
 
   componentWillUnmount = () => {
@@ -551,6 +592,7 @@ class App extends Component {
           open={this.state.congratulationModalOpen}
           size="small"
           centered={false}
+          onClose={() => this.setState({ congratulationModalOpen: false })}
           closeIcon
         >
           <Modal.Header className="modal-header">Congratulations!</Modal.Header>
@@ -560,19 +602,63 @@ class App extends Component {
               <Header as="h3">
                 You are now officially married on the Ethereum blockchain!
               </Header>
-              <Segment basic style={{ wordBreak: "break-all" }}>
-                <p>
-                  The transaction number is: {this.state.newCertificateTxHash}
-                </p>
-                <p>
-                  Your certificate address is:{" "}
-                  {this.state.certificateCheck.address.toLowerCase()}.
-                </p>
-                <p>
-                  Please keep the certificate address in a safe place as you
-                  cannot access your certificate without it.
-                </p>
-                <p>Download a PDF copy of the certificate</p>
+              <Segment basic style={{ wordBreak: "break-word" }}>
+                <List divided relaxed="very">
+                  <List.Item>
+                    <List.Icon
+                      name="linkify"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>
+                        {this.state.newCertificateTxHash}
+                      </List.Header>
+                      <List.Description>
+                        This is the transaction number you can look up here.
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon
+                      name="file alternate outline"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>
+                        {this.state.certificateCheck.address.toLowerCase()}
+                      </List.Header>
+                      <List.Description>
+                        Please keep the certificate address in a safe place as
+                        you cannot access your certificate without it.
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon name="key" size="large" verticalAlign="middle" />
+                    <List.Content>
+                      <List.Header>{this.state.idEncodingKey}</List.Header>
+                      <List.Description>
+                        Your secret key allows to read your encrypted ID number
+                        from the blockchain.
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon
+                      name="file pdf outline"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>Copy of the certificate</List.Header>
+                      <List.Description>
+                        Download a PDF copy of the certificate
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                </List>
               </Segment>
             </Modal.Description>
           </Modal.Content>
