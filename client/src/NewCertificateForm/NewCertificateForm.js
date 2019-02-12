@@ -116,7 +116,7 @@ class NewCertificateForm extends Component {
     const spousesDetails = this.props.spousesDetails;
 
     return (
-      <Grid columns={2}>
+      <Grid columns={2} stackable>
         <Grid.Row textAlign="left">
           <Grid.Column>
             <Header as="h5">City of registration</Header>

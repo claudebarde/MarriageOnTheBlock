@@ -16,6 +16,8 @@ export const checkCertificate = async (certificateAddress, web3) => {
       newCertificateAbi,
       certificateAddress
     );
+    // this makes sure the certificate exists, throws error if not
+    await web3.eth.getCode(certificateAddress);
     result = {
       return: "OK",
       isMarriageValid: await certificate.methods.checkIfValid().call(),
@@ -26,7 +28,8 @@ export const checkCertificate = async (certificateAddress, web3) => {
         .returnSpousesAddresses()
         .call(),
       timestamp: await certificate.methods.timestamp().call(),
-      instance: certificate
+      instance: certificate,
+      balance: await certificate.methods.returnBalance().call()
     };
   } catch (error) {
     result = {
@@ -50,4 +53,30 @@ export const lastMarriageDisplay = lastMarriage => {
   )} got married in ${_.upperFirst(location.city)}, ${_.upperFirst(
     location.country
   )}.`;
+};
+
+export const MIN_SCREEN_WIDTH = 900;
+
+export const CERTIFICATE_OBJ = {
+  address: "0x8b35e59614efc1b4e760f56e8ee66df495822111",
+  timestamp: "",
+  location: "",
+  isMarriageValid: {},
+  spousesDetails: {
+    firstSpouseDetails: {
+      firstName: "",
+      lastName: "",
+      idNumber: "",
+      idType: "",
+      address: ""
+    },
+    secondSpouseDetails: {
+      firstName: "",
+      lastName: "",
+      idNumber: "",
+      idType: "",
+      address: ""
+    }
+  },
+  error: null
 };

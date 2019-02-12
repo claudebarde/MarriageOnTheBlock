@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import {
   Container,
-  Menu,
   Icon,
   Grid,
   Segment,
@@ -10,30 +9,26 @@ import {
   Divider,
   Modal,
   Message,
-  Form,
-  Input,
-  Dimmer,
-  Loader,
   List
 } from "semantic-ui-react";
 import CryptoJS from "crypto-js";
-import "./App.css";
+import { Redirect } from "react-router";
 //import Web3 from "web3";
-import getWeb3 from "./utils/getWeb3";
+import getWeb3 from "../utils/getWeb3";
 
-import compiledContract from "./utils/contractCreator";
-import NewCertificateForm from "./NewCertificateForm/NewCertificateForm";
-import DetailsValidation from "./DetailsValidation/DetailsValidation";
+import compiledContract from "../utils/contractCreator";
+import NewCertificateForm from "../NewCertificateForm/NewCertificateForm";
+import DetailsValidation from "../DetailsValidation/DetailsValidation";
 import {
   checkIfDetailsAreValid,
-  checkCertificate,
-  lastMarriageDisplay
-} from "./utils/functions";
-import DisplayCertificateCheck from "./DisplayCertificateCheck/DisplayCertificateCheck";
+  lastMarriageDisplay,
+  MIN_SCREEN_WIDTH,
+  CERTIFICATE_OBJ
+} from "../utils/functions";
+import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
 
 let web3 = null;
-let contractCreator,
-  subscribedEvents = {};
+let contractCreator;
 
 class App extends Component {
   constructor(props) {
@@ -44,6 +39,7 @@ class App extends Component {
       certificatesTotal: 0,
       lastMarriage: { 0: "", 1: "", 2: "" },
       userAddress: "",
+      certificate: CERTIFICATE_OBJ,
       addressChangeListener: null,
       confirmationModal: {
         open: false,
@@ -57,34 +53,9 @@ class App extends Component {
         message:
           "Please  wait while your marriage certificate is being confirmed on the blockchain..."
       },
-      checkCertificateModal: { open: false },
-      certificateCheck: {
-        address: "0xEA45Ce0d2Cd49ee96F816F47b29261D54De2F73F",
-        timestamp: "",
-        location: "",
-        isMarriageValid: {},
-        spousesDetails: {
-          firstSpouseDetails: {
-            firstName: "",
-            lastName: "",
-            idNumber: "",
-            idType: "",
-            address: ""
-          },
-          secondSpouseDetails: {
-            firstName: "",
-            lastName: "",
-            idNumber: "",
-            idType: "",
-            address: ""
-          }
-        },
-        error: null
-      },
-      errorMessage: false,
-      showCertificateCheckDetails: false,
-      fetchingCertificateDetails: false,
-      congratulationModalOpen: true,
+      screenWidth: window.innerWidth,
+      errorMessage: { open: false, message: "" },
+      congratulationModalOpen: false,
       newCertificateTxHash: "",
       idEncodingKey:
         Math.random()
@@ -93,6 +64,7 @@ class App extends Component {
         Math.random()
           .toString(36)
           .substring(2, 9),
+      redirectAfterRegistration: false,
       /*city: "",
       country: "",
       spousesDetails: {
@@ -204,8 +176,14 @@ class App extends Component {
   };
 
   confirmRegistration = async () => {
-    console.log(this.formatCertificateDetails());
+    console.log(this.state.userAddress);
     try {
+      if (
+        this.state.spousesDetails.firstSpouseDetails.address.toLowerCase() ===
+        this.state.spousesDetails.secondSpouseDetails.address.toLowerCase()
+      ) {
+        throw new Error("same_addresses");
+      }
       // modal displayed while the new certificate is created
       this.setState({
         confirmationModal: { ...this.state.confirmationModal, open: true }
@@ -232,7 +210,10 @@ class App extends Component {
                   ...this.state.confirmationModal,
                   open: false
                 },
-                errorMessage: true
+                errorMessage: {
+                  open: true,
+                  message: "An error has occurred, please try again later."
+                }
               });
             } else {
               this.setState({
@@ -253,8 +234,8 @@ class App extends Component {
 
       if (newCertificateAddress) {
         this.setState({
-          certificateCheck: {
-            ...this.state.certificateCheck,
+          certificate: {
+            ...this.state.certificate,
             address: newCertificateAddress.toLowerCase()
           },
           lastMarriage: {
@@ -268,93 +249,20 @@ class App extends Component {
       }
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  subscribeLogEvent = (contract, eventName) => {
-    if (subscribedEvents.hasOwnProperty(eventName) === false) {
-      const eventJsonInterface = web3.utils._.find(
-        contract._jsonInterface,
-        o => o.name === eventName && o.type === "event"
-      );
-      const subscription = web3.eth.subscribe(
-        "logs",
-        {
-          address: contract.options.address,
-          topics: [eventJsonInterface.signature]
-        },
-        (error, result) => {
-          if (!error) {
-            const eventObj = web3.eth.abi.decodeLog(
-              eventJsonInterface.inputs,
-              result.data,
-              result.topics.slice(1)
-            );
-            console.log(`New ${eventName}!`, eventObj);
-            // we update the state with new contract state
-            if (
-              eventName === "MarriageValidity" ||
-              eventName === "DivorcePetition"
-            ) {
-              this.setState({
-                certificateCheck: {
-                  ...this.state.certificateCheck,
-                  isMarriageValid: {
-                    0: eventObj.validity[0],
-                    1: eventObj.validity[1]
-                  }
-                }
-              });
-            }
-          }
-        }
-      );
-      subscribedEvents[eventName] = subscription;
-    }
-  };
-
-  fetchCertificateDetails = async () => {
-    this.setState({ fetchingCertificateDetails: true });
-    const address = this.state.certificateCheck.address;
-    const certificate = await checkCertificate(address, web3);
-    if (certificate.return === "OK") {
-      // we lowercase the address to compare it later with current user address
-      let spouse1details = JSON.parse(certificate.spouse1);
-      let spouse2details = JSON.parse(certificate.spouse2);
-      spouse1details.address = spouse1details.address.toLowerCase();
-      spouse2details.address = spouse2details.address.toLowerCase();
-      // we update the state with the data
-      this.setState({
-        certificateCheck: {
-          ...this.state.certificateCheck,
-          timestamp: certificate.timestamp,
-          location: JSON.parse(certificate.location),
-          spousesDetails: {
-            firstSpouseDetails: spouse1details,
-            secondSpouseDetails: spouse2details
+      if (error.message === "same_addresses") {
+        this.setState({
+          errorMessage: {
+            open: true,
+            message: "Spouses' addresses cannot be the same!"
           },
-          isMarriageValid: certificate.isMarriageValid,
-          error: null
-        },
-        showCertificateCheckDetails: true,
-        fetchingCertificateDetails: false
-      });
-      // subscription to events
-      this.subscribeLogEvent(certificate.instance, "MarriageValidity");
-      this.subscribeLogEvent(certificate.instance, "DivorcePetition");
-    } else {
-      this.setState({
-        certificateCheck: {
-          ...this.state.certificateCheck,
-          error: certificate.error
-        },
-        showCertificateCheckDetails: true,
-        fetchingCertificateDetails: false
-      });
+          confirmationModal: { ...this.state.confirmationModal, open: false }
+        });
+      }
     }
   };
 
   componentDidMount = () => {
+    window.addEventListener("resize", this.handleWindowSizeChange);
     getWeb3()
       .then(async getWeb3 => {
         web3 = getWeb3;
@@ -393,10 +301,14 @@ class App extends Component {
             addressChangeListener
           });
         } catch (error) {
-          console.log("Error while instantiating web3: ", error);
+          console.log("Error while fetching details from contract: ", error);
         }
       })
       .catch(err => console.log(err));
+  };
+
+  handleWindowSizeChange = () => {
+    this.setState({ screenWidth: window.innerWidth });
   };
 
   componentWillUnmount = () => {
@@ -404,37 +316,22 @@ class App extends Component {
   };
 
   render() {
+    if (this.state.redirectAfterRegistration) {
+      return (
+        <Redirect
+          to={`/check/${this.state.certificate.address.toLowerCase()}`}
+        />
+      );
+    }
     return (
       <Container fluid>
-        <Menu size="massive" borderless>
-          <Container>
-            <Menu.Item className="title">
-              Get Married On The Blockchain!
-            </Menu.Item>
-            <Menu.Item>
-              <Image src="/images/undraw_wedding_t1yl.svg" size="small" />
-            </Menu.Item>
-
-            <Menu.Menu position="right">
-              <Menu.Item
-                link
-                onClick={() =>
-                  this.setState({ checkCertificateModalOpen: true })
-                }
-              >
-                <Icon name="id card outline" className="navbar-icon" />
-                Check a certificate
-              </Menu.Item>
-            </Menu.Menu>
-          </Container>
-        </Menu>
-        {this.state.errorMessage && (
+        {this.state.errorMessage.open && (
           <>
             <Container text>
               <Message
                 icon="exclamation triangle"
                 header="An error has occurred"
-                content="Please try again later."
+                content={this.state.errorMessage.message}
                 size="small"
                 error
               />
@@ -443,6 +340,11 @@ class App extends Component {
           </>
         )}
         <Container textAlign="center">
+          {this.state.screenWidth <= MIN_SCREEN_WIDTH && (
+            <NumberOfMarriages
+              certificatesTotal={this.state.certificatesTotal}
+            />
+          )}
           <Grid columns={2} stackable>
             <Grid.Row stretched>
               <Grid.Column>
@@ -476,18 +378,11 @@ class App extends Component {
                   )}
               </Grid.Column>
               <Grid.Column>
-                <Segment>
-                  <Divider horizontal>
-                    <Header as="h4">Number of registered marriages</Header>
-                  </Divider>
-                  <p>
-                    {this.state.certificatesTotal > 1
-                      ? `There are ${this.state.certificatesTotal} registered
-                    marriages around the world.`
-                      : `There is ${this.state.certificatesTotal} registered
-                    marriage around the world.`}
-                  </p>
-                </Segment>
+                {this.state.screenWidth >= MIN_SCREEN_WIDTH && (
+                  <NumberOfMarriages
+                    certificatesTotal={this.state.certificatesTotal}
+                  />
+                )}
                 <Segment>
                   <Divider horizontal>
                     <Header as="h4">Last marriage</Header>
@@ -526,73 +421,17 @@ class App extends Component {
             <p>{this.state.confirmationModal.message}</p>
           </Modal.Content>
         </Modal>
-        <Modal
-          open={this.state.checkCertificateModalOpen}
-          size="small"
-          centered={false}
-          onClose={() =>
-            this.setState({
-              checkCertificateModalOpen: false,
-              showCertificateCheckDetails: false
-            })
-          }
-          closeIcon
-        >
-          <Modal.Header className="modal-header">
-            Check a marriage certificate
-          </Modal.Header>
-          <Modal.Content>
-            <Form>
-              <Form.Field
-                id="form-input-certificate-address"
-                control={Input}
-                label="Please enter certificate address :"
-                placeholder="Certificate Address"
-                action={{
-                  icon: "search",
-                  content: "Search",
-                  onClick: this.fetchCertificateDetails
-                }}
-                value={this.state.certificateCheck.address}
-                onChange={event =>
-                  this.setState({
-                    certificateCheck: {
-                      ...this.state.certificateCheck,
-                      address: event.target.value
-                    }
-                  })
-                }
-              />
-            </Form>
-            {this.state.fetchingCertificateDetails && (
-              <Segment>
-                <Dimmer active inverted>
-                  <Loader inverted content="Loading" />
-                </Dimmer>
-                <Image src="/images/short-paragraph.png" />
-              </Segment>
-            )}
-            {this.state.showCertificateCheckDetails &&
-              (this.state.certificateCheck.error === null ? (
-                <DisplayCertificateCheck
-                  details={this.state.certificateCheck}
-                  currentUser={this.state.userAddress}
-                  web3={web3}
-                />
-              ) : (
-                <Message
-                  header="An error occurred"
-                  content="Please check if the certificate address is correct and retry"
-                  error
-                />
-              ))}
-          </Modal.Content>
-        </Modal>
+
         <Modal
           open={this.state.congratulationModalOpen}
           size="small"
           centered={false}
-          onClose={() => this.setState({ congratulationModalOpen: false })}
+          onClose={() =>
+            this.setState({
+              congratulationModalOpen: false,
+              redirectAfterRegistration: true
+            })
+          }
           closeIcon
         >
           <Modal.Header className="modal-header">Congratulations!</Modal.Header>
@@ -627,7 +466,7 @@ class App extends Component {
                     />
                     <List.Content>
                       <List.Header>
-                        {this.state.certificateCheck.address.toLowerCase()}
+                        {this.state.certificate.address.toLowerCase()}
                       </List.Header>
                       <List.Description>
                         Please keep the certificate address in a safe place as

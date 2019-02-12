@@ -16,6 +16,16 @@ body {
   font-size: 2.5rem;
 }
 
+.title-mobile {
+  font-family: "Just Another Hand", cursive;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.mobile-hamburger {
+  color: var(--THEME_COLOR) !important;
+}
+
 .modal-header {
   background-color: var(--THEME_COLOR) !important;
   color: white !important;
@@ -32,4 +42,8 @@ body {
 
 .submit-button:hover {
   background-color: var(--THEME_COLOR_DARK) !important;
+}
+
+.router-link {
+  color: black !important;
 }
