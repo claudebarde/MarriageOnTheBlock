@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 contract MarriageCertificateCreator {
     MarriageCertificate[] public certificates;
-    address public owner;
+    address payable public owner;
     uint public certificateFee;
     string[3] public lastMarriage;
     
@@ -60,7 +60,7 @@ contract MarriageCertificateCreator {
     
     function withdraw() public {
         require(msg.sender == owner, "You are not allowed to perform this action");
-        msg.sender.transfer(address(this).balance);
+        owner.transfer(address(this).balance);
     }
 }
 
@@ -86,21 +86,21 @@ contract MarriageCertificate {
     /** 
         @dev function is called every time someone wants to register a new marriage certificate
         @param certificateCreator =  spouse who initiated the contract
-        @param newSpouse1 =  holds JSON string with first spouse details
-        @param newSpouse2 =  holds JSON string with second spouse details
+        @param _spouse1 =  holds JSON string with first spouse details
+        @param _spouse2 =  holds JSON string with second spouse details
         @param spouse2address = keeps second spouse address for validation purposes
-        @param newLocation =  holds JSON string with location details
+        @param _location =  holds JSON string with location details
     **/
     constructor(
         address certificateCreator, 
-        string memory newSpouse1, 
-        string memory newSpouse2,
+        string memory _spouse1, 
+        string memory _spouse2,
         address spouse2address, 
-        string memory newLocation) public {
+        string memory _location) public {
         require(certificateCreator != spouse2address, "Spouses' addresses cannot be the same!");
-        location = newLocation;
-        spouse1 = newSpouse1;
-        spouse2 = newSpouse2;
+        location = _location;
+        spouse1 = _spouse1;
+        spouse2 = _spouse2;
         isValid = [true, false];
         spousesAddresses = [certificateCreator, spouse2address];
         timestamp = now;
@@ -145,11 +145,15 @@ contract MarriageCertificate {
         // we check the amount sent is the amount required
         require(msg.value == amount, "Wrong amount sent!");
         // we update the balance according to the account type selected
-        if(keccak256(abi.encodePacked(account)) == keccak256(abi.encodePacked("joint"))) {
+        if(stringsAreEqual(account, "joint")) {
             accounts["joint"] = accounts["joint"] + amount;
-        } else if(keccak256(abi.encodePacked(account)) == keccak256(abi.encodePacked("savings"))) {
+        } else if(stringsAreEqual(account, "savings")) {
             accounts["savings"] = accounts["savings"] + amount;
+        } else {
+            revert("This is not a valid account.");
         }
+        // we make sure the sum of the joint and savings accounts is equal to the total sum
+        assert(accounts["joint"] + accounts["savings"] == address(this).balance);
     }
     
     /// @notice allows spouses to withdraw money from the account
@@ -157,10 +161,10 @@ contract MarriageCertificate {
         // requested amount cannot exceed total balance of account
         if(amount < address(this).balance) {
             // we check if the balance is sufficient for the withdrawal from the joint account
-            if(keccak256(abi.encodePacked(account)) == keccak256(abi.encodePacked("joint")) && 
+            if(stringsAreEqual(account, "joint") && 
                 accounts["joint"] > amount) {
                 msg.sender.transfer(amount);
-            } else if(keccak256(abi.encodePacked(account)) == keccak256(abi.encodePacked("savings")) && 
+            } else if(stringsAreEqual(account, "savings") && 
                 accounts["savings"] > amount) {
                 // we create a request that the second spouse must approve in order to allow the transfer
                 withdrawRequestFromSavings memory newRequest = withdrawRequestFromSavings({
@@ -174,9 +178,13 @@ contract MarriageCertificate {
                 emit NewWithdrawalRequestFromSavings(requestID);
                 // we save the new request in requests mapping
                 withdrawRequests[requestID] = newRequest;
+            } else {
+                revert("This is not a valid account.");
             }
+            // we make sure the sum of the joint and savings accounts is equal to the total sum
+            assert(accounts["joint"] + accounts["savings"] == address(this).balance);
         } else {
-            revert();
+            revert("The amount you are trying to withdraw exceeds the total balance of the account.");
         }
     }
     
@@ -203,15 +211,20 @@ contract MarriageCertificate {
                 // we transfer the money
                 request.sender.transfer(request.amount);
             } else {
-            revert();
+            revert("The request cannot be approved by the same person who created it!");
             }
         } else {
-            revert();
+            revert("This request has already been approved!");
         }
     }
     
     /// @notice fallback function to send money directly, money stored in deposit account by default
     function() external payable {
         accounts["deposit"] = accounts["deposit"] + msg.value;
+    }
+
+    /// @dev compares two strings
+    function stringsAreEqual(string memory str1, string memory str2) pure private returns (bool) {
+        return keccak256(abi.encodePacked(str1)) == keccak256(abi.encodePacked(str2));
     }
 }

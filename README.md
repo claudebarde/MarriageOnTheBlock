@@ -20,8 +20,7 @@ You must download Truffle in order to compile and migrate updated contracts.
 npm install -g truffle
 ```
 
-The Ganache GUI was also used during the development process.
-[Ganache](https://truffleframework.com/ganache)
+The Ganache GUI was also used during the development process -> [Ganache](https://truffleframework.com/ganache)
 
 ## Deployment
 
