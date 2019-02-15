@@ -39,10 +39,8 @@ class SpouseList extends Component {
       timestamp: 0,
       approved: true
     },
-    displayIdNumbers: {
-      firstSpouseDetails: "••••••••••••••••••",
-      secondSpouseDetails: "••••••••••••••••••"
-    }
+    displayIdNumber: "••••••••••••••••••",
+    decryptInput: { error: false, length: 0 }
   };
 
   changeMarriageStatus = async () => {
@@ -256,13 +254,23 @@ class SpouseList extends Component {
 
   decryptIdNumber = event => {
     const key = event.target.value;
+    // decrypts first spouse id
     const decrypt = CryptoJS.AES.decrypt(
-      this.props.details.spousesDetails[
-        "firstSpouseDetails"
-      ].idNumber.toString(),
+      this.props.details.spousesDetails[this.props.spouse].idNumber.toString(),
       key.toString()
     ).toString(CryptoJS.enc.Utf8);
-    console.log(decrypt);
+    // we update the Id Number field according to results
+    if (key.length > 0 && decrypt) {
+      this.setState({ decryptInput: { error: false, length: key.length } });
+      // we update the state with the id numbers
+      this.setState({
+        displayIdNumber: decrypt
+      });
+    } else if (key.length === 0 && !decrypt) {
+      this.setState({ decryptInput: { error: false, length: 0 } });
+    } else {
+      this.setState({ decryptInput: { error: true, length: key.length } });
+    }
   };
 
   componentDidMount = async () => {
@@ -289,14 +297,7 @@ class SpouseList extends Component {
   };
 
   render() {
-    const {
-      details,
-      spouse,
-      index,
-      isValid,
-      currentUser,
-      currentAddress
-    } = this.props;
+    const { details, spouse, index, isValid, currentUser } = this.props;
 
     return (
       <List size="small" style={{ wordBreak: "break-word" }}>
@@ -318,19 +319,27 @@ class SpouseList extends Component {
                   trigger={
                     <List.Content as="a">{`${_.upperFirst(
                       details.spousesDetails[spouse].idType
-                    )} Number: ${
-                      this.state.displayIdNumbers[spouse]
-                    }`}</List.Content>
+                    )} Number: ${this.state.displayIdNumber}`}</List.Content>
                   }
                   content={
                     <Input
                       placeholder="Enter security key"
-                      icon="search"
+                      icon={
+                        !this.state.decryptInput.error &&
+                        this.state.decryptInput.length > 0
+                          ? "thumbs up outline"
+                          : "search"
+                      }
                       onChange={this.decryptIdNumber}
+                      error={this.state.decryptInput.error}
+                      autoFocus
                     />
                   }
                   on="click"
-                  position="top right"
+                  position="top left"
+                  onClose={() =>
+                    this.setState({ decryptInput: { error: false, length: 0 } })
+                  }
                 />
               </List.Item>
               <List.Item>
