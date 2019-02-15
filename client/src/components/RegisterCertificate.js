@@ -156,17 +156,18 @@ class App extends Component {
   formatCertificateDetails = () => {
     const firstSpouseDetails = this.state.spousesDetails.firstSpouseDetails;
     //  we encrypt the id number with sha256 and the random key
-    let hash = CryptoJS.SHA256(
-      firstSpouseDetails.idNumber.toString() +
-        this.state.idEncodingKey.toString()
+    const encrypt1 = CryptoJS.AES.encrypt(
+      firstSpouseDetails.idNumber.toString(),
+      this.state.idEncodingKey.toString()
     ).toString();
-    firstSpouseDetails.idNumber = hash;
+    firstSpouseDetails.idNumber = encrypt1;
 
     const secondSpouseDetails = this.state.spousesDetails.secondSpouseDetails;
-    hash = CryptoJS.SHA256(
-      this.state.randomKey + secondSpouseDetails.idNumber
+    const encrypt2 = CryptoJS.AES.encrypt(
+      secondSpouseDetails.idNumber.toString(),
+      this.state.idEncodingKey.toString()
     ).toString();
-    secondSpouseDetails.idNumber = hash;
+    secondSpouseDetails.idNumber = encrypt2;
 
     return [
       JSON.stringify({ city: this.state.city, country: this.state.country }),
@@ -176,7 +177,7 @@ class App extends Component {
   };
 
   confirmRegistration = async () => {
-    console.log(this.state.userAddress);
+    //console.log(this.state.userAddress);
     try {
       if (
         this.state.spousesDetails.firstSpouseDetails.address.toLowerCase() ===

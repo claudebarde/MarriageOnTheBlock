@@ -163,6 +163,9 @@ contract MarriageCertificate {
             // we check if the balance is sufficient for the withdrawal from the joint account
             if(stringsAreEqual(account, "joint") && 
                 accounts["joint"] > amount) {
+                // we substract the amount from the joint account amount
+                accounts["joint"] = accounts["joint"] - amount;
+                // we send the money
                 msg.sender.transfer(amount);
             } else if(stringsAreEqual(account, "savings") && 
                 accounts["savings"] > amount) {

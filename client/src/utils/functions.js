@@ -29,7 +29,14 @@ export const checkCertificate = async (certificateAddress, web3) => {
         .call(),
       timestamp: await certificate.methods.timestamp().call(),
       instance: certificate,
-      balance: await certificate.methods.returnBalance().call()
+      balance: {}
+    };
+    // balance for each account must be formatted for easier reading
+    const balances = await certificate.methods.returnBalances().call();
+    result.balance = {
+      total: balances[0],
+      joint: balances[1],
+      savings: balances[2]
     };
   } catch (error) {
     result = {
@@ -58,7 +65,7 @@ export const lastMarriageDisplay = lastMarriage => {
 export const MIN_SCREEN_WIDTH = 900;
 
 export const CERTIFICATE_OBJ = {
-  address: "0x8b35e59614efc1b4e760f56e8ee66df495822111",
+  address: "0xD0Db34b683d5658E621Af56244f1c57332d5761c",
   timestamp: "",
   location: "",
   isMarriageValid: {},

@@ -69,6 +69,7 @@ class CheckCertificate extends Component {
       // subscription to events
       this.subscribeLogEvent(certificate.instance, "MarriageValidity");
     } else {
+      console.log(certificate.error);
       this.setState({
         certificateCheck: {
           ...this.state.certificateCheck,
@@ -119,12 +120,31 @@ class CheckCertificate extends Component {
     }
   };
 
-  updateBalance = (txType, newTxAmount) => {
-    let newBalance = parseInt(this.state.certificateCheck.balance);
+  updateBalance = (txType, newTxAmount, account) => {
+    let newBalance = { ...this.state.certificateCheck.balance };
+    // if deposit, we add values
     if (txType === "deposit") {
-      newBalance = newBalance + parseInt(newTxAmount);
+      // update the total balance
+      newBalance.total = parseInt(newBalance.total) + parseInt(newTxAmount);
+      if (account === "joint") {
+        // update the joint account
+        newBalance.joint = parseInt(newBalance.joint) + parseInt(newTxAmount);
+      } else if (account === "savings") {
+        // update the joint account
+        newBalance.savings =
+          parseInt(newBalance.savings) + parseInt(newTxAmount);
+      }
     } else if (txType === "withdrawal") {
-      newBalance = newBalance - parseInt(newTxAmount);
+      // update the total balance
+      newBalance.total = parseInt(newBalance.total) - parseInt(newTxAmount);
+      if (account === "joint") {
+        // update the joint account
+        newBalance.joint = parseInt(newBalance.joint) - parseInt(newTxAmount);
+      } else if (account === "savings") {
+        // update the joint account
+        newBalance.savings =
+          parseInt(newBalance.savings) - parseInt(newTxAmount);
+      }
     }
     this.setState({
       certificateCheck: {

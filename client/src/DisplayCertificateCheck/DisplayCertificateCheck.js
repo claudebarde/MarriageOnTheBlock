@@ -7,10 +7,15 @@ import {
   Header,
   Input,
   Button,
-  Message
+  Message,
+  Dimmer,
+  Loader,
+  Image,
+  Popup
 } from "semantic-ui-react";
 import _ from "lodash";
 import moment from "moment";
+import CryptoJS from "crypto-js";
 
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 let web3 = null;
@@ -24,9 +29,22 @@ class DisplayCertificateCheck extends Component {
       ethToDollarChange: 0,
       convertEthToDollars: 0,
       ethToTransfer: "",
-      depositFundsModal: { open: false, loading: false },
-      withdrawFundsModal: { open: false, loading: false },
-      errorSend: false
+      depositFundsModal: { open: false, loading: false, toAccount: "" },
+      withdrawFundsModal: { open: false, loading: false, fromAccount: "" },
+      errorSend: false,
+      requestReceipt: { status: false, tx: 0 },
+      fetchWithdrawRequest: {
+        loading: false,
+        status: false,
+        sender: "",
+        amount: 0,
+        timestamp: 0,
+        approved: true
+      },
+      displayIdNumbers: {
+        firstSpouseDetails: "••••••••••••••••••",
+        secondSpouseDetails: "••••••••••••••••••"
+      }
     };
   }
 
@@ -46,28 +64,48 @@ class DisplayCertificateCheck extends Component {
   };
 
   depositFunds = async () => {
-    this.setState({ depositFundsModal: { open: true, loading: true } });
+    this.setState({
+      depositFundsModal: {
+        ...this.state.depositFundsModal,
+        open: true,
+        loading: true
+      }
+    });
     try {
       const funds = web3.utils.toWei(
         this.state.ethToTransfer.toString(),
         "ether"
       );
-      const depositTx = await certificate.methods.deposit(funds).send({
-        from: this.props.currentUser,
-        gas: "300000",
-        value: funds
-      });
+      const depositTx = await certificate.methods
+        .deposit(funds, this.state.depositFundsModal.toAccount)
+        .send({
+          from: this.props.currentUser,
+          gas: "300000",
+          value: funds
+        });
 
       if (depositTx.status) {
-        this.props.updateBalance("deposit", funds);
+        this.props.updateBalance(
+          "deposit",
+          funds,
+          this.state.depositFundsModal.toAccount
+        );
         this.setState({
-          depositFundsModal: { open: false, loading: false },
+          depositFundsModal: {
+            open: false,
+            loading: false,
+            toAccount: ""
+          },
           convertEthToDollars: 0,
           ethToTransfer: ""
         });
       } else {
         this.setState({
-          depositFundsModal: { open: false, loading: false },
+          depositFundsModal: {
+            open: false,
+            loading: false,
+            toAccount: "joint"
+          },
           errorSend: true
         });
       }
@@ -78,26 +116,54 @@ class DisplayCertificateCheck extends Component {
 
   withdrawFunds = async () => {
     this.setState({
-      withdrawFundsModal: { open: true, loading: true },
-      convertEthToDollars: 0,
-      ethToTransfer: ""
+      withdrawFundsModal: {
+        ...this.state.withdrawFundsModal,
+        open: true,
+        loading: true
+      }
     });
     try {
       const funds = web3.utils.toWei(
         this.state.ethToTransfer.toString(),
         "ether"
       );
-      const withdrawTx = await certificate.methods.withdraw(funds).send({
-        from: this.props.currentUser,
-        gas: "300000"
-      });
+      const withdrawTx = await certificate.methods
+        .withdraw(funds, this.state.withdrawFundsModal.fromAccount)
+        .send({
+          from: this.props.currentUser,
+          gas: "300000"
+        });
 
       if (withdrawTx.status) {
-        this.props.updateBalance("withdrawal", funds);
-        this.setState({ withdrawFundsModal: { open: false, loading: false } });
+        // we return the request number for a withdrawal from the savings account
+        if (this.state.withdrawFundsModal.fromAccount === "savings") {
+          this.setState({
+            requestReceipt: {
+              status: true,
+              tx:
+                withdrawTx.events.NewWithdrawalRequestFromSavings.returnValues
+                  .request
+            }
+          });
+        } else {
+          this.props.updateBalance(
+            "withdrawal",
+            funds,
+            this.state.withdrawFundsModal.fromAccount
+          );
+          this.setState({
+            withdrawFundsModal: {
+              open: false,
+              loading: false,
+              fromAccount: ""
+            },
+            convertEthToDollars: 0,
+            ethToTransfer: ""
+          });
+        }
       } else {
         this.setState({
-          withdrawFundsModal: { open: false, loading: false },
+          withdrawFundsModal: { open: false, loading: false, fromAccount: "" },
           errorSend: true
         });
       }
@@ -117,6 +183,91 @@ class DisplayCertificateCheck extends Component {
     });
   };
 
+  fetchWithdrawRequest = requestID => {
+    this.setState(
+      {
+        fetchWithdrawRequest: {
+          loading: true,
+          status: false,
+          sender: "",
+          amount: 0,
+          timestamp: 0,
+          approved: true
+        }
+      },
+      async () => {
+        try {
+          const request = await certificate.methods
+            .checkWithdrawRequest(requestID)
+            .call();
+          if (request) {
+            this.setState({
+              fetchWithdrawRequest: {
+                loading: false,
+                status: true,
+                requestID,
+                sender: request[0],
+                amount: request[1],
+                timestamp: request[2],
+                approved: request[3],
+                error: ""
+              }
+            });
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    );
+  };
+
+  approveRequest = async requestID => {
+    try {
+      const requestTx = await certificate.methods
+        .approveWithdrawRequestFromSavings(requestID)
+        .send({
+          from: this.props.currentUser,
+          gas: "300000"
+        });
+      // if approved
+      if (requestTx.status) {
+        // we update request info
+        this.setState({
+          fetchWithdrawRequest: {
+            ...this.state.fetchWithdrawRequest,
+            approved: true,
+            error: ""
+          }
+        });
+        // we update balances
+        this.props.updateBalance(
+          "withdrawal",
+          this.state.fetchWithdrawRequest.amount,
+          "savings"
+        );
+      }
+    } catch (error) {
+      console.log(error);
+      this.setState({
+        fetchWithdrawRequest: {
+          ...this.state.fetchWithdrawRequest,
+          error: error.message.split("revert")[1].trim()
+        }
+      });
+    }
+  };
+
+  decryptIdNumber = event => {
+    const key = event.target.value;
+    const decrypt = CryptoJS.AES.decrypt(
+      this.props.details.spousesDetails[
+        "firstSpouseDetails"
+      ].idNumber.toString(),
+      key.toString()
+    ).toString(CryptoJS.enc.Utf8);
+    console.log(typeof decrypt);
+  };
+
   spouseList = (details, spouse, index, isValid, currentUser) => (
     <List size="small" style={{ wordBreak: "break-word" }}>
       <List.Item>
@@ -133,9 +284,24 @@ class DisplayCertificateCheck extends Component {
           <List.List>
             <List.Item>
               <List.Icon name="id card" />
-              <List.Content>{`${_.upperFirst(
-                details.spousesDetails[spouse].idType
-              )} Number: ••••••••••••`}</List.Content>
+              <Popup
+                trigger={
+                  <List.Content as="a">{`${_.upperFirst(
+                    details.spousesDetails[spouse].idType
+                  )} Number: ${
+                    this.state.displayIdNumbers[spouse]
+                  }`}</List.Content>
+                }
+                content={
+                  <Input
+                    placeholder="Enter security key"
+                    icon="search"
+                    onChange={this.decryptIdNumber}
+                  />
+                }
+                on="click"
+                position="top right"
+              />
             </List.Item>
             <List.Item>
               <List.Icon name="linkify" />
@@ -160,12 +326,16 @@ class DisplayCertificateCheck extends Component {
                 <List.Content
                   onClick={() =>
                     this.setState({
-                      depositFundsModal: { open: true, loading: false }
+                      depositFundsModal: {
+                        open: true,
+                        loading: false,
+                        toAccount: "joint"
+                      }
                     })
                   }
                 >
                   <List.Header as="a">
-                    Deposit Funds in General Account
+                    Deposit Funds in Joint Account
                   </List.Header>
                   <List.Description as="a">
                     This will deposit the chosen amount in the joint account.
@@ -176,13 +346,19 @@ class DisplayCertificateCheck extends Component {
                   open={this.state.depositFundsModal.open}
                   onClose={() =>
                     this.setState({
-                      depositFundsModal: { open: false, loading: false }
+                      depositFundsModal: {
+                        open: false,
+                        loading: false,
+                        toAccount: ""
+                      }
                     })
                   }
                   closeIcon
                 >
                   <Modal.Header className="modal-header">
-                    Deposit Funds
+                    {`Deposit Funds to ${_.upperFirst(
+                      this.state.depositFundsModal.toAccount
+                    )} Account`}
                   </Modal.Header>
                   <Modal.Content>
                     {this.state.errorSend && (
@@ -194,13 +370,12 @@ class DisplayCertificateCheck extends Component {
                     <Header as="h4">Amount in ether :</Header>
                     <Input
                       type="number"
-                      placeholder="Amount to transfer..."
                       id="input-transfer"
                       value={this.state.ethToTransfer}
                       onChange={this.convertEthToDollars}
                       icon="ethereum"
-                      autoComplete="off"
                       iconPosition="left"
+                      autoComplete="off"
                       autoFocus
                       fluid
                     />
@@ -228,12 +403,16 @@ class DisplayCertificateCheck extends Component {
                 <List.Content
                   onClick={() =>
                     this.setState({
-                      withdrawFundsModal: { open: true, loading: false }
+                      withdrawFundsModal: {
+                        open: true,
+                        loading: false,
+                        fromAccount: "joint"
+                      }
                     })
                   }
                 >
                   <List.Header as="a">
-                    Withdraw Funds from General Account
+                    Withdraw Funds from Joint Account
                   </List.Header>
                   <List.Description as="a">
                     This will withdraw the chosen amount from the joint account.
@@ -244,13 +423,19 @@ class DisplayCertificateCheck extends Component {
                   open={this.state.withdrawFundsModal.open}
                   onClose={() =>
                     this.setState({
-                      withdrawFundsModal: { open: false, loading: false }
+                      withdrawFundsModal: {
+                        open: false,
+                        loading: false,
+                        fromAccount: ""
+                      }
                     })
                   }
                   closeIcon
                 >
                   <Modal.Header className="modal-header">
-                    Withdraw Funds
+                    {`Withdraw Funds from ${_.upperFirst(
+                      this.state.withdrawFundsModal.fromAccount
+                    )} Account`}
                   </Modal.Header>
                   <Modal.Content>
                     {this.state.errorSend && (
@@ -272,6 +457,15 @@ class DisplayCertificateCheck extends Component {
                       autoFocus
                       fluid
                     />
+                    {this.state.requestReceipt.status && (
+                      <Message
+                        header="Withdrawal Request Receipt :"
+                        content={this.state.requestReceipt.tx}
+                        size="mini"
+                        style={{ wordBreak: "break-word" }}
+                        info
+                      />
+                    )}
                   </Modal.Content>
                   <Modal.Actions
                     style={{ background: "none", borderTop: "none" }}
@@ -293,7 +487,17 @@ class DisplayCertificateCheck extends Component {
               </List.Item>
               <List.Item>
                 <List.Icon name="lock" />
-                <List.Content>
+                <List.Content
+                  onClick={() =>
+                    this.setState({
+                      depositFundsModal: {
+                        open: true,
+                        loading: false,
+                        toAccount: "savings"
+                      }
+                    })
+                  }
+                >
                   <List.Header as="a">
                     Deposit Funds in Savings Account
                   </List.Header>
@@ -304,7 +508,17 @@ class DisplayCertificateCheck extends Component {
               </List.Item>
               <List.Item>
                 <List.Icon name="lock open" />
-                <List.Content>
+                <List.Content
+                  onClick={() =>
+                    this.setState({
+                      withdrawFundsModal: {
+                        open: true,
+                        loading: false,
+                        fromAccount: "savings"
+                      }
+                    })
+                  }
+                >
                   <List.Header as="a">
                     Withdraw Funds from Savings Account
                   </List.Header>
@@ -315,6 +529,112 @@ class DisplayCertificateCheck extends Component {
                     The approval of the second spouse is required.
                   </List.Description>
                 </List.Content>
+              </List.Item>
+              <List.Item>
+                <List.Icon name="certificate" />
+                <Modal
+                  trigger={
+                    <List.Content>
+                      <List.Header as="a">Check Withdrawal Request</List.Header>
+                      <List.Description as="a">
+                        You can check and approve a withdrawal request made from
+                        the savings account.
+                      </List.Description>
+                    </List.Content>
+                  }
+                  size="small"
+                  onOpen={() =>
+                    this.setState({
+                      fetchWithdrawRequest: {
+                        loading: false,
+                        status: false,
+                        sender: "",
+                        amount: 0,
+                        timestamp: 0,
+                        approved: true
+                      }
+                    })
+                  }
+                  closeIcon
+                >
+                  <Modal.Header className="modal-header">
+                    Check Withdrawal Request
+                  </Modal.Header>
+                  <Modal.Content>
+                    <Header as="h4">Enter Request Number :</Header>
+                    <Input
+                      id="request-number"
+                      type="number"
+                      placeholder="Request Number"
+                      action={{
+                        icon: "search",
+                        onClick: async () =>
+                          this.fetchWithdrawRequest(
+                            document.getElementById("request-number").value
+                          )
+                      }}
+                      fluid
+                      autoFocus
+                    />
+                    {this.state.fetchWithdrawRequest.loading && (
+                      <Segment>
+                        <Dimmer active inverted>
+                          <Loader inverted content="Loading" />
+                        </Dimmer>
+                        <Image src="/images/short-paragraph.png" />
+                      </Segment>
+                    )}
+                    {this.state.fetchWithdrawRequest.status && (
+                      <List bulleted>
+                        <List.Item>
+                          Creator's Address:{" "}
+                          {this.state.fetchWithdrawRequest.sender}
+                        </List.Item>
+                        <List.Item>
+                          Requested Amount:{" "}
+                          {web3.utils.fromWei(
+                            this.state.fetchWithdrawRequest.amount.toString(),
+                            "ether"
+                          )}{" "}
+                          ether
+                        </List.Item>
+                        <List.Item>
+                          Sent on{" "}
+                          {moment
+                            .unix(this.state.fetchWithdrawRequest.timestamp)
+                            .format("dddd, MMMM Do YYYY, h:mm:ss a")}
+                        </List.Item>
+                        <List.Item>
+                          Approval status:{" "}
+                          {this.state.fetchWithdrawRequest.approved
+                            ? "Approved"
+                            : "Pending"}
+                        </List.Item>
+                        {this.state.fetchWithdrawRequest.error && (
+                          <Message
+                            size="mini"
+                            header="Error"
+                            content={this.state.fetchWithdrawRequest.error}
+                            error
+                          />
+                        )}
+                      </List>
+                    )}
+                  </Modal.Content>
+                  {!this.state.fetchWithdrawRequest.approved && (
+                    <Modal.Actions>
+                      <Button
+                        onClick={() =>
+                          this.approveRequest(
+                            this.state.fetchWithdrawRequest.requestID
+                          )
+                        }
+                      >
+                        Approve Request
+                      </Button>
+                    </Modal.Actions>
+                  )}
+                </Modal>
               </List.Item>
               {isValid[index] ? (
                 <List.Item onClick={this.changeMarriageStatus}>
@@ -366,6 +686,7 @@ class DisplayCertificateCheck extends Component {
   render() {
     const details = this.props.details;
 
+    // display marriage validity
     let marriageValidity = { value: 0, message: "error" };
     const isValid = Object.keys(details.isMarriageValid).map(
       key => details.isMarriageValid[key]
@@ -448,11 +769,26 @@ class DisplayCertificateCheck extends Component {
                     <List.Content>
                       <List.Header>Account Balance:</List.Header>
                       <List.Description>
-                        {web3.utils.fromWei(
-                          details.balance.toString(),
-                          "ether"
-                        )}{" "}
-                        ether
+                        <List.Item as="ol">
+                          <List.Item as="li" value="-">
+                            {`Joint Account: ${web3.utils.fromWei(
+                              details.balance.joint.toString(),
+                              "ether"
+                            )}  ether`}
+                          </List.Item>
+                          <List.Item as="li" value="-">
+                            {`Savings Account: ${web3.utils.fromWei(
+                              details.balance.savings.toString(),
+                              "ether"
+                            )} ether`}
+                          </List.Item>
+                          <List.Item as="li" value="-">
+                            {`Total Balance: ${web3.utils.fromWei(
+                              details.balance.total.toString(),
+                              "ether"
+                            )} ether`}
+                          </List.Item>
+                        </List.Item>
                       </List.Description>
                     </List.Content>
                   </List.Item>
