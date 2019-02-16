@@ -13,7 +13,7 @@ import {
 } from "semantic-ui-react";
 import CryptoJS from "crypto-js";
 import { Redirect } from "react-router";
-//import Web3 from "web3";
+import { Link } from "react-router-dom";
 import getWeb3 from "../utils/getWeb3";
 
 import compiledContract from "../utils/contractCreator";
@@ -262,6 +262,10 @@ class App extends Component {
     }
   };
 
+  updateCityAndCountry = (city, country) => {
+    this.setState({ city, country });
+  };
+
   componentDidMount = () => {
     window.addEventListener("resize", this.handleWindowSizeChange);
     getWeb3()
@@ -358,6 +362,7 @@ class App extends Component {
                   </Segment>
                   <NewCertificateForm
                     userAddress={this.state.userAddress}
+                    updateCityAndCountry={this.updateCityAndCountry}
                     updateSpouseDetails={this.updateSpouseDetails}
                     spousesDetails={this.state.spousesDetails}
                   />
@@ -436,7 +441,7 @@ class App extends Component {
           closeIcon
         >
           <Modal.Header className="modal-header">Congratulations!</Modal.Header>
-          <Modal.Content image>
+          <Modal.Content image id="congratulations">
             <Image wrapped size="small" src="/images/undraw_wedding_t1yl.svg" />
             <Modal.Description>
               <Header as="h3">
@@ -494,7 +499,47 @@ class App extends Component {
                     <List.Content>
                       <List.Header>Copy of the certificate</List.Header>
                       <List.Description>
-                        Download a PDF copy of the certificate
+                        <Link
+                          to={`/certificate/${this.state.certificate.address.toLowerCase()}`}
+                        >
+                          Save a copy of the certificate!
+                        </Link>
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon
+                      name="share"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>Announce your marriage</List.Header>
+                      <List.Description style={{ paddingTop: "5px" }}>
+                        <iframe
+                          title="facebook-share"
+                          src="https://www.facebook.com/plugins/share_button.php?href=https%3A%2F%2Fwww.getmarriedontheblockchain.com&layout=button_count&size=small&mobile_iframe=true&width=69&height=20&appId"
+                          width="69"
+                          height="20"
+                          style={{
+                            border: "none",
+                            overflow: "hidden",
+                            marginRight: "20px"
+                          }}
+                          scrolling="no"
+                          frameBorder="0"
+                          allowtransparency="true"
+                          allow="encrypted-media"
+                        />
+                        <a
+                          className="twitter-share-button"
+                          href="https://twitter.com/intent/tweet"
+                          text="Get Married on the Blockchain!"
+                          url="https://www.getmarriedontheblockchain.com"
+                          hashtags="ethereum,blockchain,crypto"
+                        >
+                          Tweet
+                        </a>
                       </List.Description>
                     </List.Content>
                   </List.Item>

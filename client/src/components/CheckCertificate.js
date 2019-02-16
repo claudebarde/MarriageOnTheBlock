@@ -42,7 +42,7 @@ class CheckCertificate extends Component {
   fetchCertificateDetails = async () => {
     this.setState({ fetchingCertificateDetails: true });
     const address = this.state.certificateCheck.address;
-    const certificate = await checkCertificate(address, web3);
+    const certificate = await checkCertificate(address);
     if (certificate.return === "OK") {
       // we lowercase the address to compare it later with current user address
       let spouse1details = JSON.parse(certificate.spouse1);

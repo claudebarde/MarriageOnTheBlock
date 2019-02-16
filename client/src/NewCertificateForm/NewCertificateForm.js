@@ -98,6 +98,38 @@ class NewCertificateForm extends Component {
     });
   };
 
+  updateCity = city => {
+    this.setState({ city }, () =>
+      this.props.updateCityAndCountry(this.state.city, this.state.country)
+    );
+  };
+
+  updateCountry = country => {
+    this.setState({ country }, () =>
+      this.props.updateCityAndCountry(this.state.city, this.state.country)
+    );
+  };
+
+  componentDidMount = () => {
+    // if the geolocation api is supported
+    if (navigator.geolocation) {
+      // we fetch the user's location
+      navigator.geolocation.getCurrentPosition(async position => {
+        const query = await fetch(
+          `https://eu1.locationiq.com/v1/reverse.php?key=3f48503edac36f&lat=${
+            position.coords.latitude
+          }&lon=${position.coords.longitude}&format=json`
+        );
+        const location = await query.json();
+        // we update the location in the state if found
+        if ("city" in location.address && "country" in location.address) {
+          this.updateCity(location.address.city);
+          this.updateCountry(location.address.country);
+        }
+      });
+    }
+  };
+
   componentDidUpdate() {
     if (
       this.props.userAddress !== this.state.firstSpouseDetails.address &&
@@ -126,7 +158,7 @@ class NewCertificateForm extends Component {
               icon="home"
               iconPosition="left"
               value={this.state.city}
-              onChange={event => this.setState({ city: event.target.value })}
+              onChange={event => this.updateCity(event.target.value)}
             />
           </Grid.Column>
           <Grid.Column>
@@ -137,7 +169,7 @@ class NewCertificateForm extends Component {
               icon="globe"
               iconPosition="left"
               value={this.state.country}
-              onChange={event => this.setState({ country: event.target.value })}
+              onChange={event => this.updateCountry(event.target.value)}
             />
           </Grid.Column>
         </Grid.Row>

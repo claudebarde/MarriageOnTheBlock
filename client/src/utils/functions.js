@@ -1,4 +1,6 @@
 import _ from "lodash";
+import getWeb3 from "./getWeb3";
+
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 
 export const checkIfDetailsAreValid = details => {
@@ -8,44 +10,46 @@ export const checkIfDetailsAreValid = details => {
     .reduce((a, b) => a && b);
 };
 
-export const checkCertificate = async (certificateAddress, web3) => {
-  let result;
+export const checkCertificate = async certificateAddress => {
+  return getWeb3().then(async web3 => {
+    let result;
 
-  try {
-    const certificate = await new web3.eth.Contract(
-      newCertificateAbi,
-      certificateAddress
-    );
-    // this makes sure the certificate exists, throws error if not
-    await web3.eth.getCode(certificateAddress);
-    result = {
-      return: "OK",
-      isMarriageValid: await certificate.methods.checkIfValid().call(),
-      spouse1: await certificate.methods.spouse1().call(),
-      spouse2: await certificate.methods.spouse2().call(),
-      location: await certificate.methods.location().call(),
-      spousesAddresses: await certificate.methods
-        .returnSpousesAddresses()
-        .call(),
-      timestamp: await certificate.methods.timestamp().call(),
-      instance: certificate,
-      balance: {}
-    };
-    // balance for each account must be formatted for easier reading
-    const balances = await certificate.methods.returnBalances().call();
-    result.balance = {
-      total: balances[0],
-      joint: balances[1],
-      savings: balances[2]
-    };
-  } catch (error) {
-    result = {
-      return: "error",
-      error
-    };
-  }
+    try {
+      const certificate = await new web3.eth.Contract(
+        newCertificateAbi,
+        certificateAddress
+      );
+      // this makes sure the certificate exists, throws error if not
+      await web3.eth.getCode(certificateAddress);
+      result = {
+        return: "OK",
+        isMarriageValid: await certificate.methods.checkIfValid().call(),
+        spouse1: await certificate.methods.spouse1().call(),
+        spouse2: await certificate.methods.spouse2().call(),
+        location: await certificate.methods.location().call(),
+        spousesAddresses: await certificate.methods
+          .returnSpousesAddresses()
+          .call(),
+        timestamp: await certificate.methods.timestamp().call(),
+        instance: certificate,
+        balance: {}
+      };
+      // balance for each account must be formatted for easier reading
+      const balances = await certificate.methods.returnBalances().call();
+      result.balance = {
+        total: balances[0],
+        joint: balances[1],
+        savings: balances[2]
+      };
+    } catch (error) {
+      result = {
+        return: "error",
+        error
+      };
+    }
 
-  return result;
+    return result;
+  });
 };
 
 export const lastMarriageDisplay = lastMarriage => {
@@ -86,4 +90,46 @@ export const CERTIFICATE_OBJ = {
     }
   },
   error: null
+};
+
+export const isMarriageValid = marriageValidityData => {
+  // display marriage validity
+  let marriageValidity = { value: 0, message: "error" };
+  const isValid = Object.keys(marriageValidityData).map(
+    key => marriageValidityData[key]
+  );
+  switch (true) {
+    case isValid[0] === true && isValid[1] === false:
+      marriageValidity = {
+        value: "Not Valid",
+        message: "Second spouse did not approve or disapproved the marriage",
+        isValid
+      };
+      break;
+    case isValid[0] === true && isValid[1] === true:
+      marriageValidity = {
+        value: "Valid",
+        message: "The marriage has been approved by both spouses",
+        isValid
+      };
+      break;
+    case isValid[0] === false && isValid[1] === true:
+      marriageValidity = {
+        value: "Not Valid",
+        message: "First spouse disapproved the marriage",
+        isValid
+      };
+      break;
+    case isValid[0] === false && isValid[1] === false:
+      marriageValidity = {
+        value: "Not Valid",
+        message: "The spouses have divorced",
+        isValid
+      };
+      break;
+    default:
+      break;
+  }
+
+  return marriageValidity;
 };

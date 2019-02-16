@@ -6,6 +6,7 @@ import "./index.css";
 import App from "./components/App";
 import RegisterCertificate from "./components/RegisterCertificate";
 import CheckCertificate from "./components/CheckCertificate";
+import ViewCertificate from "./components/ViewCertificate";
 import Navbar from "./components/Navbar";
 import "./App.css";
 import * as serviceWorker from "./serviceWorker";
@@ -19,7 +20,20 @@ const routing = (
         <Route path="/register" component={RegisterCertificate} />
         <Route path="/check/:address" component={CheckCertificate} />
         <Route path="/check" component={CheckCertificate} />
+        <Route path="/certificate/:address" component={ViewCertificate} />
       </Switch>
+      <div
+        style={{
+          position: "absolute",
+          bottom: "0px",
+          right: "5px",
+          fontSize: "0.4rem"
+        }}
+      >
+        <a href="https://www.freepik.com/free-photos-vectors/background">
+          Background photo by prostooleh
+        </a>{" "}
+      </div>
     </>
   </Router>
 );

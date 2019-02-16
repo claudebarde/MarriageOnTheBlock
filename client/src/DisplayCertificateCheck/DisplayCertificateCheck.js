@@ -4,6 +4,8 @@ import moment from "moment";
 
 import SpouseList from "./SpouseList";
 
+import { isMarriageValid } from "../utils/functions";
+
 let web3 = null;
 
 class DisplayCertificateCheck extends Component {
@@ -17,38 +19,7 @@ class DisplayCertificateCheck extends Component {
     const details = this.props.details;
 
     // display marriage validity
-    let marriageValidity = { value: 0, message: "error" };
-    const isValid = Object.keys(details.isMarriageValid).map(
-      key => details.isMarriageValid[key]
-    );
-    switch (true) {
-      case isValid[0] === true && isValid[1] === false:
-        marriageValidity = {
-          value: "Not Valid",
-          message: "Second spouse did not approve or disapproved the marriage"
-        };
-        break;
-      case isValid[0] === true && isValid[1] === true:
-        marriageValidity = {
-          value: "Valid",
-          message: "The marriage has been approved by both spouses"
-        };
-        break;
-      case isValid[0] === false && isValid[1] === true:
-        marriageValidity = {
-          value: "Not Valid",
-          message: "First spouse disapproved the marriage"
-        };
-        break;
-      case isValid[0] === false && isValid[1] === false:
-        marriageValidity = {
-          value: "Not Valid",
-          message: "The spouses have divorced"
-        };
-        break;
-      default:
-        break;
-    }
+    const marriageValidity = isMarriageValid(details.isMarriageValid);
 
     return (
       <Segment>
@@ -77,7 +48,8 @@ class DisplayCertificateCheck extends Component {
                   </List.Content>
                 </List.Item>
                 <List.Item>
-                  {isValid[0] === true && isValid[1] === true ? (
+                  {marriageValidity.isValid[0] === true &&
+                  marriageValidity.isValid[1] === true ? (
                     <List.Icon name="check circle" />
                   ) : (
                     <List.Icon name="times circle" />
@@ -138,7 +110,7 @@ class DisplayCertificateCheck extends Component {
                       details={details}
                       spouse={spouse}
                       index={index}
-                      isValid={isValid}
+                      isValid={marriageValidity.isValid}
                       currentUser={true}
                       currentAddress={this.props.currentUser}
                       updateBalance={this.props.updateBalance}
@@ -150,7 +122,7 @@ class DisplayCertificateCheck extends Component {
                       details={details}
                       spouse={spouse}
                       index={index}
-                      isValid={isValid}
+                      isValid={marriageValidity.isValid}
                       currentUser={false}
                       currentAddress={this.props.currentUser}
                       updateBalance={this.props.updateBalance}

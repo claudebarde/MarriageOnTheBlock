@@ -1,25 +1,94 @@
-@import url("https://fonts.googleapis.com/css?family=Just+Another+Hand");
+@import url("https://fonts.googleapis.com/css?family=Monsieur+La+Doulaise|Oregano|Just+Another+Hand");
+
+/* latin-ext for Monsieur La Doulaise */
+/* This part is necessary to make dom-to-image work */
+@font-face {
+  font-family: "Monsieur La Doulaise";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Monsieur La Doulaise Regular"),
+    local("MonsieurLaDoulaise-Regular"),
+    url(https://fonts.gstatic.com/s/monsieurladoulaise/v7/_Xmz-GY4rjmCbQfc-aPRaa4pqV340p7EZm5XyEA242TzTO8.woff2)
+      format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Monsieur La Doulaise";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Monsieur La Doulaise Regular"),
+    local("MonsieurLaDoulaise-Regular"),
+    url(https://fonts.gstatic.com/s/monsieurladoulaise/v7/_Xmz-GY4rjmCbQfc-aPRaa4pqV340p7EZm5ZyEA242Tz.woff2)
+      format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+/* latin-ext for Oregano */
+/* This part is necessary to make dom-to-image work */
+@font-face {
+  font-family: "Oregano";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Oregano"), local("Oregano-Regular"),
+    url(https://fonts.gstatic.com/s/oregano/v6/If2IXTPxciS3H4S2oZ7VPhvNzyLfqw.woff2)
+      format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Oregano";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Oregano"), local("Oregano-Regular"),
+    url(https://fonts.gstatic.com/s/oregano/v6/If2IXTPxciS3H4S2oZDVPhvNzyI.woff2)
+      format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
 
 :root {
   --THEME_COLOR: #ff6347;
   --THEME_COLOR_DARK: #ff2600;
   --THEME_COLOR_LIGHTER: #ffa599;
+  --BG_IMAGE: url("/images/marriage-tables.jpg");
 }
 
 html,
 body {
+  background-image: var(--BG_IMAGE);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   background-color: #f9fbfd;
+}
+
+#root {
+  height: 100%;
+  overflow: auto;
+}
+
+.front-page-header {
+  text-shadow: 2px 2px lightgrey !important;
+}
+
+.front-page-subheader {
+  text-shadow: 2px 2px lightgrey !important;
 }
 
 .title {
   font-family: "Just Another Hand", cursive;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
 }
 
-.title-mobile {
+.title-scroll {
   font-family: "Just Another Hand", cursive;
-  font-size: 2rem;
-  text-align: center;
+  font-size: 1rem;
 }
 
 .mobile-hamburger {
@@ -46,4 +115,36 @@ body {
 
 .router-link {
   color: black !important;
+}
+
+.share-button {
+  display: inline-block !important;
+  margin-right: 20px !important;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.certificate-view {
+  background-color: #f5efe4 !important;
+  padding: 30px;
+  border: solid 1px black;
+  -moz-box-shadow: 5px 5px 0px #999;
+  -webkit-box-shadow: 5px 5px 0px #999;
+  box-shadow: 5px 5px 0px #999;
+  position: relative !important;
+}
+
+.certificate-view-title {
+  font-family: "Monsieur La Doulaise", cursive !important;
+  font-size: 60px !important;
+}
+
+.certificate-view-text {
+  font-family: "Oregano", cursive !important;
+  font-size: 25px !important;
+  line-height: 120%;
+}
+
+.certificate-view-address {
+  font-size: 15px !important;
 }
