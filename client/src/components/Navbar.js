@@ -91,6 +91,17 @@ class Navbar extends Component {
                     </Link>
                   </Dropdown.Item>
                   <Dropdown.Item>
+                    <a
+                      href="https://github.com/claudebarde/GetMarriedOnTheBlockchain"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="router-link"
+                    >
+                      <Icon name="github" className="navbar-icon" />
+                      Github Repo
+                    </a>
+                  </Dropdown.Item>
+                  <Dropdown.Item>
                     <Link to="/" className="router-link">
                       <Icon name="wpforms" className="navbar-icon" />
                       Contact form
