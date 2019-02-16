@@ -39,7 +39,8 @@ class NewCertificateForm extends Component {
     idOptions: [
       { key: "passport", text: "Passport", value: "passport" },
       { key: "id", text: "ID", value: "id" }
-    ]
+    ],
+    loadingLocation: false
   };
 
   updateSpouseInfo = event => {
@@ -113,20 +114,29 @@ class NewCertificateForm extends Component {
   componentDidMount = () => {
     // if the geolocation api is supported
     if (navigator.geolocation) {
+      this.setState({ loadingLocation: true });
       // we fetch the user's location
-      navigator.geolocation.getCurrentPosition(async position => {
-        const query = await fetch(
-          `https://eu1.locationiq.com/v1/reverse.php?key=3f48503edac36f&lat=${
-            position.coords.latitude
-          }&lon=${position.coords.longitude}&format=json`
-        );
-        const location = await query.json();
-        // we update the location in the state if found
-        if ("city" in location.address && "country" in location.address) {
-          this.updateCity(location.address.city);
-          this.updateCountry(location.address.country);
+      navigator.geolocation.getCurrentPosition(
+        async position => {
+          const query = await fetch(
+            `https://eu1.locationiq.com/v1/reverse.php?key=3f48503edac36f&lat=${
+              position.coords.latitude
+            }&lon=${position.coords.longitude}&format=json`
+          );
+          const location = await query.json();
+          // we update the location in the state if found
+          if ("city" in location.address && "country" in location.address) {
+            this.updateCity(location.address.city);
+            this.updateCountry(location.address.country);
+          }
+          this.setState({ loadingLocation: false });
+        },
+        error => {
+          if (error) {
+            this.setState({ loadingLocation: false });
+          }
         }
-      });
+      );
     }
   };
 
@@ -159,6 +169,8 @@ class NewCertificateForm extends Component {
               iconPosition="left"
               value={this.state.city}
               onChange={event => this.updateCity(event.target.value)}
+              loading={this.state.loadingLocation}
+              disabled={this.state.loadingLocation}
             />
           </Grid.Column>
           <Grid.Column>
@@ -170,6 +182,8 @@ class NewCertificateForm extends Component {
               iconPosition="left"
               value={this.state.country}
               onChange={event => this.updateCountry(event.target.value)}
+              loading={this.state.loadingLocation}
+              disabled={this.state.loadingLocation}
             />
           </Grid.Column>
         </Grid.Row>

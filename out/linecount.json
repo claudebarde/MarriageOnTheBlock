@@ -1,0 +1,292 @@
+{
+    "extension": "linecount",
+    "version": "0.1.7",
+    "workspace": "/Users/claudebarde/Desktop/MarriageCertificate/marriage-on-ethereum-v3",
+    "linecount": [
+        {
+            "version": "0.1.7",
+            "counttime": "2019-02-16 16:22:55",
+            "filesum": 45,
+            "codesum": 69947,
+            "commentsum": 401,
+            "blanksum": 1922,
+            "filelist": [
+                {
+                    "blank": 5,
+                    "code": 19,
+                    "comment": 1,
+                    "filename": ".gitignore"
+                },
+                {
+                    "blank": 5,
+                    "code": 18,
+                    "comment": 1,
+                    "filename": "client/.gitignore"
+                },
+                {
+                    "blank": 0,
+                    "code": 18628,
+                    "comment": 0,
+                    "filename": "client/package-lock.json"
+                },
+                {
+                    "blank": 1,
+                    "code": 34,
+                    "comment": 0,
+                    "filename": "client/package.json"
+                },
+                {
+                    "filename": "client/public/favicon.ico",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "client/public/images/certificate-corner.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "client/public/images/certificate-frame.jpg",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "client/public/images/marriage-tables.jpg",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "client/public/images/short-paragraph.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "client/public/images/undraw_love_is_in_the_air_4mmc.svg"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "client/public/images/undraw_together_j0gj.svg"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "client/public/images/undraw_wedding_t1yl.svg"
+                },
+                {
+                    "blank": 2,
+                    "code": 46,
+                    "comment": 25,
+                    "filename": "client/public/index.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "client/public/manifest.json"
+                },
+                {
+                    "blank": 5,
+                    "code": 18,
+                    "comment": 1,
+                    "filename": "client/src/.gitignore"
+                },
+                {
+                    "blank": 20,
+                    "code": 124,
+                    "comment": 10,
+                    "filename": "client/src/App.css"
+                },
+                {
+                    "blank": 2,
+                    "code": 78,
+                    "comment": 0,
+                    "filename": "client/src/components/App.js"
+                },
+                {
+                    "blank": 11,
+                    "code": 225,
+                    "comment": 16,
+                    "filename": "client/src/components/CheckCertificate.js"
+                },
+                {
+                    "blank": 2,
+                    "code": 19,
+                    "comment": 0,
+                    "filename": "client/src/components/infoComponents/NumberOfMarriages.js"
+                },
+                {
+                    "blank": 9,
+                    "code": 106,
+                    "comment": 0,
+                    "filename": "client/src/components/Navbar.js"
+                },
+                {
+                    "blank": 18,
+                    "code": 508,
+                    "comment": 30,
+                    "filename": "client/src/components/RegisterCertificate.js"
+                },
+                {
+                    "blank": 7,
+                    "code": 172,
+                    "comment": 3,
+                    "filename": "client/src/components/ViewCertificate.js"
+                },
+                {
+                    "blank": 4,
+                    "code": 19914,
+                    "comment": 0,
+                    "filename": "client/src/contracts/MarriageCertificate.json"
+                },
+                {
+                    "blank": 4,
+                    "code": 19774,
+                    "comment": 0,
+                    "filename": "client/src/contracts/MarriageCertificateCreator.json"
+                },
+                {
+                    "blank": 2,
+                    "code": 1394,
+                    "comment": 0,
+                    "filename": "client/src/contracts/Migrations.json"
+                },
+                {
+                    "blank": 4,
+                    "code": 105,
+                    "comment": 0,
+                    "filename": "client/src/DetailsValidation/DetailsValidation.js"
+                },
+                {
+                    "blank": 12,
+                    "code": 128,
+                    "comment": 1,
+                    "filename": "client/src/DisplayCertificateCheck/DisplayCertificateCheck.js"
+                },
+                {
+                    "blank": 20,
+                    "code": 604,
+                    "comment": 9,
+                    "filename": "client/src/DisplayCertificateCheck/SpouseList.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 7,
+                    "comment": 0,
+                    "filename": "client/src/index.css"
+                },
+                {
+                    "blank": 3,
+                    "code": 40,
+                    "comment": 3,
+                    "filename": "client/src/index.js"
+                },
+                {
+                    "blank": 14,
+                    "code": 313,
+                    "comment": 166,
+                    "filename": "client/src/NewCertificateForm/NewCertificateForm.js"
+                },
+                {
+                    "blank": 15,
+                    "code": 89,
+                    "comment": 31,
+                    "filename": "client/src/serviceWorker.js"
+                },
+                {
+                    "blank": 2,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "client/src/utils/contractCreator.js"
+                },
+                {
+                    "blank": 11,
+                    "code": 120,
+                    "comment": 4,
+                    "filename": "client/src/utils/functions.js"
+                },
+                {
+                    "blank": 3,
+                    "code": 28,
+                    "comment": 39,
+                    "filename": "client/src/utils/getWeb3.js"
+                },
+                {
+                    "blank": 1671,
+                    "code": 7150,
+                    "comment": 0,
+                    "filename": "client/yarn.lock"
+                },
+                {
+                    "blank": 24,
+                    "code": 161,
+                    "comment": 48,
+                    "filename": "contracts/MarriageCertificateCreator.sol"
+                },
+                {
+                    "blank": 5,
+                    "code": 18,
+                    "comment": 0,
+                    "filename": "contracts/Migrations.sol"
+                },
+                {
+                    "blank": 5,
+                    "code": 17,
+                    "comment": 0,
+                    "filename": "LICENSE"
+                },
+                {
+                    "blank": 1,
+                    "code": 4,
+                    "comment": 0,
+                    "filename": "migrations/1_initial_migration.js"
+                },
+                {
+                    "blank": 2,
+                    "code": 5,
+                    "comment": 0,
+                    "filename": "migrations/2_deploy_contracts.js"
+                },
+                {
+                    "blank": 21,
+                    "code": 30,
+                    "comment": 6,
+                    "filename": "README.md"
+                },
+                {
+                    "blank": 4,
+                    "code": 9,
+                    "comment": 2,
+                    "filename": "test/simplestorage.js"
+                },
+                {
+                    "blank": 7,
+                    "code": 12,
+                    "comment": 0,
+                    "filename": "test/TestSimpleStorage.sol"
+                },
+                {
+                    "blank": 1,
+                    "code": 9,
+                    "comment": 5,
+                    "filename": "truffle-config.js"
+                }
+            ]
+        }
+    ]
+}
