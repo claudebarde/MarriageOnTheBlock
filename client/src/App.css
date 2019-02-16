@@ -71,6 +71,7 @@ body {
 #root {
   height: 100%;
   overflow: auto;
+  padding-bottom: 40px;
 }
 
 .front-page-header {

@@ -1,6 +1,13 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { Container, Segment, Header, List, Button } from "semantic-ui-react";
+import {
+  Container,
+  Segment,
+  Header,
+  List,
+  Button,
+  Image
+} from "semantic-ui-react";
 
 class App extends Component {
   render() {
@@ -20,6 +27,7 @@ class App extends Component {
           </Header>
         </Segment>
         <Segment padded="very">
+          <Image src="/images/undraw_wedding_t1yl.svg" size="medium" centered />
           <Header as="h3">
             Here are a few benefits of registering your marriage on the
             blockchain:
