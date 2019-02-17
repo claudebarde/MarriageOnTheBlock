@@ -10,12 +10,15 @@ import {
   Modal,
   Message,
   List,
-  Loader
+  Loader,
+  Button
 } from "semantic-ui-react";
 import CryptoJS from "crypto-js";
 import { Redirect } from "react-router";
 import { Link } from "react-router-dom";
 import getWeb3 from "../utils/getWeb3";
+import CanvasJSReact from "../config/canvasjs.react";
+import upperFirst from "lodash/upperFirst";
 
 import compiledContract from "../utils/contractCreator";
 import NewCertificateForm from "../NewCertificateForm/NewCertificateForm";
@@ -33,8 +36,12 @@ import functions from "firebase/firebase-functions";
 import { config } from "../config/firebaseConfig";
 firebase.initializeApp(config);
 
+const lookup = require("country-data").lookup;
+
 let web3 = null;
 let contractCreator;
+const CanvasJS = CanvasJSReact.CanvasJS;
+const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 class App extends Component {
   constructor(props) {
@@ -107,9 +114,14 @@ class App extends Component {
           idType: "id",
           address: "0x0b324d7f2Da52A8F88Cf13e45205C2D6591A8DC1"
         }
-      }
+      },
+      chartOptions: {}
     };
   }
+
+  handleWindowSizeChange = () => {
+    this.setState({ screenWidth: window.innerWidth });
+  };
 
   // updates user address in case of change
   userAddressChange = () => {
@@ -273,6 +285,44 @@ class App extends Component {
     this.setState({ city, country });
   };
 
+  displayCouplesLocations = couplesLocations => {
+    const countries = {};
+    couplesLocations.forEach(location => {
+      // we look for country details
+      const country = lookup.countries({ name: location.country })[0];
+      // if found
+      if (country) {
+        if (country.name.toLowerCase() in countries) {
+          ++countries[country.name.toLowerCase()];
+        } else {
+          countries[country.name.toLowerCase()] = 1;
+        }
+      }
+    });
+    // we sort the values to get the highest ones first
+    let sortedData = Object.keys(countries).sort(function(a, b) {
+      return -(countries[a] - countries[b]);
+    });
+    // we prepare the chart options
+    const options = {
+      animationEnabled: true,
+      data: [
+        {
+          type: "pie",
+          theme: "light2",
+          showInLegend: true,
+          legendText: "{label} - {y}",
+          dataPoints: sortedData.map(country => ({
+            label: upperFirst(country),
+            y: countries[country]
+          }))
+        }
+      ]
+    };
+
+    return options;
+  };
+
   componentDidMount = async () => {
     window.addEventListener("resize", this.handleWindowSizeChange);
     // web3 set up
@@ -322,15 +372,11 @@ class App extends Component {
     const fetchLocations = firebase.functions().httpsCallable("fetchLocations");
     try {
       const locations = await fetchLocations();
-      console.log(locations.data);
-      this.setState({ loadingMap: false });
+      const chartOptions = this.displayCouplesLocations(locations.data);
+      this.setState({ loadingMap: false, chartOptions });
     } catch (error) {
       console.log(error);
     }
-  };
-
-  handleWindowSizeChange = () => {
-    this.setState({ screenWidth: window.innerWidth });
   };
 
   componentWillUnmount = () => {
@@ -420,22 +466,62 @@ class App extends Component {
                   <Divider horizontal>
                     <Header as="h4">Exchange</Header>
                   </Divider>
-                  <p>Exchange Bitcoin for Ethereum</p>
+                  <Modal
+                    trigger={
+                      <Button color="green">
+                        Exchange Bitcoin for Ethereum
+                      </Button>
+                    }
+                    size="small"
+                    closeIcon
+                  >
+                    <Modal.Header>Exchange with Changelly</Modal.Header>
+                    <Modal.Content>
+                      <Header as="h1">
+                        Exchange your Bitcoin for Ethereum to validate your
+                        marriage certificate
+                      </Header>
+                      <Header as="h3">
+                        or exchange other cryptocurrencies{" "}
+                        <a
+                          href="https://old.changelly.com/?ref_id=vab5l967wagye3m2"
+                          alt="changelly"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          on this page
+                        </a>
+                        .
+                      </Header>
+                      <iframe
+                        src="https://old.changelly.com/widget/v1?auth=email&from=BTC&to=ETH&merchant_id=vab5l967wagye3m2&address=&amount=1&ref_id=vab5l967wagye3m2&color=00cf70"
+                        title="changelly"
+                        width="600"
+                        height="450"
+                        className="changelly"
+                        scrolling="no"
+                        style={{ overflowY: "hidden", border: "none" }}
+                      >
+                        {" "}
+                        Can't load widget{" "}
+                      </iframe>
+                    </Modal.Content>
+                  </Modal>
                 </Segment>
               </Grid.Column>
             </Grid.Row>
             <Grid.Row stretched>
               <Grid.Column width={16}>
-                <Segment>
+                <Segment textAlign="center">
                   <Divider horizontal>
-                    <Header as="h4">Map of married couples</Header>
+                    <Header as="h4">Location of married couples</Header>
                   </Divider>
                   {this.state.loadingMap ? (
                     <Loader size="small" inline="centered" active>
                       Loading
                     </Loader>
                   ) : (
-                    "Map"
+                    <CanvasJSChart options={this.state.chartOptions} />
                   )}
                 </Segment>
               </Grid.Column>
