@@ -13,12 +13,7 @@ class App extends Component {
   render() {
     return (
       <Container text>
-        <Segment
-          textAlign="center"
-          className="front-page-block"
-          padded="very"
-          basic
-        >
+        <Segment textAlign="center" className="front-page-block" padded basic>
           <Header as="h1" className="front-page-header">
             WHAT ABOUT TYING THE KNOT IN A BLOCK?
           </Header>

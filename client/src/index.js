@@ -10,6 +10,7 @@ import ViewCertificate from "./components/ViewCertificate";
 import Navbar from "./components/Navbar";
 import "./App.css";
 import * as serviceWorker from "./serviceWorker";
+import "./config/firebaseConfig";
 
 const routing = (
   <Router>

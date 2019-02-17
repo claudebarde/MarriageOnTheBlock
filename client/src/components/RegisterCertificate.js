@@ -9,7 +9,8 @@ import {
   Divider,
   Modal,
   Message,
-  List
+  List,
+  Loader
 } from "semantic-ui-react";
 import CryptoJS from "crypto-js";
 import { Redirect } from "react-router";
@@ -26,6 +27,11 @@ import {
   CERTIFICATE_OBJ
 } from "../utils/functions";
 import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
+
+import firebase from "firebase/app";
+import functions from "firebase/firebase-functions";
+import { config } from "../config/firebaseConfig";
+firebase.initializeApp(config);
 
 let web3 = null;
 let contractCreator;
@@ -65,6 +71,7 @@ class App extends Component {
           .toString(36)
           .substring(2, 9),
       redirectAfterRegistration: false,
+      loadingMap: true,
       /*city: "",
       country: "",
       spousesDetails: {
@@ -266,8 +273,9 @@ class App extends Component {
     this.setState({ city, country });
   };
 
-  componentDidMount = () => {
+  componentDidMount = async () => {
     window.addEventListener("resize", this.handleWindowSizeChange);
+    // web3 set up
     getWeb3()
       .then(async getWeb3 => {
         web3 = getWeb3;
@@ -310,6 +318,15 @@ class App extends Component {
         }
       })
       .catch(err => console.log(err));
+    // fetch locations of married couples from firestore
+    const fetchLocations = firebase.functions().httpsCallable("fetchLocations");
+    try {
+      const locations = await fetchLocations();
+      console.log(locations.data);
+      this.setState({ loadingMap: false });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   handleWindowSizeChange = () => {
@@ -413,6 +430,13 @@ class App extends Component {
                   <Divider horizontal>
                     <Header as="h4">Map of married couples</Header>
                   </Divider>
+                  {this.state.loadingMap ? (
+                    <Loader size="small" inline="centered" active>
+                      Loading
+                    </Loader>
+                  ) : (
+                    "Map"
+                  )}
                 </Segment>
               </Grid.Column>
             </Grid.Row>

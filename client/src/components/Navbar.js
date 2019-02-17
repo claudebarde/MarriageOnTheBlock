@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Menu, Dropdown, Icon } from "semantic-ui-react";
+import { Menu, Dropdown, Icon, Container } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
 import { MIN_SCREEN_WIDTH } from "../utils/functions";
@@ -55,62 +55,71 @@ class Navbar extends Component {
           fluid
           secondary={!this.state.onScrollDetected}
         >
-          <Menu.Item
-            className={!this.state.onScrollDetected ? "title" : "title-scroll"}
-          >
-            <Link to="/" className="router-link">
-              Get Married On The Blockchain!
-            </Link>
-          </Menu.Item>
-          <Menu.Menu position="right">
-            <Menu.Item>
-              <Dropdown
-                icon="bars"
-                floating
-                button
-                className="icon"
-                size={!this.state.onScrollDetected ? "small" : "mini"}
-              >
-                <Dropdown.Menu>
-                  <Dropdown.Item>
-                    <Link to="/" className="router-link">
-                      <Icon name="home" className="navbar-icon" />
-                      Home
-                    </Link>
-                  </Dropdown.Item>
-                  <Dropdown.Item>
-                    <Link to="/register" className="router-link">
-                      <Icon name="edit" className="navbar-icon" />
-                      Register a certificate
-                    </Link>
-                  </Dropdown.Item>
-                  <Dropdown.Item>
-                    <Link to="/check" className="router-link">
-                      <Icon name="id card outline" className="navbar-icon" />
-                      Check a certificate
-                    </Link>
-                  </Dropdown.Item>
-                  <Dropdown.Item>
-                    <a
-                      href="https://github.com/claudebarde/GetMarriedOnTheBlockchain"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="router-link"
-                    >
-                      <Icon name="github" className="navbar-icon" />
-                      Github Repo
-                    </a>
-                  </Dropdown.Item>
-                  <Dropdown.Item>
-                    <Link to="/" className="router-link">
-                      <Icon name="wpforms" className="navbar-icon" />
-                      Contact form
-                    </Link>
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
+          <Container>
+            <Menu.Item
+              className={
+                !this.state.onScrollDetected ? "title" : "title-scroll"
+              }
+            >
+              <Link to="/" className="router-link">
+                Get Married On The Blockchain!
+              </Link>
             </Menu.Item>
-          </Menu.Menu>
+            <Menu.Menu position="right">
+              <Menu.Item>
+                <Dropdown
+                  icon="bars"
+                  floating
+                  button
+                  className="icon"
+                  size={!this.state.onScrollDetected ? "small" : "mini"}
+                >
+                  <Dropdown.Menu>
+                    <Dropdown.Item>
+                      <Link to="/" className="router-link">
+                        <Icon name="home" className="navbar-icon" />
+                        Home
+                      </Link>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      <Link to="/register" className="router-link">
+                        <Icon name="edit" className="navbar-icon" />
+                        Register a certificate
+                      </Link>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      <Link to="/check" className="router-link">
+                        <Icon name="id card outline" className="navbar-icon" />
+                        Check a certificate
+                      </Link>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      <a
+                        href="https://github.com/claudebarde/GetMarriedOnTheBlockchain"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="router-link"
+                      >
+                        <Icon name="github" className="navbar-icon" />
+                        Github Repo
+                      </a>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      <a
+                        href="https://docs.google.com/forms/d/e/1FAIpQLSfN9zRRHz78REQa85JeQvWsp5zHpS6bYRK7PWwHcSY7DR4Jxw/viewform?usp=sf_link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="router-link"
+                      >
+                        <Icon name="wpforms" className="navbar-icon" />
+                        Contact form
+                      </a>
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Menu.Item>
+            </Menu.Menu>
+          </Container>
         </Menu>
         <div
           id="navbar-padding"

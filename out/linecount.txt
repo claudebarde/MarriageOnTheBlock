@@ -55,3 +55,69 @@ test/simplestorage.js, code is 9, comment is 2, blank is 4.
 test/TestSimpleStorage.sol, code is 12, comment is 0, blank is 7.
 truffle-config.js, code is 9, comment is 5, blank is 1.
 ===============================================================================
+===============================================================================
+EXTENSION NAME : linecount
+EXTENSION VERSION : 0.1.7
+-------------------------------------------------------------------------------
+count time : 2019-02-17 12:15:32
+count workspace : /Users/claudebarde/Desktop/MarriageCertificate/marriage-on-ethereum-v3
+total files : 54
+total code lines : 74487
+total comment lines : 404
+total blank lines : 1929
+
+.gitignore, code is 26, comment is 1, blank is 6.
+client/.firebaserc, code is 5, comment is 0, blank is 0.
+client/.gitignore, code is 18, comment is 1, blank is 5.
+client/firebase.json, code is 23, comment is 0, blank is 2.
+client/firestore.indexes.json, code is 4, comment is 0, blank is 0.
+client/firestore.rules, code is 7, comment is 0, blank is 0.
+client/functions/.gitignore, code is 1, comment is 0, blank is 0.
+client/functions/index.js, code is 15, comment is 0, blank is 2.
+client/functions/package-lock.json, code is 3581, comment is 0, blank is 0.
+client/functions/package.json, code is 22, comment is 0, blank is 0.
+client/package-lock.json, code is 19435, comment is 0, blank is 0.
+client/package.json, code is 35, comment is 0, blank is 1.
+client/public/favicon.ico, it is a binary file.
+client/public/images/certificate-corner.png, it is a binary file.
+client/public/images/certificate-frame.jpg, it is a binary file.
+client/public/images/marriage-tables.jpg, it is a binary file.
+client/public/images/short-paragraph.png, it is a binary file.
+client/public/images/undraw_love_is_in_the_air_4mmc.svg, code is 1, comment is 0, blank is 0.
+client/public/images/undraw_together_j0gj.svg, code is 1, comment is 0, blank is 0.
+client/public/images/undraw_wedding_t1yl.svg, code is 1, comment is 0, blank is 0.
+client/public/index.html, code is 46, comment is 25, blank is 2.
+client/public/manifest.json, code is 15, comment is 0, blank is 0.
+client/src/.gitignore, code is 18, comment is 1, blank is 5.
+client/src/App.css, code is 125, comment is 10, blank is 20.
+client/src/components/App.js, code is 81, comment is 0, blank is 2.
+client/src/components/CheckCertificate.js, code is 225, comment is 16, blank is 11.
+client/src/components/infoComponents/NumberOfMarriages.js, code is 19, comment is 0, blank is 2.
+client/src/components/Navbar.js, code is 126, comment is 0, blank is 9.
+client/src/components/RegisterCertificate.js, code is 528, comment is 32, blank is 20.
+client/src/components/ViewCertificate.js, code is 172, comment is 3, blank is 7.
+client/src/config/firebaseConfig.js, code is 8, comment is 1, blank is 0.
+client/src/contracts/MarriageCertificate.json, code is 19914, comment is 0, blank is 4.
+client/src/contracts/MarriageCertificateCreator.json, code is 19774, comment is 0, blank is 4.
+client/src/contracts/Migrations.json, code is 1394, comment is 0, blank is 2.
+client/src/DetailsValidation/DetailsValidation.js, code is 105, comment is 0, blank is 4.
+client/src/DisplayCertificateCheck/DisplayCertificateCheck.js, code is 128, comment is 1, blank is 12.
+client/src/DisplayCertificateCheck/SpouseList.js, code is 604, comment is 9, blank is 20.
+client/src/index.css, code is 7, comment is 0, blank is 0.
+client/src/index.js, code is 41, comment is 3, blank is 3.
+client/src/NewCertificateForm/NewCertificateForm.js, code is 327, comment is 166, blank is 14.
+client/src/serviceWorker.js, code is 89, comment is 31, blank is 15.
+client/src/utils/contractCreator.js, code is 3, comment is 0, blank is 2.
+client/src/utils/functions.js, code is 120, comment is 4, blank is 11.
+client/src/utils/getWeb3.js, code is 28, comment is 39, blank is 3.
+client/yarn.lock, code is 7150, comment is 0, blank is 1671.
+contracts/MarriageCertificateCreator.sol, code is 161, comment is 48, blank is 24.
+contracts/Migrations.sol, code is 18, comment is 0, blank is 5.
+LICENSE, code is 17, comment is 0, blank is 5.
+migrations/1_initial_migration.js, code is 4, comment is 0, blank is 1.
+migrations/2_deploy_contracts.js, code is 5, comment is 0, blank is 2.
+README.md, code is 30, comment is 6, blank is 21.
+test/simplestorage.js, code is 9, comment is 2, blank is 4.
+test/TestSimpleStorage.sol, code is 12, comment is 0, blank is 7.
+truffle-config.js, code is 9, comment is 5, blank is 1.
+===============================================================================

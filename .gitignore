@@ -7,6 +7,13 @@
 /.vscode
 /.out
 
+# firebase
+/client/.firebaserc
+/client/firebase.json
+/client/firestore.indexes.json
+/client/firestore.rules
+/client/functions
+
 # testing
 /coverage
 
