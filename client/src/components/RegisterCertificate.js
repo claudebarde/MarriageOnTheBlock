@@ -330,6 +330,7 @@ class App extends Component {
     let sortedData = Object.keys(couplesLocations).sort(function(a, b) {
       return -(couplesLocations[a] - couplesLocations[b]);
     });
+    sortedData = sortedData.slice(0, 10);
     // we prepare the chart options
     const options = {
       animationEnabled: true,
