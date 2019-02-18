@@ -5,9 +5,10 @@
 /.pnp
 .pnp.js
 /.vscode
-/.out
+/out
 
 # firebase
+/client/.firebase
 /client/.firebaserc
 /client/firebase.json
 /client/firestore.indexes.json
