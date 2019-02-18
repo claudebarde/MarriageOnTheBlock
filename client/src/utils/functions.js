@@ -38,7 +38,7 @@ export const checkCertificate = async certificateAddress => {
       const balances = await certificate.methods.returnBalances().call();
       result.balance = {
         total: balances[0],
-        joint: balances[1],
+        joined: balances[1],
         savings: balances[2]
       };
     } catch (error) {

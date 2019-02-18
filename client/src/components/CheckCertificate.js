@@ -126,22 +126,22 @@ class CheckCertificate extends Component {
     if (txType === "deposit") {
       // update the total balance
       newBalance.total = parseInt(newBalance.total) + parseInt(newTxAmount);
-      if (account === "joint") {
-        // update the joint account
-        newBalance.joint = parseInt(newBalance.joint) + parseInt(newTxAmount);
+      if (account === "joined") {
+        // update the joined account
+        newBalance.joined = parseInt(newBalance.joined) + parseInt(newTxAmount);
       } else if (account === "savings") {
-        // update the joint account
+        // update the joined account
         newBalance.savings =
           parseInt(newBalance.savings) + parseInt(newTxAmount);
       }
     } else if (txType === "withdrawal") {
       // update the total balance
       newBalance.total = parseInt(newBalance.total) - parseInt(newTxAmount);
-      if (account === "joint") {
-        // update the joint account
-        newBalance.joint = parseInt(newBalance.joint) - parseInt(newTxAmount);
+      if (account === "joined") {
+        // update the joined account
+        newBalance.joined = parseInt(newBalance.joined) - parseInt(newTxAmount);
       } else if (account === "savings") {
-        // update the joint account
+        // update the joined account
         newBalance.savings =
           parseInt(newBalance.savings) - parseInt(newTxAmount);
       }

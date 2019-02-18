@@ -74,8 +74,8 @@ class DisplayCertificateCheck extends Component {
                         <List.Description>
                           <List.Item as="ol">
                             <List.Item as="li" value="-">
-                              {`Joint Account: ${web3.utils.fromWei(
-                                details.balance.joint.toString(),
+                              {`Joined Account: ${web3.utils.fromWei(
+                                details.balance.joined.toString(),
                                 "ether"
                               )}  ether`}
                             </List.Item>

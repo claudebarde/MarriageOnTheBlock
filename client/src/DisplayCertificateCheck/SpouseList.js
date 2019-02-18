@@ -99,7 +99,7 @@ class SpouseList extends Component {
           depositFundsModal: {
             open: false,
             loading: false,
-            toAccount: "joint"
+            toAccount: "joined"
           },
           errorSend: true
         });
@@ -368,16 +368,16 @@ class SpouseList extends Component {
                         depositFundsModal: {
                           open: true,
                           loading: false,
-                          toAccount: "joint"
+                          toAccount: "joined"
                         }
                       })
                     }
                   >
                     <List.Header as="a">
-                      Deposit Funds in Joint Account
+                      Deposit Funds in Joined Account
                     </List.Header>
                     <List.Description as="a">
-                      This will deposit the chosen amount in the joint account.
+                      This will deposit the chosen amount in the joined account.
                     </List.Description>
                   </List.Content>
                   <Modal
@@ -445,16 +445,16 @@ class SpouseList extends Component {
                         withdrawFundsModal: {
                           open: true,
                           loading: false,
-                          fromAccount: "joint"
+                          fromAccount: "joined"
                         }
                       })
                     }
                   >
                     <List.Header as="a">
-                      Withdraw Funds from Joint Account
+                      Withdraw Funds from Joined Account
                     </List.Header>
                     <List.Description as="a">
-                      This will withdraw the chosen amount from the joint
+                      This will withdraw the chosen amount from the joined
                       account.
                     </List.Description>
                   </List.Content>
