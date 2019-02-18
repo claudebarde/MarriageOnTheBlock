@@ -32,7 +32,7 @@ import {
 import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
 
 import firebase from "firebase/app";
-import functions from "firebase/firebase-functions";
+import "firebase/firebase-functions";
 import { config } from "../config/firebaseConfig";
 firebase.initializeApp(config);
 
@@ -40,7 +40,6 @@ const lookup = require("country-data").lookup;
 
 let web3 = null;
 let contractCreator;
-const CanvasJS = CanvasJSReact.CanvasJS;
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 class App extends Component {
@@ -128,7 +127,7 @@ class App extends Component {
     const currentAddress = web3.eth.accounts.currentProvider.selectedAddress;
     if (currentAddress && currentAddress !== this.state.userAddress) {
       this.setState({
-        userAddress: web3.eth.accounts.currentProvider.selectedAddress.toLowerCase()
+        userAddress: web3.eth.accounts.currentProvider.selectedAddress
       });
     }
   };
@@ -214,7 +213,7 @@ class App extends Component {
         .createNewCertificate(
           fcd[1],
           fcd[2],
-          this.state.spousesDetails.secondSpouseDetails.address.toLowerCase(),
+          this.state.spousesDetails.secondSpouseDetails.address,
           fcd[0]
         )
         .send(
@@ -253,10 +252,11 @@ class App extends Component {
       console.log(newCertificateAddress);
 
       if (newCertificateAddress) {
+        //we update here the state of the app
         this.setState({
           certificate: {
             ...this.state.certificate,
-            address: newCertificateAddress.toLowerCase()
+            address: newCertificateAddress
           },
           lastMarriage: {
             0: fcd[1],
@@ -266,6 +266,38 @@ class App extends Component {
           certificatesTotal: parseInt(this.state.certificatesTotal) + 1,
           congratulationModalOpen: true
         });
+        // we save some of the info from the certificate in the firestore
+        const saveNewCertificate = firebase
+          .functions()
+          .httpsCallable("saveNewCertificate");
+        const saveNewCtf = await saveNewCertificate({
+          address: newCertificateAddress,
+          location: {
+            city: this.state.city.toLowerCase(),
+            country: this.state.country.toLowerCase()
+          },
+          firstSpouse: {
+            firstName: this.state.spousesDetails.firstSpouseDetails.firstName,
+            lastName: this.state.spousesDetails.firstSpouseDetails.lastName
+          },
+          secondSpouse: {
+            firstName: this.state.spousesDetails.secondSpouseDetails.firstName,
+            lastName: this.state.spousesDetails.secondSpouseDetails.lastName
+          },
+          timestamp: Date.now()
+        });
+        if (saveNewCtf.data !== "OK") {
+          console.log("Error while saving to the database: ", saveNewCtf);
+        }
+        // we update the firestore with the country of registration
+        const saveLocation = firebase.functions().httpsCallable("saveLocation");
+        // we receive the new data
+        const savedLocations = await saveLocation({
+          text: this.state.country.toLowerCase()
+        });
+        // we update the pie chart
+        const chartOptions = this.displayCouplesLocations(savedLocations.data);
+        this.setState({ chartOptions });
       }
     } catch (error) {
       console.log(error);
@@ -285,23 +317,18 @@ class App extends Component {
     this.setState({ city, country });
   };
 
+  formatCountryNameForLookup = string =>
+    string
+      .toLowerCase()
+      .replace("-", " ")
+      .split(" ")
+      .map(substr => upperFirst(substr))
+      .join(" ");
+
   displayCouplesLocations = couplesLocations => {
-    const countries = {};
-    couplesLocations.forEach(location => {
-      // we look for country details
-      const country = lookup.countries({ name: location.country })[0];
-      // if found
-      if (country) {
-        if (country.name.toLowerCase() in countries) {
-          ++countries[country.name.toLowerCase()];
-        } else {
-          countries[country.name.toLowerCase()] = 1;
-        }
-      }
-    });
     // we sort the values to get the highest ones first
-    let sortedData = Object.keys(countries).sort(function(a, b) {
-      return -(countries[a] - countries[b]);
+    let sortedData = Object.keys(couplesLocations).sort(function(a, b) {
+      return -(couplesLocations[a] - couplesLocations[b]);
     });
     // we prepare the chart options
     const options = {
@@ -313,8 +340,16 @@ class App extends Component {
           showInLegend: true,
           legendText: "{label} - {y}",
           dataPoints: sortedData.map(country => ({
-            label: upperFirst(country),
-            y: countries[country]
+            label: `${upperFirst(country)} ${
+              lookup.countries({
+                name: this.formatCountryNameForLookup(country)
+              })[0]
+                ? lookup.countries({
+                    name: this.formatCountryNameForLookup(country)
+                  })[0].emoji
+                : ""
+            }`,
+            y: couplesLocations[country]
           }))
         }
       ]
@@ -365,6 +400,13 @@ class App extends Component {
           });
         } catch (error) {
           console.log("Error while fetching details from contract: ", error);
+          this.setState({
+            errorMessage: {
+              open: true,
+              message:
+                "The contract does not exist or you are not connected to Metamask."
+            }
+          });
         }
       })
       .catch(err => console.log(err));
@@ -385,11 +427,7 @@ class App extends Component {
 
   render() {
     if (this.state.redirectAfterRegistration) {
-      return (
-        <Redirect
-          to={`/check/${this.state.certificate.address.toLowerCase()}`}
-        />
-      );
+      return <Redirect to={`/check/${this.state.certificate.address}`} />;
     }
     return (
       <Container fluid>
@@ -582,7 +620,7 @@ class App extends Component {
                     />
                     <List.Content>
                       <List.Header>
-                        {this.state.certificate.address.toLowerCase()}
+                        {this.state.certificate.address}
                       </List.Header>
                       <List.Description>
                         Please keep the certificate address in a safe place as
@@ -610,7 +648,7 @@ class App extends Component {
                       <List.Header>Copy of the certificate</List.Header>
                       <List.Description>
                         <Link
-                          to={`/certificate/${this.state.certificate.address.toLowerCase()}`}
+                          to={`/certificate/${this.state.certificate.address}`}
                         >
                           Save a copy of the certificate!
                         </Link>

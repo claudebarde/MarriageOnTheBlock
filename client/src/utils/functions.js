@@ -69,7 +69,7 @@ export const lastMarriageDisplay = lastMarriage => {
 export const MIN_SCREEN_WIDTH = 900;
 
 export const CERTIFICATE_OBJ = {
-  address: "0xD0Db34b683d5658E621Af56244f1c57332d5761c",
+  address: "0xee050bf4f63991bcbf0559e1ada13453842f1dd1",
   timestamp: "",
   location: "",
   isMarriageValid: {},

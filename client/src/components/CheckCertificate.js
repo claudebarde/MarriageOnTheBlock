@@ -34,7 +34,7 @@ class CheckCertificate extends Component {
     const currentAddress = web3.eth.accounts.currentProvider.selectedAddress;
     if (currentAddress && currentAddress !== this.state.userAddress) {
       this.setState({
-        userAddress: web3.eth.accounts.currentProvider.selectedAddress.toLowerCase()
+        userAddress: web3.eth.accounts.currentProvider.selectedAddress
       });
     }
   };

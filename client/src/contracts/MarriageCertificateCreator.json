@@ -19750,12 +19750,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x6b57Dde8e7B92FE15883E71F3863a0E7B74d4421",
-      "transactionHash": "0xfab39d24ec863049abab82e1bd85f3e50006eb04dd3f95318ace1947ad281f97"
+      "address": "0x630Fae5A0d764b43c77e32005F5A9E6EcdC45D7B",
+      "transactionHash": "0x5e8b4b3330bdf72f25be8c331eea2f0522a26a8572a9c9af50a5a13b1d4a9881"
     }
   },
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-02-14T04:20:59.770Z",
+  "updatedAt": "2019-02-18T02:47:45.079Z",
   "devdoc": {
     "methods": {
       "createNewCertificate(string,string,address,string)": {
