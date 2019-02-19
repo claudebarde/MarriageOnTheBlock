@@ -11,11 +11,8 @@ import {
 } from "semantic-ui-react";
 
 import DisplayCertificateCheck from "../DisplayCertificateCheck/DisplayCertificateCheck";
-import {
-  MIN_SCREEN_WIDTH,
-  CERTIFICATE_OBJ,
-  checkCertificate
-} from "../utils/functions";
+import { checkCertificate } from "../utils/functions";
+import { MIN_SCREEN_WIDTH, CERTIFICATE_OBJ } from "../config/config";
 import getWeb3 from "../utils/getWeb3";
 let web3 = null;
 

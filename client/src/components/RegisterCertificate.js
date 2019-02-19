@@ -14,7 +14,6 @@ import {
   Button
 } from "semantic-ui-react";
 import CryptoJS from "crypto-js";
-import { Redirect } from "react-router";
 import { Link } from "react-router-dom";
 import getWeb3 from "../utils/getWeb3";
 import CanvasJSReact from "../config/canvasjs.react";
@@ -25,10 +24,9 @@ import NewCertificateForm from "../NewCertificateForm/NewCertificateForm";
 import DetailsValidation from "../DetailsValidation/DetailsValidation";
 import {
   checkIfDetailsAreValid,
-  lastMarriageDisplay,
-  MIN_SCREEN_WIDTH,
-  CERTIFICATE_OBJ
+  lastMarriageDisplay
 } from "../utils/functions";
+import { MIN_SCREEN_WIDTH, CERTIFICATE_OBJ } from "../config/config";
 import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
 
 import firebase from "firebase/app";
@@ -76,7 +74,6 @@ class App extends Component {
         Math.random()
           .toString(36)
           .substring(2, 9),
-      redirectAfterRegistration: false,
       loadingMap: true,
       /*city: "",
       country: "",
@@ -427,9 +424,6 @@ class App extends Component {
   };
 
   render() {
-    if (this.state.redirectAfterRegistration) {
-      return <Redirect to={`/check/${this.state.certificate.address}`} />;
-    }
     return (
       <Container fluid>
         {this.state.errorMessage.open && (
@@ -567,7 +561,12 @@ class App extends Component {
             </Grid.Row>
           </Grid>
         </Container>
-        <Modal open={this.state.confirmationModal.open} basic size="small">
+        <Modal
+          open={this.state.confirmationModal.open}
+          basic
+          size="small"
+          closeIcon
+        >
           <Header>
             {this.state.confirmationModal.header}
             {this.state.confirmationModal.headerMessage}
@@ -583,8 +582,7 @@ class App extends Component {
           centered={false}
           onClose={() =>
             this.setState({
-              congratulationModalOpen: false,
-              redirectAfterRegistration: true
+              congratulationModalOpen: false
             })
           }
           closeIcon

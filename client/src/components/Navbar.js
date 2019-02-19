@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Menu, Dropdown, Icon, Container } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
-import { MIN_SCREEN_WIDTH } from "../utils/functions";
+import { MIN_SCREEN_WIDTH } from "../config/config";
 
 class Navbar extends Component {
   state = {

@@ -66,32 +66,6 @@ export const lastMarriageDisplay = lastMarriage => {
   )}.`;
 };
 
-export const MIN_SCREEN_WIDTH = 900;
-
-export const CERTIFICATE_OBJ = {
-  address: "0xee050bf4f63991bcbf0559e1ada13453842f1dd1",
-  timestamp: "",
-  location: "",
-  isMarriageValid: {},
-  spousesDetails: {
-    firstSpouseDetails: {
-      firstName: "",
-      lastName: "",
-      idNumber: "",
-      idType: "",
-      address: ""
-    },
-    secondSpouseDetails: {
-      firstName: "",
-      lastName: "",
-      idNumber: "",
-      idType: "",
-      address: ""
-    }
-  },
-  error: null
-};
-
 export const isMarriageValid = marriageValidityData => {
   // display marriage validity
   let marriageValidity = { value: 0, message: "error" };
