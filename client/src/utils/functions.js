@@ -11,45 +11,53 @@ export const checkIfDetailsAreValid = details => {
 };
 
 export const checkCertificate = async certificateAddress => {
-  return getWeb3().then(async web3 => {
-    let result;
+  return getWeb3()
+    .then(async web3 => {
+      let result;
 
-    try {
-      const certificate = await new web3.eth.Contract(
-        newCertificateAbi,
-        certificateAddress
-      );
-      // this makes sure the certificate exists, throws error if not
-      await web3.eth.getCode(certificateAddress);
-      result = {
-        return: "OK",
-        isMarriageValid: await certificate.methods.checkIfValid().call(),
-        spouse1: await certificate.methods.spouse1().call(),
-        spouse2: await certificate.methods.spouse2().call(),
-        location: await certificate.methods.location().call(),
-        spousesAddresses: await certificate.methods
-          .returnSpousesAddresses()
-          .call(),
-        timestamp: await certificate.methods.timestamp().call(),
-        instance: certificate,
-        balance: {}
-      };
-      // balance for each account must be formatted for easier reading
-      const balances = await certificate.methods.returnBalances().call();
-      result.balance = {
-        total: balances[0],
-        joined: balances[1],
-        savings: balances[2]
-      };
-    } catch (error) {
-      result = {
-        return: "error",
-        error
-      };
-    }
+      try {
+        const certificate = await new web3.eth.Contract(
+          newCertificateAbi,
+          certificateAddress
+        );
+        // this makes sure the certificate exists, throws error if not
+        const getCode = await web3.eth.getCode(certificateAddress);
+        if (getCode === "0x")
+          throw new Error("The certificate does not exist!");
 
-    return result;
-  });
+        result = {
+          return: "OK",
+          isMarriageValid: await certificate.methods.checkIfValid().call(),
+          spouse1: await certificate.methods.spouse1().call(),
+          spouse2: await certificate.methods.spouse2().call(),
+          location: await certificate.methods.location().call(),
+          spousesAddresses: await certificate.methods
+            .returnSpousesAddresses()
+            .call(),
+          timestamp: await certificate.methods.timestamp().call(),
+          instance: certificate,
+          balance: {}
+        };
+        // balance for each account must be formatted for easier reading
+        const balances = await certificate.methods.returnBalances().call();
+        result.balance = {
+          total: balances[0],
+          joined: balances[1],
+          savings: balances[2]
+        };
+      } catch (error) {
+        result = {
+          return: "error",
+          error
+        };
+      }
+
+      return result;
+    })
+    .catch(error => ({
+      return: "error",
+      error
+    }));
 };
 
 export const lastMarriageDisplay = lastMarriage => {

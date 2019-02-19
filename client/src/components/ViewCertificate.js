@@ -7,7 +7,8 @@ import {
   Container,
   Header,
   Grid,
-  Button
+  Button,
+  Message
 } from "semantic-ui-react";
 import _ from "lodash";
 import moment from "moment";
@@ -20,7 +21,7 @@ class ViewCertificate extends Component {
     address: "",
     certificate: null,
     loading: true,
-    error: ""
+    error: { status: false, message: "" }
   };
 
   componentDidMount = async () => {
@@ -34,16 +35,31 @@ class ViewCertificate extends Component {
         certificate.spouse2 = JSON.parse(certificate.spouse2);
         certificate.location = JSON.parse(certificate.location);
         this.setState({ address, certificate, loading: false });
+      } else {
+        this.setState({
+          loading: false,
+          error: { status: true, message: certificate.error.message }
+        });
       }
     } else {
       this.setState({
         loading: false,
-        error: "No certificate address provided"
+        error: { status: true, message: "No address provided!" }
       });
     }
   };
 
   render() {
+    if (this.state.error.status) {
+      return (
+        <Message
+          header="An error has occurred"
+          content={this.state.error.message}
+          error
+        />
+      );
+    }
+
     if (this.state.loading) {
       return (
         <Container>

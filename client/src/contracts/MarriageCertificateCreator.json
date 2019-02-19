@@ -19821,7 +19821,7 @@
     }
   },
   "schemaVersion": "3.0.1",
-  "updatedAt": "2019-02-19T01:06:48.850Z",
+  "updatedAt": "2019-02-19T02:52:49.851Z",
   "devdoc": {
     "methods": {
       "createNewCertificate(string,string,address,string)": {

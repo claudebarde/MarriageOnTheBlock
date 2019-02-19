@@ -88,7 +88,7 @@ const DisplayCertificateCheck = props => {
                       </List.Content>
                     </List.Item>
                     <List.Item>
-                      <List.Icon name="certificate" />
+                      <List.Icon name="copy" />
                       <List.Content>
                         <List.Header>Copy of the certificate:</List.Header>
                         <List.Description>

@@ -233,10 +233,6 @@ class App extends Component {
               });
             } else {
               this.setState({
-                confirmationModal: {
-                  ...this.state.confirmationModal,
-                  open: false
-                },
                 newCertificateTxHash: txHash
               });
             }
@@ -261,6 +257,10 @@ class App extends Component {
             2: fcd[0]
           },
           certificatesTotal: parseInt(this.state.certificatesTotal) + 1,
+          confirmationModal: {
+            ...this.state.confirmationModal,
+            open: false
+          },
           congratulationModalOpen: true
         });
         // we save some of the info from the certificate in the firestore

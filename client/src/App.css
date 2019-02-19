@@ -144,6 +144,7 @@ body {
   font-family: "Oregano", cursive !important;
   font-size: 25px !important;
   line-height: 120%;
+  word-break: break-all;
 }
 
 .certificate-view-address {
