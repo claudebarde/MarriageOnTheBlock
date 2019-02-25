@@ -18,10 +18,16 @@ const routing = (
       <Navbar />
       <Switch>
         <Route exact path="/" component={App} />
-        <Route path="/register" component={RegisterCertificate} />
-        <Route path="/check/:address" component={CheckCertificate} />
-        <Route path="/check" component={CheckCertificate} />
-        <Route path="/certificate/:address" component={ViewCertificate} />
+        <Route path="/register/:blockchain?" component={RegisterCertificate} />
+        <Route
+          path="/check/:blockchain?/:address"
+          component={CheckCertificate}
+        />
+        <Route path="/check/:blockchain?" component={CheckCertificate} />
+        <Route
+          path="/certificate/:blockchain?/:address"
+          component={ViewCertificate}
+        />
       </Switch>
       <div
         style={{

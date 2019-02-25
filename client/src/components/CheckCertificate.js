@@ -166,7 +166,10 @@ class CheckCertificate extends Component {
         addressChangeListener
       });
       // fetch contract details if address is provided
-      if (this.props.match.params.address) {
+      if (
+        this.props.match.params.address &&
+        web3.utils.isAddress(this.props.match.params.address)
+      ) {
         this.setState(
           {
             certificateCheck: {

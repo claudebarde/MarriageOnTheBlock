@@ -9,7 +9,7 @@ import {
   Button,
   Grid
 } from "semantic-ui-react";
-import { Link } from "react-router-dom";
+import { Link, withRouter } from "react-router-dom";
 
 import { MIN_SCREEN_WIDTH } from "../config/config";
 
@@ -20,7 +20,7 @@ class Navbar extends Component {
     navbarHeight: 0,
     onScrollDetected: false,
     blockchain: null,
-    blockchainModalOpen: true
+    blockchainModalOpen: false
   };
 
   handleWindowSizeChange = () => {
@@ -44,6 +44,15 @@ class Navbar extends Component {
     document
       .getElementById("root")
       .addEventListener("scroll", this.handleScroll);
+    // displays modal to let user choose blockchain
+    const path = this.props.location.pathname;
+    if (
+      this.state.blockchain === null &&
+      (path.includes("/check") || path.includes("/register")) &&
+      (!path.includes("/eth") && !path.includes("/trx"))
+    ) {
+      this.setState({ blockchainModalOpen: true });
+    }
   };
 
   componentWillUnmount = () => {
@@ -55,6 +64,8 @@ class Navbar extends Component {
     const navbarPadding = Math.round(
       this.state.navbarHeight + this.state.navbarHeight / 4
     );
+
+    console.log(this.props.location.pathname);
 
     return (
       <>
@@ -93,13 +104,27 @@ class Navbar extends Component {
                       </Link>
                     </Dropdown.Item>
                     <Dropdown.Item>
-                      <Link to="/register" className="router-link">
+                      <Link
+                        to={
+                          this.state.blockchain
+                            ? `/register/${this.state.blockchain}`
+                            : "/register"
+                        }
+                        className="router-link"
+                      >
                         <Icon name="edit" className="navbar-icon" />
                         Register a certificate
                       </Link>
                     </Dropdown.Item>
                     <Dropdown.Item>
-                      <Link to="/check" className="router-link">
+                      <Link
+                        to={
+                          this.state.blockchain
+                            ? `/check/${this.state.blockchain}`
+                            : "/check"
+                        }
+                        className="router-link"
+                      >
                         <Icon name="id card outline" className="navbar-icon" />
                         Check a certificate
                       </Link>
@@ -143,11 +168,40 @@ class Navbar extends Component {
             <Header icon="linkify" content="Choose Your Blockchain" as="h2" />
             <Modal.Content>
               <Header as="h3" style={{ color: "white" }}>
-                In which blockchain would you like to register your marriage?
+                Which blockchain would you like to use?
               </Header>
               <Grid columns={2}>
                 <Grid.Column>
-                  <Button color="teal" size="big" animated inverted fluid>
+                  <Button
+                    color="teal"
+                    size="big"
+                    animated
+                    inverted
+                    fluid
+                    onClick={() =>
+                      // this saves the blockchain chosen by the user
+                      this.setState(
+                        {
+                          blockchain: "eth",
+                          blockchainModalOpen: false
+                        },
+                        () => {
+                          // we rewrite the URL with the code for the chosen blockchain
+                          let newURL = this.props.location.pathname;
+                          newURL = newURL
+                            .replace(
+                              "/check",
+                              `/check/${this.state.blockchain}`
+                            )
+                            .replace(
+                              "/register",
+                              `/register/${this.state.blockchain}`
+                            );
+                          this.props.history.push(newURL);
+                        }
+                      )
+                    }
+                  >
                     <Button.Content visible>
                       <Icon name="ethereum" /> Ethereum
                     </Button.Content>
@@ -171,4 +225,4 @@ class Navbar extends Component {
   }
 }
 
-export default Navbar;
+export default withRouter(Navbar);
