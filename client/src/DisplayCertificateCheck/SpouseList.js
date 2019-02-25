@@ -216,8 +216,8 @@ class SpouseList extends Component {
             requestReceipt: {
               status: true,
               tx:
-                withdrawTx.events.NewWithdrawalRequestFromSavings.returnValues
-                  .request
+                withdrawTx.events.LogNewWithdrawalRequestFromSavings
+                  .returnValues.request
             }
           });
         } else {

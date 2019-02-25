@@ -64,7 +64,7 @@ class CheckCertificate extends Component {
         fetchingCertificateDetails: false
       });
       // subscription to events
-      this.subscribeLogEvent(certificate.instance, "MarriageValidity");
+      this.subscribeLogEvent(certificate.instance, "LogMarriageValidity");
     } else {
       console.log(certificate.error);
       this.setState({
@@ -99,7 +99,7 @@ class CheckCertificate extends Component {
             );
             console.log(`New ${eventName}!`, eventObj);
             // we update the state with new contract state
-            if (eventName === "MarriageValidity") {
+            if (eventName === "LogMarriageValidity") {
               this.setState({
                 certificateCheck: {
                   ...this.state.certificateCheck,

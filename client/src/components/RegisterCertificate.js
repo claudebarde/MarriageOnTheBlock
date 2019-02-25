@@ -64,7 +64,15 @@ class App extends Component {
           "Please  wait while your marriage certificate is being confirmed on the blockchain..."
       },
       screenWidth: window.innerWidth,
-      errorMessage: { open: false, message: "" },
+      headerMessage: {
+        open: true,
+        header: "Please wait...",
+        content: "Fetching marriages data",
+        icon: "circle notched",
+        iconLoading: true,
+        info: true,
+        error: false
+      },
       congratulationModalOpen: false,
       newCertificateTxHash: "",
       idEncodingKey:
@@ -226,9 +234,14 @@ class App extends Component {
                   ...this.state.confirmationModal,
                   open: false
                 },
-                errorMessage: {
+                headerMessage: {
                   open: true,
-                  message: "An error has occurred, please try again later."
+                  header: "An error has occurred",
+                  content: "Please try again later",
+                  icon: "exclamation triangle",
+                  iconLoading: false,
+                  info: false,
+                  error: true
                 }
               });
             } else {
@@ -240,7 +253,7 @@ class App extends Component {
         );
       // listening to event newCertificateCreated to get contract address
       const newCertificateAddress =
-        newCertificateTx.events.NewCertificateCreated.returnValues
+        newCertificateTx.events.LogNewCertificateCreated.returnValues
           .newCertificateAddress;
       console.log(newCertificateAddress);
 
@@ -300,9 +313,14 @@ class App extends Component {
       console.log(error);
       if (error.message === "same_addresses") {
         this.setState({
-          errorMessage: {
+          headerMessage: {
             open: true,
-            message: "Spouses' addresses cannot be the same!"
+            header: "An error has occurred",
+            content: "Spouses' addresses cannot be the same!",
+            icon: "exclamation triangle",
+            iconLoading: false,
+            info: false,
+            error: true
           },
           confirmationModal: { ...this.state.confirmationModal, open: false }
         });
@@ -394,15 +412,21 @@ class App extends Component {
             fee: feeInEther,
             certificatesTotal,
             lastMarriage,
-            addressChangeListener
+            addressChangeListener,
+            headerMessage: {...this.state.headerMessage, open: false}
           });
         } catch (error) {
           console.log("Error while fetching details from contract: ", error);
           this.setState({
-            errorMessage: {
+            headerMessage: {
               open: true,
-              message:
-                "The contract does not exist or you are not connected to Metamask."
+              header: "An error has occurred",
+              content:
+                "The contract does not exist or you are not connected to Metamask.",
+              icon: "exclamation triangle",
+              iconLoading: false,
+              info: false,
+              error: true
             }
           });
         }
@@ -426,16 +450,26 @@ class App extends Component {
   render() {
     return (
       <Container fluid>
-        {this.state.errorMessage.open && (
+        {this.state.headerMessage.open && (
           <>
             <Container text>
               <Message
-                icon="exclamation triangle"
-                header="An error has occurred"
-                content={this.state.errorMessage.message}
                 size="small"
-                error
-              />
+                info={this.state.headerMessage.info}
+                error={this.state.headerMessage.error}
+                icon
+              >
+                <Icon
+                  name={this.state.headerMessage.icon}
+                  loading={this.state.headerMessage.iconLoading}
+                />
+                <Message.Content>
+                  <Message.Header>
+                    {this.state.headerMessage.header}
+                  </Message.Header>
+                  {this.state.headerMessage.content}
+                </Message.Content>
+              </Message>
             </Container>
             <br />
           </>
@@ -449,35 +483,39 @@ class App extends Component {
           <Grid columns={2} stackable>
             <Grid.Row stretched>
               <Grid.Column>
-                <Segment>
-                  <Divider horizontal>
-                    <Header as="h4">Register a new marriage</Header>
-                  </Divider>
-                  <Segment secondary basic>
-                    Fill in the form to register a new marriage.
-                  </Segment>
-                  <NewCertificateForm
-                    userAddress={this.state.userAddress}
-                    updateCityAndCountry={this.updateCityAndCountry}
-                    updateSpouseDetails={this.updateSpouseDetails}
-                    spousesDetails={this.state.spousesDetails}
-                  />
-                </Segment>
-                {checkIfDetailsAreValid(
-                  this.state.spousesDetails.firstSpouseDetails
-                ) &&
-                  checkIfDetailsAreValid(
-                    this.state.spousesDetails.secondSpouseDetails
-                  ) && (
-                    <DetailsValidation
-                      spousesDetails={this.state.spousesDetails}
-                      city={this.state.city}
-                      country={this.state.country}
-                      currentFee={this.state.fee}
-                      gasToUse={this.state.gasToUse}
-                      confirmRegistration={this.confirmRegistration}
-                    />
-                  )}
+                {!this.state.headerMessage.open && (
+                  <>
+                    <Segment>
+                      <Divider horizontal>
+                        <Header as="h4">Register a new marriage</Header>
+                      </Divider>
+                      <Segment secondary basic>
+                        Fill in the form to register a new marriage.
+                      </Segment>
+                      <NewCertificateForm
+                        userAddress={this.state.userAddress}
+                        updateCityAndCountry={this.updateCityAndCountry}
+                        updateSpouseDetails={this.updateSpouseDetails}
+                        spousesDetails={this.state.spousesDetails}
+                      />
+                    </Segment>
+                    {checkIfDetailsAreValid(
+                      this.state.spousesDetails.firstSpouseDetails
+                    ) &&
+                      checkIfDetailsAreValid(
+                        this.state.spousesDetails.secondSpouseDetails
+                      ) && (
+                        <DetailsValidation
+                          spousesDetails={this.state.spousesDetails}
+                          city={this.state.city}
+                          country={this.state.country}
+                          currentFee={this.state.fee}
+                          gasToUse={this.state.gasToUse}
+                          confirmRegistration={this.confirmRegistration}
+                        />
+                      )}
+                  </>
+                )}
               </Grid.Column>
               <Grid.Column>
                 {this.state.screenWidth >= MIN_SCREEN_WIDTH && (

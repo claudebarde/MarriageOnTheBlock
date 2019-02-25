@@ -1,72 +1,5 @@
 pragma solidity ^0.5.0;
 
-contract MarriageCertificateCreator {
-    /// @title MarriageCertificateCreator
-    /// @author Claude Barde
-
-    MarriageCertificate[] public certificates;
-    address payable public owner;
-    uint public certificateFee;
-    string[3] public lastMarriage;
-    
-    constructor() public {
-        owner = msg.sender;
-        certificateFee = 100000000000000000 wei;
-    }
-    
-    event LogNewCertificateCreated(MarriageCertificate newCertificateAddress, uint numberOfCertificates);
-    
-    /** 
-        @dev function is called every time someone wants to register a new marriage certificate
-        @param spouse1 =  holds JSON string with first spouse details
-        @param spouse2 =  holds JSON string with second spouse details
-        @param spouse2address = address of second spouse needed to validate the marriage
-        @param location =  holds JSON string with location details
-    **/
-    function createNewCertificate(
-        string memory spouse1, string memory spouse2, address spouse2address, string memory location
-        ) public payable {
-        // certificate fee must be paid
-        require(msg.value >= certificateFee, "Insufficient fee");
-        // new certificate creation
-        MarriageCertificate newCertificate = new MarriageCertificate(
-            msg.sender,
-            spouse1,
-            spouse2,
-            spouse2address,
-            location);
-        // we save the address in array
-        certificates.push(newCertificate);
-        // we update last marriage array
-        lastMarriage = [spouse1, spouse2, location];
-        // we return an event for the web3 interface
-        emit LogNewCertificateCreated(newCertificate, certificates.length);
-    }
-    
-    /// @dev owner of contract can update the required fee to create a new certificate
-    function updateFee(uint newFee) public {
-        require(msg.sender == owner, "You are not allowed to perform this action");
-        certificateFee = newFee;
-    }
-    
-    function returnNumberOfContracts() public view returns (uint) {
-        return certificates.length;
-    }
-    
-    function getLastMarriage() public view returns (string memory, string memory, string memory) {
-        return (lastMarriage[0], lastMarriage[1], lastMarriage[2]);
-    }
-    
-    function returnBalance() public view returns (uint) {
-        return address(this).balance;
-    }
-    
-    function withdraw() public {
-        require(msg.sender == owner, "You are not allowed to perform this action");
-        owner.transfer(address(this).balance);
-    }
-}
-
 contract MarriageCertificate {
     string public location;
     string public spouse1;
@@ -83,8 +16,8 @@ contract MarriageCertificate {
     }
     mapping(uint => withdrawRequestFromSavings) withdrawRequests;
     
-    event LogMarriageValidity(bool[2] validity);
-    event LogNewWithdrawalRequestFromSavings(uint request);
+    event MarriageValidity(bool[2] validity);
+    event NewWithdrawalRequestFromSavings(uint request);
     
     /** 
         @dev function is called every time someone wants to register a new marriage certificate
@@ -140,18 +73,18 @@ contract MarriageCertificate {
             isValid[1] = !isValid[1];
         }
         
-        emit LogMarriageValidity(isValid);
+        emit MarriageValidity(isValid);
     }
     
     /// @notice allows spouses or third parties to deposit money in marriage contract
-    function deposit(uint amount, bytes32 account) public payable onlySpouses {
+    function deposit(uint amount, string memory account) public payable onlySpouses {
         // we check the amount sent is the amount required
         require(msg.value == amount, "Wrong amount sent!");
         // we update the balance according to the account type selected
         if(stringsAreEqual(account, "joined")) {
-            accounts["joined"] += amount;
+            accounts["joined"] = accounts["joined"] + amount;
         } else if(stringsAreEqual(account, "savings")) {
-            accounts["savings"] += amount;
+            accounts["savings"] = accounts["savings"] + amount;
         } else {
             revert("This is not a valid account.");
         }
@@ -160,15 +93,14 @@ contract MarriageCertificate {
     }
     
     /// @notice allows spouses to withdraw money from the account
-    function withdraw(uint amount, bytes32 account) public onlySpouses {
-        require(accounts[account] > amount);
+    function withdraw(uint amount, string memory account) public onlySpouses {
         // requested amount cannot exceed total balance of account
         if(amount < address(this).balance) {
             // we check if the balance is sufficient for the withdrawal from the joined account
             if(stringsAreEqual(account, "joined") && 
                 accounts["joined"] > amount) {
                 // we substract the amount from the joined account amount
-                accounts["joined"] -= amount;
+                accounts["joined"] = accounts["joined"] - amount;
                 // we send the money
                 msg.sender.transfer(amount);
             } else if(stringsAreEqual(account, "savings") && 
@@ -182,7 +114,7 @@ contract MarriageCertificate {
                 });
                 // we emit the new request with id number that will help find it in requests mapping
                 uint requestID = uint(keccak256(abi.encodePacked(msg.sender, amount, now, block.difficulty)));
-                emit LogNewWithdrawalRequestFromSavings(requestID);
+                emit NewWithdrawalRequestFromSavings(requestID);
                 // we save the new request in requests mapping
                 withdrawRequests[requestID] = newRequest;
             } else {
@@ -214,7 +146,7 @@ contract MarriageCertificate {
                 // mark the request as approved
                 request.approved = true;
                 // deduct amount from accounts mapping
-                accounts["savings"] -= request.amount;
+                accounts["savings"] = accounts["savings"] - request.amount;
                 // we transfer the money
                 request.sender.transfer(request.amount);
             } else {
@@ -242,7 +174,7 @@ contract MarriageCertificate {
     }
 
     /// @dev compares two strings
-    function stringsAreEqual(bytes32 str1, bytes32 str2) pure private returns (bool) {
+    function stringsAreEqual(string memory str1, string memory str2) pure private returns (bool) {
         return keccak256(abi.encodePacked(str1)) == keccak256(abi.encodePacked(str2));
     }
 }
