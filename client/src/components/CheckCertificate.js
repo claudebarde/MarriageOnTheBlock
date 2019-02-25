@@ -151,42 +151,35 @@ class CheckCertificate extends Component {
     });
   };
 
-  componentDidMount = () => {
+  componentDidMount = async () => {
     // listens to window resizing
     window.addEventListener("resize", this.handleWindowSizeChange);
-    // creates instance of contract
-    getWeb3()
-      .then(async getWeb3 => {
-        web3 = getWeb3;
-        try {
-          await web3.eth.net.isListening();
-          console.log("web3 started!");
-          // address change listener
-          const addressChangeListener = setInterval(
-            this.userAddressChange,
-            500
-          );
-          this.setState({
-            isConnected: true,
-            addressChangeListener
-          });
-          // fetch contract details if address is provided
-          if (this.props.match.params.address) {
-            this.setState(
-              {
-                certificateCheck: {
-                  ...this.state.certificateCheck,
-                  address: this.props.match.params.address
-                }
-              },
-              async () => await this.fetchCertificateDetails()
-            );
-          }
-        } catch (error) {
-          console.log("Error while fetching details from contract: ", error);
-        }
-      })
-      .catch(err => console.log(err));
+    try {
+      // creates instance of contract
+      web3 = await getWeb3();
+      await web3.eth.net.isListening();
+      console.log("web3 started!");
+      // address change listener
+      const addressChangeListener = setInterval(this.userAddressChange, 500);
+      this.setState({
+        isConnected: true,
+        addressChangeListener
+      });
+      // fetch contract details if address is provided
+      if (this.props.match.params.address) {
+        this.setState(
+          {
+            certificateCheck: {
+              ...this.state.certificateCheck,
+              address: this.props.match.params.address
+            }
+          },
+          async () => await this.fetchCertificateDetails()
+        );
+      }
+    } catch (error) {
+      console.log("Error while fetching details from contract: ", error);
+    }
   };
 
   componentWillUnmount = () => {

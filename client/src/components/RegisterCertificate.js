@@ -17,8 +17,6 @@ import {
 import CryptoJS from "crypto-js";
 import { Link } from "react-router-dom";
 import getWeb3 from "../utils/getWeb3";
-import CanvasJSReact from "../config/canvasjs.react";
-import upperFirst from "lodash/upperFirst";
 
 import compiledContract from "../utils/contractCreator";
 import NewCertificateForm from "../NewCertificateForm/NewCertificateForm";
@@ -29,17 +27,15 @@ import {
 } from "../utils/functions";
 import { MIN_SCREEN_WIDTH, CERTIFICATE_OBJ } from "../config/config";
 import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
+import MarriagesGraph from "./infoComponents/MarriagesGraph";
 
 import firebase from "firebase/app";
 import "firebase/firebase-functions";
 import { config } from "../config/firebaseConfig";
 firebase.initializeApp(config);
 
-const lookup = require("country-data").lookup;
-
 let web3 = null;
 let contractCreator;
-const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 class App extends Component {
   constructor(props) {
@@ -119,8 +115,7 @@ class App extends Component {
           idType: "id",
           address: "0x0b324d7f2Da52A8F88Cf13e45205C2D6591A8DC1"
         }
-      },
-      chartOptions: {}
+      }
     };
   }
 
@@ -333,138 +328,58 @@ class App extends Component {
     this.setState({ city, country });
   };
 
-  formatCountryNameForLookup = string =>
-    string
-      .toLowerCase()
-      .replace("-", " ")
-      .split(" ")
-      .map(substr => upperFirst(substr))
-      .join(" ");
-
-  displayCouplesLocations = couplesLocations => {
-    // we sort the values to get the highest ones first
-    let sortedData = Object.keys(couplesLocations).sort(function(a, b) {
-      return -(couplesLocations[a] - couplesLocations[b]);
-    });
-    sortedData = sortedData.slice(0, 10);
-    // we prepare the chart options
-    const options = {
-      animationEnabled: true,
-      data: [
-        {
-          type: "pie",
-          theme: "light2",
-          showInLegend: true,
-          legendText: "{label} - {y}",
-          dataPoints: sortedData.map(country => ({
-            label: `${upperFirst(country)} ${
-              lookup.countries({
-                name: this.formatCountryNameForLookup(country)
-              })[0]
-                ? lookup.countries({
-                    name: this.formatCountryNameForLookup(country)
-                  })[0].emoji
-                : ""
-            }`,
-            y: couplesLocations[country],
-            indexLabel:
-              this.state.screenWidth <= MIN_SCREEN_WIDTH
-                ? `${
-                    lookup.countries({
-                      name: this.formatCountryNameForLookup(country)
-                    })[0]
-                      ? lookup.countries({
-                          name: this.formatCountryNameForLookup(country)
-                        })[0].emoji
-                      : ""
-                  }`
-                : `${upperFirst(country)} ${
-                    lookup.countries({
-                      name: this.formatCountryNameForLookup(country)
-                    })[0]
-                      ? lookup.countries({
-                          name: this.formatCountryNameForLookup(country)
-                        })[0].emoji
-                      : ""
-                  }`
-          }))
-        }
-      ]
-    };
-
-    return options;
-  };
-
   componentDidMount = async () => {
     window.addEventListener("resize", this.handleWindowSizeChange);
-    // web3 set up
-    getWeb3()
-      .then(async getWeb3 => {
-        web3 = getWeb3;
-        try {
-          await web3.eth.net.isListening();
-          console.log("web3 started!");
-          // we create the contract
-          contractCreator = await new web3.eth.Contract(
-            compiledContract.abi,
-            compiledContract.address
-          );
-          // we update the state with info
-          // fee for registration
-          const feeInWei = await contractCreator.methods
-            .certificateFee()
-            .call();
-          const feeInEther = web3.utils.fromWei(feeInWei, "ether");
-          // number of certificates
-          const certificatesTotal = await contractCreator.methods
-            .returnNumberOfContracts()
-            .call();
-          // last marriage
-          const lastMarriage = await contractCreator.methods
-            .getLastMarriage()
-            .call();
-          // address change listener
-          const addressChangeListener = setInterval(
-            this.userAddressChange,
-            500
-          );
-          this.setState({
-            isConnected: true,
-            fee: feeInEther,
-            certificatesTotal,
-            lastMarriage,
-            addressChangeListener,
-            headerMessage: {
-              ...this.state.headerMessage,
-              open: false,
-              iconLoading: false
-            }
-          });
-        } catch (error) {
-          console.log("Error while fetching details from contract: ", error);
-          this.setState({
-            headerMessage: {
-              open: true,
-              header: "An error has occurred",
-              content:
-                "The contract does not exist or you are not connected to Metamask.",
-              icon: "exclamation triangle",
-              iconLoading: false,
-              info: false,
-              error: true
-            }
-          });
-        }
-      })
-      .catch(err => console.log(err));
-    // fetch locations of married couples from firestore
-    const fetchLocations = firebase.functions().httpsCallable("fetchLocations");
     try {
-      const locations = await fetchLocations();
-      const chartOptions = this.displayCouplesLocations(locations.data);
-      this.setState({ loadingGraph: false, chartOptions });
+      // web3 set up
+      web3 = await getWeb3();
+      await web3.eth.net.isListening();
+      console.log("web3 started!");
+      // we create the contract
+      contractCreator = await new web3.eth.Contract(
+        compiledContract.abi,
+        compiledContract.address
+      );
+      // we update the state with info
+      // fee for registration
+      const feeInWei = await contractCreator.methods.certificateFee().call();
+      const feeInEther = web3.utils.fromWei(feeInWei, "ether");
+      // number of certificates
+      const certificatesTotal = await contractCreator.methods
+        .returnNumberOfContracts()
+        .call();
+      // last marriage
+      const lastMarriage = await contractCreator.methods
+        .getLastMarriage()
+        .call();
+      // address change listener
+      const addressChangeListener = setInterval(this.userAddressChange, 500);
+      this.setState({
+        isConnected: true,
+        fee: feeInEther,
+        certificatesTotal,
+        lastMarriage,
+        addressChangeListener,
+        headerMessage: {
+          ...this.state.headerMessage,
+          open: false,
+          iconLoading: false
+        }
+      });
     } catch (error) {
-      console.log(error);
+      console.log("Error while fetching details from contract: ", error);
+      this.setState({
+        headerMessage: {
+          open: true,
+          header: "An error has occurred",
+          content:
+            "The contract does not exist or you are not connected to Metamask.",
+          icon: "exclamation triangle",
+          iconLoading: false,
+          info: false,
+          error: true
+        }
+      });
     }
   };
 
@@ -510,7 +425,7 @@ class App extends Component {
           ) : (
             <Grid columns={this.state.headerMessage.open ? 1 : 2} stackable>
               <Grid.Row stretched>
-                {this.state.screenWidth <= MIN_SCREEN_WIDTH && (
+                {this.state.screenWidth < MIN_SCREEN_WIDTH && (
                   <Grid.Column>
                     <NumberOfMarriages
                       certificatesTotal={this.state.certificatesTotal}
@@ -616,18 +531,10 @@ class App extends Component {
               </Grid.Row>
               <Grid.Row stretched>
                 <Grid.Column width={16}>
-                  <Segment textAlign="center">
-                    <Divider horizontal>
-                      <Header as="h4">Location of married couples</Header>
-                    </Divider>
-                    {this.state.loadingGraph ? (
-                      <Loader size="small" inline="centered" active>
-                        Loading
-                      </Loader>
-                    ) : (
-                      <CanvasJSChart options={this.state.chartOptions} />
-                    )}
-                  </Segment>
+                  <MarriagesGraph
+                    firebase={firebase}
+                    screenWidth={this.state.screenWidth}
+                  />
                 </Grid.Column>
               </Grid.Row>
             </Grid>

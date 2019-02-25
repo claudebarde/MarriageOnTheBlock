@@ -1,5 +1,14 @@
 import React, { Component } from "react";
-import { Menu, Dropdown, Icon, Container } from "semantic-ui-react";
+import {
+  Menu,
+  Dropdown,
+  Icon,
+  Container,
+  Modal,
+  Header,
+  Button,
+  Grid
+} from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
 import { MIN_SCREEN_WIDTH } from "../config/config";
@@ -9,7 +18,9 @@ class Navbar extends Component {
     minScreenWidth: MIN_SCREEN_WIDTH,
     screenWidth: window.innerWidth,
     navbarHeight: 0,
-    onScrollDetected: false
+    onScrollDetected: false,
+    blockchain: null,
+    blockchainModalOpen: true
   };
 
   handleWindowSizeChange = () => {
@@ -127,6 +138,34 @@ class Navbar extends Component {
             height: navbarPadding
           }}
         />
+        {this.state.blockchain === null && (
+          <Modal open={this.state.blockchainModalOpen} basic size="small">
+            <Header icon="linkify" content="Choose Your Blockchain" as="h2" />
+            <Modal.Content>
+              <Header as="h3" style={{ color: "white" }}>
+                In which blockchain would you like to register your marriage?
+              </Header>
+              <Grid columns={2}>
+                <Grid.Column>
+                  <Button color="teal" size="big" animated inverted fluid>
+                    <Button.Content visible>
+                      <Icon name="ethereum" /> Ethereum
+                    </Button.Content>
+                    <Button.Content hidden>Go!</Button.Content>
+                  </Button>
+                </Grid.Column>
+                <Grid.Column>
+                  <Button color="red" size="big" animated inverted fluid>
+                    <Button.Content visible>
+                      <Icon name="cube" /> Tron
+                    </Button.Content>
+                    <Button.Content hidden>Coming soon!</Button.Content>
+                  </Button>
+                </Grid.Column>
+              </Grid>
+            </Modal.Content>
+          </Modal>
+        )}
       </>
     );
   }
