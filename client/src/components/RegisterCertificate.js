@@ -10,6 +10,7 @@ import {
   Modal,
   Message,
   List,
+  Dimmer,
   Loader,
   Button
 } from "semantic-ui-react";
@@ -82,7 +83,7 @@ class App extends Component {
         Math.random()
           .toString(36)
           .substring(2, 9),
-      loadingMap: true,
+      loadingGraph: true,
       /*city: "",
       country: "",
       spousesDetails: {
@@ -365,7 +366,27 @@ class App extends Component {
                   })[0].emoji
                 : ""
             }`,
-            y: couplesLocations[country]
+            y: couplesLocations[country],
+            indexLabel:
+              this.state.screenWidth <= MIN_SCREEN_WIDTH
+                ? `${
+                    lookup.countries({
+                      name: this.formatCountryNameForLookup(country)
+                    })[0]
+                      ? lookup.countries({
+                          name: this.formatCountryNameForLookup(country)
+                        })[0].emoji
+                      : ""
+                  }`
+                : `${upperFirst(country)} ${
+                    lookup.countries({
+                      name: this.formatCountryNameForLookup(country)
+                    })[0]
+                      ? lookup.countries({
+                          name: this.formatCountryNameForLookup(country)
+                        })[0].emoji
+                      : ""
+                  }`
           }))
         }
       ]
@@ -413,7 +434,11 @@ class App extends Component {
             certificatesTotal,
             lastMarriage,
             addressChangeListener,
-            headerMessage: {...this.state.headerMessage, open: false}
+            headerMessage: {
+              ...this.state.headerMessage,
+              open: false,
+              iconLoading: false
+            }
           });
         } catch (error) {
           console.log("Error while fetching details from contract: ", error);
@@ -437,7 +462,7 @@ class App extends Component {
     try {
       const locations = await fetchLocations();
       const chartOptions = this.displayCouplesLocations(locations.data);
-      this.setState({ loadingMap: false, chartOptions });
+      this.setState({ loadingGraph: false, chartOptions });
     } catch (error) {
       console.log(error);
     }
@@ -475,16 +500,25 @@ class App extends Component {
           </>
         )}
         <Container textAlign="center">
-          {this.state.screenWidth <= MIN_SCREEN_WIDTH && (
-            <NumberOfMarriages
-              certificatesTotal={this.state.certificatesTotal}
-            />
-          )}
-          <Grid columns={2} stackable>
-            <Grid.Row stretched>
-              <Grid.Column>
+          {this.state.headerMessage.iconLoading ? (
+            <Segment>
+              <Dimmer active inverted>
+                <Loader inverted content="Loading" />
+              </Dimmer>
+              <Image src="/images/short-paragraph.png" />
+            </Segment>
+          ) : (
+            <Grid columns={this.state.headerMessage.open ? 1 : 2} stackable>
+              <Grid.Row stretched>
+                {this.state.screenWidth <= MIN_SCREEN_WIDTH && (
+                  <Grid.Column>
+                    <NumberOfMarriages
+                      certificatesTotal={this.state.certificatesTotal}
+                    />
+                  </Grid.Column>
+                )}
                 {!this.state.headerMessage.open && (
-                  <>
+                  <Grid.Column>
                     <Segment>
                       <Divider horizontal>
                         <Header as="h4">Register a new marriage</Header>
@@ -514,90 +548,90 @@ class App extends Component {
                           confirmRegistration={this.confirmRegistration}
                         />
                       )}
-                  </>
+                  </Grid.Column>
                 )}
-              </Grid.Column>
-              <Grid.Column>
-                {this.state.screenWidth >= MIN_SCREEN_WIDTH && (
-                  <NumberOfMarriages
-                    certificatesTotal={this.state.certificatesTotal}
-                  />
-                )}
-                <Segment>
-                  <Divider horizontal>
-                    <Header as="h4">Last marriage</Header>
-                  </Divider>
-                  {checkIfDetailsAreValid(this.state.lastMarriage) ? (
-                    <p>{lastMarriageDisplay(this.state.lastMarriage)}</p>
-                  ) : (
-                    <p>No marriage to show.</p>
+                <Grid.Column>
+                  {this.state.screenWidth >= MIN_SCREEN_WIDTH && (
+                    <NumberOfMarriages
+                      certificatesTotal={this.state.certificatesTotal}
+                    />
                   )}
-                </Segment>
-                <Segment>
-                  <Divider horizontal>
-                    <Header as="h4">Exchange</Header>
-                  </Divider>
-                  <Modal
-                    trigger={
-                      <Button color="green">
-                        Exchange Bitcoin for Ethereum
-                      </Button>
-                    }
-                    size="small"
-                    closeIcon
-                  >
-                    <Modal.Header>Exchange with Changelly</Modal.Header>
-                    <Modal.Content>
-                      <Header as="h1">
-                        Exchange your Bitcoin for Ethereum to validate your
-                        marriage certificate
-                      </Header>
-                      <Header as="h3">
-                        or exchange other cryptocurrencies{" "}
-                        <a
-                          href="https://old.changelly.com/?ref_id=vab5l967wagye3m2"
-                          alt="changelly"
-                          target="_blank"
-                          rel="noopener noreferrer"
+                  <Segment>
+                    <Divider horizontal>
+                      <Header as="h4">Last marriage</Header>
+                    </Divider>
+                    {checkIfDetailsAreValid(this.state.lastMarriage) ? (
+                      <p>{lastMarriageDisplay(this.state.lastMarriage)}</p>
+                    ) : (
+                      <p>No marriage to show.</p>
+                    )}
+                  </Segment>
+                  <Segment>
+                    <Divider horizontal>
+                      <Header as="h4">Exchange</Header>
+                    </Divider>
+                    <Modal
+                      trigger={
+                        <Button color="green">
+                          Exchange Bitcoin for Ethereum
+                        </Button>
+                      }
+                      size="small"
+                      closeIcon
+                    >
+                      <Modal.Header>Exchange with Changelly</Modal.Header>
+                      <Modal.Content>
+                        <Header as="h1">
+                          Exchange your Bitcoin for Ethereum to validate your
+                          marriage certificate
+                        </Header>
+                        <Header as="h3">
+                          or exchange other cryptocurrencies{" "}
+                          <a
+                            href="https://old.changelly.com/?ref_id=vab5l967wagye3m2"
+                            alt="changelly"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            on this page
+                          </a>
+                          .
+                        </Header>
+                        <iframe
+                          src="https://old.changelly.com/widget/v1?auth=email&from=BTC&to=ETH&merchant_id=vab5l967wagye3m2&address=&amount=1&ref_id=vab5l967wagye3m2&color=00cf70"
+                          title="changelly"
+                          width="600"
+                          height="450"
+                          className="changelly"
+                          scrolling="no"
+                          style={{ overflowY: "hidden", border: "none" }}
                         >
-                          on this page
-                        </a>
-                        .
-                      </Header>
-                      <iframe
-                        src="https://old.changelly.com/widget/v1?auth=email&from=BTC&to=ETH&merchant_id=vab5l967wagye3m2&address=&amount=1&ref_id=vab5l967wagye3m2&color=00cf70"
-                        title="changelly"
-                        width="600"
-                        height="450"
-                        className="changelly"
-                        scrolling="no"
-                        style={{ overflowY: "hidden", border: "none" }}
-                      >
-                        {" "}
-                        Can't load widget{" "}
-                      </iframe>
-                    </Modal.Content>
-                  </Modal>
-                </Segment>
-              </Grid.Column>
-            </Grid.Row>
-            <Grid.Row stretched>
-              <Grid.Column width={16}>
-                <Segment textAlign="center">
-                  <Divider horizontal>
-                    <Header as="h4">Location of married couples</Header>
-                  </Divider>
-                  {this.state.loadingMap ? (
-                    <Loader size="small" inline="centered" active>
-                      Loading
-                    </Loader>
-                  ) : (
-                    <CanvasJSChart options={this.state.chartOptions} />
-                  )}
-                </Segment>
-              </Grid.Column>
-            </Grid.Row>
-          </Grid>
+                          {" "}
+                          Can't load widget{" "}
+                        </iframe>
+                      </Modal.Content>
+                    </Modal>
+                  </Segment>
+                </Grid.Column>
+              </Grid.Row>
+              <Grid.Row stretched>
+                <Grid.Column width={16}>
+                  <Segment textAlign="center">
+                    <Divider horizontal>
+                      <Header as="h4">Location of married couples</Header>
+                    </Divider>
+                    {this.state.loadingGraph ? (
+                      <Loader size="small" inline="centered" active>
+                        Loading
+                      </Loader>
+                    ) : (
+                      <CanvasJSChart options={this.state.chartOptions} />
+                    )}
+                  </Segment>
+                </Grid.Column>
+              </Grid.Row>
+            </Grid>
+          )}
         </Container>
         <Modal
           open={this.state.confirmationModal.open}
