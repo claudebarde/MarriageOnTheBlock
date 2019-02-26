@@ -1,7 +1,7 @@
 export const MIN_SCREEN_WIDTH = 768;
 
 export const CERTIFICATE_OBJ = {
-  address: "0x69EC34dAeC718773720EbBBc344a8a9888B3e97a",
+  address: "",
   timestamp: "",
   location: "",
   isMarriageValid: {},

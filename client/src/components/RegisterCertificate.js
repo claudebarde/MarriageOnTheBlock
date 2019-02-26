@@ -80,7 +80,7 @@ class App extends Component {
           .toString(36)
           .substring(2, 9),
       loadingGraph: true,
-      /*city: "",
+      city: "",
       country: "",
       spousesDetails: {
         firstSpouseDetails: {
@@ -96,24 +96,6 @@ class App extends Component {
           idNumber: "",
           idType: "",
           address: ""
-        }
-      }*/
-      city: "Kuala Lumpur",
-      country: "Malaysia",
-      spousesDetails: {
-        firstSpouseDetails: {
-          firstName: "claude",
-          lastName: "barde",
-          idNumber: "555",
-          idType: "passport",
-          address: "0x0fc3d599c0cc8c8741f9c56170887a39bb9e1745"
-        },
-        secondSpouseDetails: {
-          firstName: "Amira",
-          lastName: "Kawi",
-          idNumber: "6667",
-          idType: "id",
-          address: "0x0b324d7f2Da52A8F88Cf13e45205C2D6591A8DC1"
         }
       }
     };

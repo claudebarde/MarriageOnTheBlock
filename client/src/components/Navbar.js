@@ -38,13 +38,7 @@ class Navbar extends Component {
     }
   };
 
-  componentDidMount = () => {
-    window.addEventListener("resize", this.handleWindowSizeChange);
-    setTimeout(this.handleWindowSizeChange, 100);
-    document
-      .getElementById("root")
-      .addEventListener("scroll", this.handleScroll);
-    // displays modal to let user choose blockchain
+  openBlockchainModal = () => {
     const path = this.props.location.pathname;
     if (
       this.state.blockchain === null &&
@@ -55,17 +49,30 @@ class Navbar extends Component {
     }
   };
 
+  componentDidMount = () => {
+    window.addEventListener("resize", this.handleWindowSizeChange);
+    setTimeout(this.handleWindowSizeChange, 100);
+    document
+      .getElementById("root")
+      .addEventListener("scroll", this.handleScroll);
+    // displays modal to let user choose blockchain
+    this.openBlockchainModal();
+  };
+
   componentWillUnmount = () => {
     window.removeEventListener("resize", this.handleWindowSizeChange);
     window.removeEventListener("scroll", this.handleScroll);
+  };
+
+  componentDidUpdate = () => {
+    // displays modal to let user choose blockchain
+    if (this.state.blockchainModalOpen === false) this.openBlockchainModal();
   };
 
   render() {
     const navbarPadding = Math.round(
       this.state.navbarHeight + this.state.navbarHeight / 4
     );
-
-    console.log(this.props.location.pathname);
 
     return (
       <>

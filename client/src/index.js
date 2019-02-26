@@ -28,6 +28,7 @@ const routing = (
           path="/certificate/:blockchain?/:address"
           component={ViewCertificate}
         />
+        <Route component={App} />
       </Switch>
       <div
         style={{

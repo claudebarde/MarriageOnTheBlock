@@ -21,6 +21,9 @@
 # production
 /build
 
+# config
+/network-config.js
+
 # misc
 .DS_Store
 .env.local
