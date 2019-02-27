@@ -1,3 +1,5 @@
+import React from "react";
+
 export const MIN_SCREEN_WIDTH = 768;
 
 export const CERTIFICATE_OBJ = {
@@ -23,3 +25,7 @@ export const CERTIFICATE_OBJ = {
   },
   error: null
 };
+
+const GlobalState = React.createContext();
+export const GlobalStateProvider = GlobalState.Provider;
+export const GlobalStateConsumer = GlobalState.Consumer;

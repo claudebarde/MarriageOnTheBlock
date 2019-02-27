@@ -12,7 +12,11 @@ import {
 
 import DisplayCertificateCheck from "../DisplayCertificateCheck/DisplayCertificateCheck";
 import { checkCertificate } from "../utils/functions";
-import { MIN_SCREEN_WIDTH, CERTIFICATE_OBJ } from "../config/config";
+import {
+  MIN_SCREEN_WIDTH,
+  CERTIFICATE_OBJ,
+  GlobalStateConsumer
+} from "../config/config";
 import getWeb3 from "../utils/getWeb3";
 let web3 = null;
 
@@ -191,53 +195,63 @@ class CheckCertificate extends Component {
 
   render() {
     return (
-      <Container>
-        <Form>
-          <Form.Field
-            id="form-input-certificate-address"
-            control={Input}
-            label="Please enter your certificate address :"
-            placeholder="Certificate Address"
-            action={{
-              icon: "search",
-              content: "Search",
-              onClick: this.fetchCertificateDetails
-            }}
-            value={this.state.certificateCheck.address}
-            onChange={event =>
-              this.setState({
-                certificateCheck: {
-                  ...this.state.certificateCheck,
-                  address: event.target.value
+      <GlobalStateConsumer>
+        {context => (
+          <Container>
+            <Form>
+              <Form.Field
+                id="form-input-certificate-address"
+                control={Input}
+                label="Please enter your certificate address :"
+                placeholder={`Certificate Address ${
+                  context.blockchain
+                    ? context.blockchain === "eth"
+                      ? "on Ethereum"
+                      : "on Tron"
+                    : ""
+                }`}
+                action={{
+                  icon: "search",
+                  content: "Search",
+                  onClick: this.fetchCertificateDetails
+                }}
+                value={this.state.certificateCheck.address}
+                onChange={event =>
+                  this.setState({
+                    certificateCheck: {
+                      ...this.state.certificateCheck,
+                      address: event.target.value
+                    }
+                  })
                 }
-              })
-            }
-          />
-        </Form>
-        {this.state.fetchingCertificateDetails && (
-          <Segment>
-            <Dimmer active inverted>
-              <Loader inverted content="Loading" />
-            </Dimmer>
-            <Image src="/images/short-paragraph.png" />
-          </Segment>
+              />
+            </Form>
+            {this.state.fetchingCertificateDetails && (
+              <Segment>
+                <Dimmer active inverted>
+                  <Loader inverted content="Loading" />
+                </Dimmer>
+                <Image src="/images/short-paragraph.png" />
+              </Segment>
+            )}
+            {this.state.showCertificateCheckDetails &&
+              (this.state.certificateCheck.error === null ? (
+                <DisplayCertificateCheck
+                  details={this.state.certificateCheck}
+                  currentUser={this.state.userAddress}
+                  web3={web3}
+                  updateBalance={this.updateBalance}
+                />
+              ) : (
+                <Message
+                  header="An error occurred"
+                  content="Please check if the certificate address is correct and retry"
+                  error
+                />
+              ))}
+          </Container>
         )}
-        {this.state.showCertificateCheckDetails &&
-          (this.state.certificateCheck.error === null ? (
-            <DisplayCertificateCheck
-              details={this.state.certificateCheck}
-              currentUser={this.state.userAddress}
-              web3={web3}
-              updateBalance={this.updateBalance}
-            />
-          ) : (
-            <Message
-              header="An error occurred"
-              content="Please check if the certificate address is correct and retry"
-              error
-            />
-          ))}
-      </Container>
+      </GlobalStateConsumer>
     );
   }
 }

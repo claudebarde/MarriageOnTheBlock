@@ -4,10 +4,11 @@ import { Route, BrowserRouter as Router, Switch } from "react-router-dom";
 import "semantic-ui-css/semantic.min.css";
 import "./index.css";
 import App from "./components/App";
-import RegisterCertificate from "./components/RegisterCertificate";
+import RegisterCertificateContextWrapper from "./components/RegisterCertificateContextWrapper";
 import CheckCertificate from "./components/CheckCertificate";
 import ViewCertificate from "./components/ViewCertificate";
 import Navbar from "./components/Navbar";
+import BlockchainSwitch from "./components/BlockchainSwitch";
 import "./App.css";
 import * as serviceWorker from "./serviceWorker";
 import "./config/firebaseConfig";
@@ -15,21 +16,26 @@ import "./config/firebaseConfig";
 const routing = (
   <Router>
     <>
-      <Navbar />
-      <Switch>
-        <Route exact path="/" component={App} />
-        <Route path="/register/:blockchain?" component={RegisterCertificate} />
-        <Route
-          path="/check/:blockchain?/:address"
-          component={CheckCertificate}
-        />
-        <Route path="/check/:blockchain?" component={CheckCertificate} />
-        <Route
-          path="/certificate/:blockchain?/:address"
-          component={ViewCertificate}
-        />
-        <Route component={App} />
-      </Switch>
+      <BlockchainSwitch>
+        <Navbar />
+        <Switch>
+          <Route exact path="/" component={App} />
+          <Route
+            path="/register/:blockchain?"
+            component={RegisterCertificateContextWrapper}
+          />
+          <Route
+            path="/check/:blockchain?/:address"
+            component={CheckCertificate}
+          />
+          <Route path="/check/:blockchain?" component={CheckCertificate} />
+          <Route
+            path="/certificate/:blockchain?/:address"
+            component={ViewCertificate}
+          />
+          <Route component={App} />
+        </Switch>
+      </BlockchainSwitch>
       <div
         style={{
           position: "absolute",

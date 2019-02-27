@@ -370,6 +370,7 @@ class App extends Component {
   };
 
   render() {
+    const { blockchain } = this.props.context;
     return (
       <Container fluid>
         {this.state.headerMessage.open && (
@@ -405,7 +406,7 @@ class App extends Component {
               <Image src="/images/short-paragraph.png" />
             </Segment>
           ) : (
-            <Grid columns={this.state.headerMessage.open ? 1 : 2} stackable>
+            <Grid columns={2} stackable>
               <Grid.Row stretched>
                 {this.state.screenWidth < MIN_SCREEN_WIDTH && (
                   <Grid.Column>
@@ -414,39 +415,57 @@ class App extends Component {
                     />
                   </Grid.Column>
                 )}
-                {!this.state.headerMessage.open && (
-                  <Grid.Column>
-                    <Segment>
-                      <Divider horizontal>
-                        <Header as="h4">Register a new marriage</Header>
-                      </Divider>
-                      <Segment secondary basic>
-                        Fill in the form to register a new marriage.
-                      </Segment>
-                      <NewCertificateForm
-                        userAddress={this.state.userAddress}
-                        updateCityAndCountry={this.updateCityAndCountry}
-                        updateSpouseDetails={this.updateSpouseDetails}
-                        spousesDetails={this.state.spousesDetails}
-                      />
-                    </Segment>
-                    {checkIfDetailsAreValid(
-                      this.state.spousesDetails.firstSpouseDetails
-                    ) &&
-                      checkIfDetailsAreValid(
-                        this.state.spousesDetails.secondSpouseDetails
-                      ) && (
-                        <DetailsValidation
+
+                <Grid.Column>
+                  {!this.state.headerMessage.open ? (
+                    <>
+                      <Segment>
+                        <Divider horizontal>
+                          <Header as="h4">Register a new marriage</Header>
+                        </Divider>
+                        <Segment secondary basic>
+                          Fill in the form to register a new marriage.
+                        </Segment>
+                        {blockchain !== null && (
+                          <Segment
+                            basic
+                            size="tiny"
+                            style={{ fontStyle: "italic" }}
+                          >
+                            Blockchain:{" "}
+                            {blockchain === "eth" ? "Ethereum" : "Tron"}
+                          </Segment>
+                        )}
+                        <NewCertificateForm
+                          userAddress={this.state.userAddress}
+                          updateCityAndCountry={this.updateCityAndCountry}
+                          updateSpouseDetails={this.updateSpouseDetails}
                           spousesDetails={this.state.spousesDetails}
-                          city={this.state.city}
-                          country={this.state.country}
-                          currentFee={this.state.fee}
-                          gasToUse={this.state.gasToUse}
-                          confirmRegistration={this.confirmRegistration}
                         />
-                      )}
-                  </Grid.Column>
-                )}
+                      </Segment>
+                      {checkIfDetailsAreValid(
+                        this.state.spousesDetails.firstSpouseDetails
+                      ) &&
+                        checkIfDetailsAreValid(
+                          this.state.spousesDetails.secondSpouseDetails
+                        ) && (
+                          <DetailsValidation
+                            spousesDetails={this.state.spousesDetails}
+                            city={this.state.city}
+                            country={this.state.country}
+                            currentFee={this.state.fee}
+                            gasToUse={this.state.gasToUse}
+                            confirmRegistration={this.confirmRegistration}
+                          />
+                        )}
+                    </>
+                  ) : (
+                    <MarriagesGraph
+                      firebase={firebase}
+                      screenWidth={this.state.screenWidth}
+                    />
+                  )}
+                </Grid.Column>
                 <Grid.Column>
                   {this.state.screenWidth >= MIN_SCREEN_WIDTH && (
                     <NumberOfMarriages
@@ -511,14 +530,16 @@ class App extends Component {
                   </Segment>
                 </Grid.Column>
               </Grid.Row>
-              <Grid.Row stretched>
-                <Grid.Column width={16}>
-                  <MarriagesGraph
-                    firebase={firebase}
-                    screenWidth={this.state.screenWidth}
-                  />
-                </Grid.Column>
-              </Grid.Row>
+              {!this.state.headerMessage.open && (
+                <Grid.Row stretched>
+                  <Grid.Column width={16}>
+                    <MarriagesGraph
+                      firebase={firebase}
+                      screenWidth={this.state.screenWidth}
+                    />
+                  </Grid.Column>
+                </Grid.Row>
+              )}
             </Grid>
           )}
         </Container>
