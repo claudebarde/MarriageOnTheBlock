@@ -56,35 +56,37 @@ class DetailsValidation extends Component {
                   </List.Header>
                 </List.Content>
               </List.Item>
-              {Object.keys(this.props.spousesDetails).map((spouse, index) => (
-                <List.Item key={spouse}>
-                  <List.Icon name="user" />
-                  <List.Content>
-                    <List.Header>{`${_.upperFirst(
-                      this.props.spousesDetails[spouse].firstName
-                    )} ${_.upperFirst(
-                      this.props.spousesDetails[spouse].lastName
-                    )}`}</List.Header>
-                    <List.Description>Spouse {index + 1}</List.Description>
-                    <List.List>
-                      <List.Item>
-                        <List.Icon name="id card" />
-                        <List.Content>{`${_.upperFirst(
-                          this.props.spousesDetails[spouse].idType
-                        )} Number: ${
-                          this.props.spousesDetails[spouse].idNumber
-                        }`}</List.Content>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon name="linkify" />
-                        <List.Content>{`Address: ${
-                          this.props.spousesDetails[spouse].address
-                        }`}</List.Content>
-                      </List.Item>
-                    </List.List>
-                  </List.Content>
-                </List.Item>
-              ))}
+              {Object.keys(this.props.spousesDetails)
+                .slice(0, 2)
+                .map((spouse, index) => (
+                  <List.Item key={spouse}>
+                    <List.Icon name="user" />
+                    <List.Content>
+                      <List.Header>{`${_.upperFirst(
+                        this.props.spousesDetails[spouse].firstName
+                      )} ${_.upperFirst(
+                        this.props.spousesDetails[spouse].lastName
+                      )}`}</List.Header>
+                      <List.Description>Spouse {index + 1}</List.Description>
+                      <List.List>
+                        <List.Item>
+                          <List.Icon name="id card" />
+                          <List.Content>{`${_.upperFirst(
+                            this.props.spousesDetails[spouse].idType
+                          )} Number: ${
+                            this.props.spousesDetails[spouse].idNumber
+                          }`}</List.Content>
+                        </List.Item>
+                        <List.Item>
+                          <List.Icon name="linkify" />
+                          <List.Content>{`Address: ${
+                            this.props.spousesDetails[spouse].address
+                          }`}</List.Content>
+                        </List.Item>
+                      </List.List>
+                    </List.Content>
+                  </List.Item>
+                ))}
               <List.Item>
                 <List.Icon name="ethereum" />
                 <List.Content>

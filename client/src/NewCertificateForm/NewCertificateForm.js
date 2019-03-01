@@ -40,14 +40,29 @@ class NewCertificateForm extends Component {
       { key: "passport", text: "Passport", value: "passport" },
       { key: "id", text: "ID", value: "id" }
     ],
-    loadingLocation: false
+    loadingLocation: false,
+    errorAddress: { firstSpouse: false, secondSpouse: false }
   };
 
   updateSpouseInfo = event => {
     // we fetch the id value to know which spouse to update
     const spouse = event.target.id.split("-")[0];
     const infoToUpdate = event.target.id.split("-")[1];
-    const val = event.target.value;
+    const val = event.target.value.trim();
+
+    if (infoToUpdate === "address" && val.length > 0) {
+      const newErrorAddress = this.state.errorAddress;
+      newErrorAddress[spouse] = !this.props.isAddress(val);
+      this.setState({
+        errorAddress: newErrorAddress
+      });
+    } else if (infoToUpdate === "address" && val.length === 0) {
+      const newErrorAddress = this.state.errorAddress;
+      newErrorAddress[spouse] = false;
+      this.setState({
+        errorAddress: newErrorAddress
+      });
+    }
 
     if (spouse === "firstSpouse") {
       const newDetails = { ...this.state.firstSpouseDetails };
@@ -114,7 +129,9 @@ class NewCertificateForm extends Component {
   componentDidMount = () => {
     // if the geolocation api is supported
     if (navigator.geolocation) {
-      this.setState({ loadingLocation: true });
+      this.setState({ loadingLocation: true }, () =>
+        setTimeout(() => this.setState({ loadingLocation: false }), 10000)
+      );
       // we fetch the user's location
       navigator.geolocation.getCurrentPosition(
         async position => {
@@ -135,7 +152,12 @@ class NewCertificateForm extends Component {
           if (error) {
             this.setState({ loadingLocation: false });
           }
-        }
+        },
+        error => {
+          this.setState({ loadingLocation: false });
+          console.log(error);
+        },
+        { maximumAge: 600000, timeout: 10000 }
       );
     }
   };
@@ -288,6 +310,7 @@ class NewCertificateForm extends Component {
                         id={`${spouse}-address`}
                         value={this.state[`${spouse}Details`].address}
                         onChange={this.updateSpouseInfo}
+                        error={this.state.errorAddress[spouse]}
                       />
                       <Button
                         content="Submit"

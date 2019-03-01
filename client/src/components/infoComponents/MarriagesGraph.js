@@ -10,7 +10,7 @@ const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 class MarriagesGraph extends Component {
   state = {
     locations: { animationEnabled: true, data: [] },
-    chartOptions: {},
+    chartOptions: { data: [] },
     screenWidth: this.props.screenWidth
   };
 
@@ -83,12 +83,14 @@ class MarriagesGraph extends Component {
       .httpsCallable("fetchLocations");
     try {
       const locations = await fetchLocations();
-      const chartOptions = this.displayCouplesLocations(locations.data);
-      this.setState({
-        loadingGraph: false,
-        locations: locations.data,
-        chartOptions
-      });
+      if (locations.data) {
+        const chartOptions = this.displayCouplesLocations(locations.data);
+        this.setState({
+          loadingGraph: false,
+          locations: locations.data,
+          chartOptions
+        });
+      }
     } catch (error) {
       console.log(error);
     }
@@ -119,6 +121,23 @@ class MarriagesGraph extends Component {
   };
 
   render() {
+    if (this.state.chartOptions.data.length === 0) {
+      return null;
+    } else if (
+      this.state.chartOptions.data.length > 0 &&
+      this.state.chartOptions.data[0].dataPoints.length === 0
+    ) {
+      return null;
+    }
+
+    let chartOptions;
+    if (this.props.chartOptions) {
+      // new options are passed after a marriage is registered
+      chartOptions = this.displayCouplesLocations(this.props.chartOptions);
+    } else {
+      chartOptions = this.state.chartOptions;
+    }
+
     return (
       <Segment textAlign="center">
         <Divider horizontal>
@@ -129,7 +148,7 @@ class MarriagesGraph extends Component {
             Loading
           </Loader>
         ) : (
-          <CanvasJSChart options={this.state.chartOptions} />
+          <CanvasJSChart options={chartOptions} />
         )}
       </Segment>
     );

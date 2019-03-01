@@ -16,6 +16,11 @@ contract MarriageCertificateCreator {
     
     event LogNewCertificateCreated(MarriageCertificate newCertificateAddress, uint numberOfCertificates);
     
+    modifier onlyOwner {
+        require(msg.sender == owner, "You are not allowed to perform this action");
+        _;
+    }
+    
     /** 
         @dev function is called every time someone wants to register a new marriage certificate
         @param spouse1 =  holds JSON string with first spouse details
@@ -23,6 +28,7 @@ contract MarriageCertificateCreator {
         @param spouse2address = address of second spouse needed to validate the marriage
         @param location =  holds JSON string with location details
     **/
+
     function createNewCertificate(
         string memory spouse1, string memory spouse2, address spouse2address, string memory location
         ) public payable {
@@ -44,8 +50,7 @@ contract MarriageCertificateCreator {
     }
     
     /// @dev owner of contract can update the required fee to create a new certificate
-    function updateFee(uint newFee) public {
-        require(msg.sender == owner, "You are not allowed to perform this action");
+    function updateFee(uint newFee) public onlyOwner {
         certificateFee = newFee;
     }
     
@@ -61,9 +66,12 @@ contract MarriageCertificateCreator {
         return address(this).balance;
     }
     
-    function withdraw() public {
-        require(msg.sender == owner, "You are not allowed to perform this action");
+    function withdraw() public onlyOwner {
         owner.transfer(address(this).balance);
+    }
+    
+    function close() public onlyOwner {
+        selfdestruct(owner);
     }
 }
 
@@ -81,7 +89,7 @@ contract MarriageCertificate {
         uint timestamp;
         bool approved;
     }
-    mapping(uint => withdrawRequestFromSavings) withdrawRequests;
+    mapping(uint => withdrawRequestFromSavings) public withdrawRequests;
     
     event LogMarriageValidity(bool[2] validity);
     event LogNewWithdrawalRequestFromSavings(uint request);
@@ -161,44 +169,33 @@ contract MarriageCertificate {
     
     /// @notice allows spouses to withdraw money from the account
     function withdraw(uint amount, bytes32 account) public onlySpouses {
-        require(accounts[account] > amount);
-        // requested amount cannot exceed total balance of account
-        if(amount < address(this).balance) {
-            // we check if the balance is sufficient for the withdrawal from the joined account
-            if(stringsAreEqual(account, "joined") && 
-                accounts["joined"] > amount) {
-                // we substract the amount from the joined account amount
-                accounts["joined"] -= amount;
-                // we send the money
-                msg.sender.transfer(amount);
-            } else if(stringsAreEqual(account, "savings") && 
-                accounts["savings"] > amount) {
-                // we create a request that the second spouse must approve in order to allow the transfer
-                withdrawRequestFromSavings memory newRequest = withdrawRequestFromSavings({
-                    sender: msg.sender,
-                    amount: amount,
-                    timestamp: now,
-                    approved: false
-                });
-                // we emit the new request with id number that will help find it in requests mapping
-                uint requestID = uint(keccak256(abi.encodePacked(msg.sender, amount, now, block.difficulty)));
-                emit LogNewWithdrawalRequestFromSavings(requestID);
-                // we save the new request in requests mapping
-                withdrawRequests[requestID] = newRequest;
-            } else {
-                revert("Invalid account or requested amount exceeds available balance.");
-            }
-            // we make sure the sum of the joined and savings accounts is equal to the total sum
-            assert(accounts["joined"] + accounts["savings"] == address(this).balance);
+        require(accounts[account] >= amount, "Withdrawal request exceeds account balance!");
+        
+        // we check if the balance is sufficient for the withdrawal from the joined account
+        if(stringsAreEqual(account, "joined") && 
+            accounts["joined"] >= amount) {
+            // we substract the amount from the joined account amount
+            accounts["joined"] -= amount;
+            // we send the money
+            msg.sender.transfer(amount);
+        } else if(stringsAreEqual(account, "savings") && 
+            accounts["savings"] >= amount) {
+            // we create a request number
+            uint requestID = uint(now + block.difficulty + block.number);
+            // we save the new request in requests mapping
+            withdrawRequests[requestID] = withdrawRequestFromSavings({
+                sender: msg.sender,
+                amount: amount,
+                timestamp: now,
+                approved: false
+            });
+            // we emit the new request with id number that will help find it in requests mapping
+            emit LogNewWithdrawalRequestFromSavings(requestID);
         } else {
-            revert("The amount you are trying to withdraw exceeds the total balance of the account.");
+            revert("Invalid account or requested amount exceeds available balance.");
         }
-    }
-    
-    /// @dev returns details about withdrawal request
-    function checkWithdrawRequest(uint requestID) public onlySpouses view returns (address, uint, uint, bool) {
-        withdrawRequestFromSavings memory request = withdrawRequests[requestID];
-        return (request.sender, request.amount, request.timestamp, request.approved);
+        // we make sure the sum of the joined and savings accounts is equal to the total sum
+        assert(accounts["joined"] + accounts["savings"] == address(this).balance);
     }
     
     /** @notice allows spouse to accept withdrawal request from savings

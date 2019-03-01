@@ -52,11 +52,13 @@ class ViewCertificate extends Component {
   render() {
     if (this.state.error.status) {
       return (
-        <Message
-          header="An error has occurred"
-          content={this.state.error.message}
-          error
-        />
+        <Container>
+          <Message
+            header="An error has occurred"
+            content={this.state.error.message}
+            error
+          />
+        </Container>
       );
     }
 
@@ -165,10 +167,12 @@ class ViewCertificate extends Component {
             </Segment>
             <Segment basic size="tiny">
               <a
-                href="https://www.getmarriedontheblockchain.com"
+                href="https://www.marriageontheblock.com"
                 style={{ color: "grey", fontStyle: "italic" }}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                https://www.getmarriedontheblockchain.com
+                https://www.marriageontheblock.com
               </a>
             </Segment>
           </div>

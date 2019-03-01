@@ -97,7 +97,8 @@ class App extends Component {
           idType: "",
           address: ""
         }
-      }
+      },
+      chartOptions: null
     };
   }
 
@@ -125,8 +126,6 @@ class App extends Component {
       this.setState({
         spousesDetails: {
           ...this.state.spousesDetails,
-          city,
-          country,
           firstSpouseDetails: {
             firstName,
             lastName,
@@ -140,8 +139,6 @@ class App extends Component {
       this.setState({
         spousesDetails: {
           ...this.state.spousesDetails,
-          city,
-          country,
           secondSpouseDetails: {
             firstName,
             lastName,
@@ -284,8 +281,7 @@ class App extends Component {
           text: this.state.country.toLowerCase()
         });
         // we update the pie chart
-        const chartOptions = this.displayCouplesLocations(savedLocations.data);
-        this.setState({ chartOptions });
+        this.setState({ chartOptions: savedLocations.data });
       }
     } catch (error) {
       console.log(error);
@@ -370,7 +366,6 @@ class App extends Component {
   };
 
   render() {
-    const { blockchain } = this.props.context;
     return (
       <Container fluid>
         {this.state.headerMessage.open && (
@@ -426,21 +421,12 @@ class App extends Component {
                         <Segment secondary basic>
                           Fill in the form to register a new marriage.
                         </Segment>
-                        {blockchain !== null && (
-                          <Segment
-                            basic
-                            size="tiny"
-                            style={{ fontStyle: "italic" }}
-                          >
-                            Blockchain:{" "}
-                            {blockchain === "eth" ? "Ethereum" : "Tron"}
-                          </Segment>
-                        )}
                         <NewCertificateForm
                           userAddress={this.state.userAddress}
                           updateCityAndCountry={this.updateCityAndCountry}
                           updateSpouseDetails={this.updateSpouseDetails}
                           spousesDetails={this.state.spousesDetails}
+                          isAddress={web3.utils.isAddress}
                         />
                       </Segment>
                       {checkIfDetailsAreValid(
@@ -536,6 +522,7 @@ class App extends Component {
                     <MarriagesGraph
                       firebase={firebase}
                       screenWidth={this.state.screenWidth}
+                      chartOptions={this.state.chartOptions}
                     />
                   </Grid.Column>
                 </Grid.Row>
@@ -629,7 +616,9 @@ class App extends Component {
                       <List.Header>Copy of the certificate</List.Header>
                       <List.Description>
                         <Link
-                          to={`/certificate/${this.state.certificate.address}`}
+                          to={`/certificate/${this.props.context.blockchain}/${
+                            this.state.certificate.address
+                          }`}
                         >
                           Save a copy of the certificate!
                         </Link>

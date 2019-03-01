@@ -28,6 +28,7 @@ class SpouseList extends Component {
     ethToDollarChange: 0,
     convertEthToDollars: 0,
     ethToTransfer: "",
+    gasForTx: 1000000,
     depositFundsModal: { open: false, loading: false, toAccount: "" },
     withdrawFundsModal: { open: false, loading: false, fromAccount: "" },
     errorSend: false,
@@ -38,7 +39,8 @@ class SpouseList extends Component {
       sender: "",
       amount: 0,
       timestamp: 0,
-      approved: true
+      approved: true,
+      error: ""
     },
     displayIdNumber: "••••••••••••••••••",
     decryptInput: { error: false, length: 0 },
@@ -47,18 +49,20 @@ class SpouseList extends Component {
       icon: "spinner",
       loading: true,
       header: "Waiting for confirmation...",
+      txHash: null,
       message:
         "Your transaction is being confirmed on the blockchain, please wait."
     }
   };
 
-  transactionModalData = status => {
+  transactionModalData = (status, txHash) => {
     if (status === "pending") {
       return {
         open: false,
         icon: "spinner",
         loading: true,
         header: "Waiting for confirmation...",
+        txHash,
         message:
           "Your transaction is being confirmed on the blockchain, please wait."
       };
@@ -68,21 +72,22 @@ class SpouseList extends Component {
         icon: "thumbs up",
         loading: false,
         header: "Transaction confirmed!",
+        txHash,
         message:
           "Your transaction has been successfully confirmed on the blockchain!"
       };
     }
   };
 
-  closeTxModal = status => {
+  closeTxModal = (status, txHash) => {
     if (status === true) {
       this.setState({
-        transactionModal: this.transactionModalData("confirmed")
+        transactionModal: this.transactionModalData("confirmed", txHash)
       });
       setTimeout(
         () =>
           this.setState({
-            transactionModal: this.transactionModalData("pending")
+            transactionModal: this.transactionModalData("pending", txHash)
           }),
         3000
       );
@@ -93,20 +98,27 @@ class SpouseList extends Component {
     const changeMarriageStatus = await certificate.methods
       .changeMarriageStatus()
       .send(
-        { from: this.props.currentAddress, gas: "300000" },
+        { from: this.props.currentAddress, gas: this.state.gasForTx },
         (error, txHash) => {
           if (error) {
             console.log("error", error);
           } else {
             console.log("Tx hash: ", txHash);
             this.setState({
-              transactionModal: { ...this.state.transactionModal, open: true }
+              transactionModal: {
+                ...this.state.transactionModal,
+                open: true,
+                txHash
+              }
             });
           }
         }
       );
     // when the tx is processed, we display a message to the user and close the modal
-    this.closeTxModal(changeMarriageStatus.status);
+    this.closeTxModal(
+      changeMarriageStatus.status,
+      changeMarriageStatus.transactionHash
+    );
   };
 
   depositFunds = async () => {
@@ -123,11 +135,14 @@ class SpouseList extends Component {
         "ether"
       );
       const depositTx = await certificate.methods
-        .deposit(funds, this.state.depositFundsModal.toAccount)
+        .deposit(
+          funds,
+          web3.utils.fromAscii(this.state.depositFundsModal.toAccount)
+        )
         .send(
           {
             from: this.props.currentAddress,
-            gas: "300000",
+            gas: this.state.gasForTx,
             value: funds
           },
           (error, txHash) => {
@@ -136,7 +151,16 @@ class SpouseList extends Component {
             } else {
               console.log("Tx hash: ", txHash);
               this.setState({
-                transactionModal: { ...this.state.transactionModal, open: true }
+                transactionModal: {
+                  ...this.state.transactionModal,
+                  txHash,
+                  open: true
+                },
+                depositFundsModal: {
+                  ...this.state.depositFundsModal,
+                  open: false,
+                  loading: false
+                }
               });
             }
           }
@@ -144,7 +168,7 @@ class SpouseList extends Component {
 
       if (depositTx.status) {
         // when the tx is processed, we display a message to the user and close the modal
-        this.closeTxModal(depositTx.status);
+        this.closeTxModal(depositTx.status, depositTx.transactionHash);
         // we update the data in the state
         this.props.updateBalance(
           "deposit",
@@ -165,17 +189,40 @@ class SpouseList extends Component {
           depositFundsModal: {
             open: false,
             loading: false,
-            toAccount: "joined"
+            toAccount: ""
           },
           errorSend: true
         });
       }
     } catch (error) {
       console.log(error);
+      this.setState({
+        depositFundsModal: {
+          open: false,
+          loading: false,
+          toAccount: ""
+        },
+        errorSend: true
+      });
     }
   };
 
   withdrawFunds = async () => {
+    if (
+      parseFloat(this.state.ethToTransfer) >
+      parseFloat(
+        web3.utils.fromWei(
+          this.props.balance[
+            this.state.withdrawFundsModal.fromAccount
+          ].toString(),
+          "ether"
+        )
+      )
+    ) {
+      this.setState({ errorSend: true });
+      return;
+    }
+
     this.setState({
       withdrawFundsModal: {
         ...this.state.withdrawFundsModal,
@@ -189,11 +236,14 @@ class SpouseList extends Component {
         "ether"
       );
       const withdrawTx = await certificate.methods
-        .withdraw(funds, this.state.withdrawFundsModal.fromAccount)
+        .withdraw(
+          funds,
+          web3.utils.fromAscii(this.state.withdrawFundsModal.fromAccount)
+        )
         .send(
           {
             from: this.props.currentAddress,
-            gas: "300000"
+            gas: this.state.gasForTx
           },
           (error, txHash) => {
             if (error) {
@@ -201,7 +251,12 @@ class SpouseList extends Component {
             } else {
               console.log("Tx hash: ", txHash);
               this.setState({
-                transactionModal: { ...this.state.transactionModal, open: true }
+                transactionModal: {
+                  ...this.state.transactionModal,
+                  open: true,
+                  txHash
+                },
+                errorSend: false
               });
             }
           }
@@ -209,7 +264,7 @@ class SpouseList extends Component {
 
       if (withdrawTx.status) {
         // when the tx is processed, we display a message to the user and close the modal
-        this.closeTxModal(withdrawTx.status);
+        this.closeTxModal(withdrawTx.status, withdrawTx.transactionHash);
         // we return the request number for a withdrawal from the savings account
         if (this.state.withdrawFundsModal.fromAccount === "savings") {
           this.setState({
@@ -239,16 +294,30 @@ class SpouseList extends Component {
       } else {
         this.setState({
           withdrawFundsModal: { open: false, loading: false, fromAccount: "" },
+          transactionModal: {
+            ...this.state.transactionModal,
+            open: false,
+            txHash: null
+          },
           errorSend: true
         });
       }
     } catch (error) {
       console.log(error);
+      this.setState({
+        withdrawFundsModal: { open: false, loading: false, fromAccount: "" },
+        transactionModal: {
+          ...this.state.transactionModal,
+          open: false,
+          txHash: null
+        },
+        errorSend: true
+      });
     }
   };
 
   convertEthToDollars = event => {
-    const value = event.target.value.trim();
+    const value = event.target.value.trim().replace("-", "");
     this.setState({
       ethToTransfer: value,
       convertEthToDollars:
@@ -259,6 +328,8 @@ class SpouseList extends Component {
   };
 
   fetchWithdrawRequest = requestID => {
+    if (requestID.trim().length === 0) return;
+
     this.setState(
       {
         fetchWithdrawRequest: {
@@ -267,25 +338,39 @@ class SpouseList extends Component {
           sender: "",
           amount: 0,
           timestamp: 0,
-          approved: true
+          approved: true,
+          error: false
         }
       },
       async () => {
         try {
           const request = await certificate.methods
-            .checkWithdrawRequest(requestID)
+            .withdrawRequests(requestID)
             .call();
-          if (request) {
+          if (
+            request &&
+            (request.sender !== "0x0000000000000000000000000000000000000000" ||
+              request.timestamp === 0 ||
+              request.amount === 0)
+          ) {
             this.setState({
               fetchWithdrawRequest: {
                 loading: false,
                 status: true,
                 requestID,
-                sender: request[0],
-                amount: request[1],
-                timestamp: request[2],
-                approved: request[3],
-                error: ""
+                sender: request.sender,
+                amount: request.amount,
+                timestamp: request.timestamp,
+                approved: request.approved,
+                error: false
+              }
+            });
+          } else {
+            this.setState({
+              fetchWithdrawRequest: {
+                loading: false,
+                status: false,
+                error: true
               }
             });
           }
@@ -303,7 +388,7 @@ class SpouseList extends Component {
         .send(
           {
             from: this.props.currentAddress,
-            gas: "300000"
+            gas: this.state.gasForTx
           },
           (error, txHash) => {
             if (error) {
@@ -311,7 +396,11 @@ class SpouseList extends Component {
             } else {
               console.log("Tx hash: ", txHash);
               this.setState({
-                transactionModal: { ...this.state.transactionModal, open: true }
+                transactionModal: {
+                  ...this.state.transactionModal,
+                  open: true,
+                  txHash
+                }
               });
             }
           }
@@ -319,7 +408,7 @@ class SpouseList extends Component {
       // if approved
       if (requestTx.status) {
         // when the tx is processed, we display a message to the user and close the modal
-        this.closeTxModal(requestTx.status);
+        this.closeTxModal(requestTx.status, requestTx.transactionHash);
         // we update request info
         this.setState({
           fetchWithdrawRequest: {
@@ -340,7 +429,12 @@ class SpouseList extends Component {
       this.setState({
         fetchWithdrawRequest: {
           ...this.state.fetchWithdrawRequest,
-          error: error.message.split("revert")[1].trim()
+          loading: false,
+          error: "An error has occurred."
+        },
+        transactionModal: {
+          ...this.state.transactionModal,
+          open: false
         }
       });
     }
@@ -368,30 +462,35 @@ class SpouseList extends Component {
   };
 
   componentDidMount = async () => {
-    getWeb3().then(async getWeb3 => {
-      web3 = getWeb3;
-
-      // creates contract instance
-      try {
-        certificate = await new web3.eth.Contract(
-          newCertificateAbi,
-          this.props.details.address
-        );
-      } catch (error) {
-        console.log(error);
-      }
-      // fetches ether price in dollars
-      const ethToDollar = await fetch(
-        "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
+    web3 = await getWeb3();
+    // creates contract instance
+    try {
+      certificate = await new web3.eth.Contract(
+        newCertificateAbi,
+        this.props.details.address
       );
-      ethToDollar
-        .json()
-        .then(price => this.setState({ ethToDollarChange: price["USD"] }));
-    });
+    } catch (error) {
+      console.log(error);
+    }
+    // fetches ether price in dollars
+    const ethToDollar = await fetch(
+      "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
+    );
+    ethToDollar
+      .json()
+      .then(price => this.setState({ ethToDollarChange: price["USD"] }));
   };
 
   render() {
-    const { details, spouse, index, isValid, currentUser } = this.props;
+    const {
+      details,
+      spouse,
+      index,
+      isValid,
+      currentUser,
+      currentAddress,
+      balance
+    } = this.props;
 
     return (
       <>
@@ -400,7 +499,11 @@ class SpouseList extends Component {
           size="tiny"
           onClose={() =>
             this.setState({
-              transactionModal: { ...this.state.transactionModal, open: false }
+              transactionModal: {
+                ...this.state.transactionModal,
+                open: false,
+                txHash: null
+              }
             })
           }
           closeIcon
@@ -416,6 +519,16 @@ class SpouseList extends Component {
                   loading={this.state.transactionModal.loading}
                 />
                 {this.state.transactionModal.message}
+                <br />
+                <br />
+                <Segment
+                  size="tiny"
+                  basic
+                  secondary
+                  style={{ wordBreak: "break-word" }}
+                >
+                  {`Transaction hash: ${this.state.transactionModal.txHash}`}
+                </Segment>
               </Header>
             </Segment>
           </Modal.Content>
@@ -529,6 +642,18 @@ class SpouseList extends Component {
                             text="There was an error transferring the funds."
                           />
                         )}
+                        {balance &&
+                          web3 &&
+                          this.state.depositFundsModal.toAccount && (
+                            <Segment size="mini" basic secondary>
+                              {`Current balance: ${web3.utils.fromWei(
+                                balance[
+                                  this.state.depositFundsModal.toAccount
+                                ].toString(),
+                                "ether"
+                              )} ether`}
+                            </Segment>
+                          )}
                         <Header as="h4">Amount in ether :</Header>
                         <Input
                           type="number"
@@ -589,7 +714,7 @@ class SpouseList extends Component {
                           withdrawFundsModal: {
                             open: false,
                             loading: false,
-                            fromAccount: ""
+                            fromAccount: "joined"
                           }
                         })
                       }
@@ -605,8 +730,21 @@ class SpouseList extends Component {
                           <Message
                             header="An error has occurred"
                             text="There was an error withdrawing the funds."
+                            error
                           />
                         )}
+                        {balance &&
+                          web3 &&
+                          this.state.withdrawFundsModal.fromAccount && (
+                            <Segment size="mini" basic secondary>
+                              {`Available balance: ${web3.utils.fromWei(
+                                balance[
+                                  this.state.withdrawFundsModal.fromAccount
+                                ].toString(),
+                                "ether"
+                              )} ether`}
+                            </Segment>
+                          )}
                         <Header as="h4">Amount in ether :</Header>
                         <Input
                           type="number"
@@ -623,7 +761,9 @@ class SpouseList extends Component {
                         {this.state.requestReceipt.status && (
                           <Message
                             header="Withdrawal Request Receipt :"
-                            content={this.state.requestReceipt.tx}
+                            content={`${
+                              this.state.requestReceipt.tx
+                            } -> Please give this receipt number to your spouse to confirm the withdrawal.`}
                             size="mini"
                             style={{ wordBreak: "break-word" }}
                             info
@@ -708,7 +848,7 @@ class SpouseList extends Component {
                           </List.Description>
                         </List.Content>
                       }
-                      size="small"
+                      size="tiny"
                       onOpen={() =>
                         this.setState({
                           fetchWithdrawRequest: {
@@ -750,56 +890,61 @@ class SpouseList extends Component {
                             <Image src="/images/short-paragraph.png" />
                           </Segment>
                         )}
-                        {this.state.fetchWithdrawRequest.status && (
-                          <List bulleted>
-                            <List.Item>
-                              Creator's Address:{" "}
-                              {this.state.fetchWithdrawRequest.sender}
-                            </List.Item>
-                            <List.Item>
-                              Requested Amount:{" "}
-                              {web3.utils.fromWei(
-                                this.state.fetchWithdrawRequest.amount.toString(),
-                                "ether"
-                              )}{" "}
-                              ether
-                            </List.Item>
-                            <List.Item>
-                              Sent on{" "}
-                              {moment
-                                .unix(this.state.fetchWithdrawRequest.timestamp)
-                                .format("dddd, MMMM Do YYYY, h:mm:ss a")}
-                            </List.Item>
-                            <List.Item>
-                              Approval status:{" "}
-                              {this.state.fetchWithdrawRequest.approved
-                                ? "Approved"
-                                : "Pending"}
-                            </List.Item>
-                            {this.state.fetchWithdrawRequest.error && (
-                              <Message
-                                size="mini"
-                                header="Error"
-                                content={this.state.fetchWithdrawRequest.error}
-                                error
-                              />
-                            )}
-                          </List>
+                        {this.state.fetchWithdrawRequest.error ? (
+                          <Message
+                            header="An error has occurred"
+                            content="There is no request corresponding to this number."
+                            error
+                          />
+                        ) : (
+                          this.state.fetchWithdrawRequest.status && (
+                            <List bulleted>
+                              <List.Item>
+                                Creator's Address:{" "}
+                                {this.state.fetchWithdrawRequest.sender}
+                              </List.Item>
+                              <List.Item>
+                                Requested Amount:{" "}
+                                {web3.utils.fromWei(
+                                  this.state.fetchWithdrawRequest.amount.toString(),
+                                  "ether"
+                                )}{" "}
+                                ether
+                              </List.Item>
+                              <List.Item>
+                                Sent on{" "}
+                                {moment
+                                  .unix(
+                                    this.state.fetchWithdrawRequest.timestamp
+                                  )
+                                  .format("dddd, MMMM Do YYYY, h:mm:ss a")}
+                              </List.Item>
+                              <List.Item>
+                                Approval status:{" "}
+                                {this.state.fetchWithdrawRequest.approved
+                                  ? "Approved"
+                                  : "Pending"}
+                              </List.Item>
+                            </List>
+                          )
                         )}
                       </Modal.Content>
-                      {!this.state.fetchWithdrawRequest.approved && (
-                        <Modal.Actions>
-                          <Button
-                            onClick={() =>
-                              this.approveRequest(
-                                this.state.fetchWithdrawRequest.requestID
-                              )
-                            }
-                          >
-                            Approve Request
-                          </Button>
-                        </Modal.Actions>
-                      )}
+                      {!this.state.fetchWithdrawRequest.approved &&
+                        this.state.fetchWithdrawRequest.sender &&
+                        this.state.fetchWithdrawRequest.sender.toLowerCase() !==
+                          currentAddress.toLowerCase() && (
+                          <Modal.Actions>
+                            <Button
+                              onClick={() =>
+                                this.approveRequest(
+                                  this.state.fetchWithdrawRequest.requestID
+                                )
+                              }
+                            >
+                              Approve Request
+                            </Button>
+                          </Modal.Actions>
+                        )}
                     </Modal>
                   </List.Item>
                   {isValid[index] ? (

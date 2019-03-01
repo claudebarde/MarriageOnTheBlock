@@ -26,6 +26,10 @@ export const CERTIFICATE_OBJ = {
   error: null
 };
 
+export const etherescan_APIKEY = "S2IHBR3AZ3JFGMARDPSKJBU2FSJKG3FQUK";
+
+export const NETWORK = "ropsten";
+
 const GlobalState = React.createContext();
 export const GlobalStateProvider = GlobalState.Provider;
 export const GlobalStateConsumer = GlobalState.Consumer;

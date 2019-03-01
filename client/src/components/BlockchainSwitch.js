@@ -2,12 +2,13 @@ import React, { Component } from "react";
 import { Modal, Header, Grid, Button, Icon } from "semantic-ui-react";
 import { withRouter } from "react-router-dom";
 
-import { GlobalStateProvider } from "../config/config";
+import { GlobalStateProvider, NETWORK } from "../config/config";
 
 class BlockchainSwitch extends Component {
   state = {
     blockchain: null,
-    blockchainModalOpen: false
+    blockchainModalOpen: false,
+    network: NETWORK
   };
 
   openBlockchainModal = () => {
@@ -37,7 +38,7 @@ class BlockchainSwitch extends Component {
 
   render() {
     return (
-      <GlobalStateProvider value={{ blockchain: this.state.blockchain }}>
+      <GlobalStateProvider value={{ ...this.state }}>
         {this.props.children}
         {this.state.blockchain === null && (
           <Modal

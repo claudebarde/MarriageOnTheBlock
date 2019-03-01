@@ -9,6 +9,7 @@ import {
   Image,
   Container
 } from "semantic-ui-react";
+import { withRouter } from "react-router-dom";
 
 import DisplayCertificateCheck from "../DisplayCertificateCheck/DisplayCertificateCheck";
 import { checkCertificate } from "../utils/functions";
@@ -27,7 +28,8 @@ class CheckCertificate extends Component {
     minScreenWidth: MIN_SCREEN_WIDTH,
     certificateCheck: CERTIFICATE_OBJ,
     lastMarriage: { 0: "", 1: "", 2: "" },
-    fetchingCertificateDetails: false
+    fetchingCertificateDetails: false,
+    showCertificateCheckDetails: false
   };
 
   // updates user address in case of change
@@ -41,7 +43,10 @@ class CheckCertificate extends Component {
   };
 
   fetchCertificateDetails = async () => {
-    this.setState({ fetchingCertificateDetails: true });
+    this.setState({
+      fetchingCertificateDetails: true,
+      showCertificateCheckDetails: false
+    });
     const address = this.state.certificateCheck.address;
     const certificate = await checkCertificate(address);
     if (certificate.return === "OK") {
@@ -69,8 +74,21 @@ class CheckCertificate extends Component {
       });
       // subscription to events
       this.subscribeLogEvent(certificate.instance, "LogMarriageValidity");
+      // updates the URL to include contract address
+      if (
+        this.props.location &&
+        !web3.utils.isAddress(this.props.match.params.address)
+      ) {
+        let url = this.props.location.pathname;
+        // we make sure there is no trailing slash at the end
+        if (url[url.length - 1] === "/") {
+          url = url.slice(0, -1);
+        }
+        // we create the url including the address
+        let newURL = url + `/${address}`;
+        this.props.history.push(newURL);
+      }
     } else {
-      console.log(certificate.error);
       this.setState({
         certificateCheck: {
           ...this.state.certificateCheck,
@@ -241,6 +259,7 @@ class CheckCertificate extends Component {
                   currentUser={this.state.userAddress}
                   web3={web3}
                   updateBalance={this.updateBalance}
+                  balance={this.state.certificateCheck.balance}
                 />
               ) : (
                 <Message
@@ -256,4 +275,4 @@ class CheckCertificate extends Component {
   }
 }
 
-export default CheckCertificate;
+export default withRouter(CheckCertificate);
