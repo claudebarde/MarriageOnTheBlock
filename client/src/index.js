@@ -36,18 +36,6 @@ const routing = (
           <Route component={App} />
         </Switch>
       </BlockchainSwitch>
-      <div
-        style={{
-          position: "absolute",
-          bottom: "0px",
-          right: "5px",
-          fontSize: "0.4rem"
-        }}
-      >
-        <a href="https://www.freepik.com/free-photos-vectors/background">
-          Background photo by prostooleh
-        </a>{" "}
-      </div>
     </>
   </Router>
 );

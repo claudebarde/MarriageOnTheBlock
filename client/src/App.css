@@ -56,8 +56,16 @@
   --THEME_COLOR: #ff6347;
   --THEME_COLOR_DARK: #ff2600;
   --THEME_COLOR_LIGHTER: #ffa599;
-  --BG_IMAGE: url("/images/marriage-tables.jpg");
+  /*--BG_IMAGE: url("/images/marriage-tables.jpg");*/
+  /*--BG_IMAGE: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);*/
+  /*--BG_IMAGE: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);*/
+  /*--BG_IMAGE: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%);*/
+  /*--BG_IMAGE: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);*/
+  /*--BG_IMAGE: linear-gradient(to top, #dad4ec 0%, #dad4ec 1%, #f3e7e9 100%);*/
+  --BG_IMAGE: linear-gradient(to top, #dfe9f3 0%, white 100%);
 }
+
+/*4*/
 
 html,
 body {

@@ -28,7 +28,6 @@ contract MarriageCertificateCreator {
         @param spouse2address = address of second spouse needed to validate the marriage
         @param location =  holds JSON string with location details
     **/
-
     function createNewCertificate(
         string memory spouse1, string memory spouse2, address spouse2address, string memory location
         ) public payable {
@@ -109,6 +108,7 @@ contract MarriageCertificate {
         address spouse2address, 
         string memory _location) public {
         require(certificateCreator != spouse2address, "Spouses' addresses cannot be the same!");
+        
         location = _location;
         spouse1 = _spouse1;
         spouse2 = _spouse2;
@@ -224,7 +224,7 @@ contract MarriageCertificate {
     
     /// @notice fallback function to send money directly, money stored in deposit account by default
     function() external payable {
-        accounts["deposit"] = accounts["deposit"] + msg.value;
+        accounts["deposit"] += msg.value;
     }
     
     function closeCertificate() public onlySpouses {

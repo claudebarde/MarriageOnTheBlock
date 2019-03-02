@@ -79,6 +79,7 @@ class CheckCertificate extends Component {
         this.props.location &&
         !web3.utils.isAddress(this.props.match.params.address)
       ) {
+        // if there is no address in the url
         let url = this.props.location.pathname;
         // we make sure there is no trailing slash at the end
         if (url[url.length - 1] === "/") {
@@ -86,6 +87,20 @@ class CheckCertificate extends Component {
         }
         // we create the url including the address
         let newURL = url + `/${address}`;
+        this.props.history.push(newURL);
+      } else if (
+        this.props.location &&
+        web3.utils.isAddress(this.props.match.params.address) &&
+        this.props.match.params.address.toLowerCase() !== address.toLowerCase()
+      ) {
+        // if there is a different address in the url
+        let url = this.props.location.pathname;
+        // we make sure there is no trailing slash at the end
+        if (url[url.length - 1] === "/") {
+          url = url.slice(0, -1);
+        }
+        // we create the url including the address
+        let newURL = url.replace(this.props.match.params.address, address);
         this.props.history.push(newURL);
       }
     } else {
