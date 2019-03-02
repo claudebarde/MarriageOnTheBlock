@@ -32,16 +32,6 @@ class CheckCertificate extends Component {
     showCertificateCheckDetails: false
   };
 
-  // updates user address in case of change
-  userAddressChange = () => {
-    const currentAddress = web3.eth.accounts.currentProvider.selectedAddress;
-    if (currentAddress && currentAddress !== this.state.userAddress) {
-      this.setState({
-        userAddress: web3.eth.accounts.currentProvider.selectedAddress
-      });
-    }
-  };
-
   fetchCertificateDetails = async () => {
     this.setState({
       fetchingCertificateDetails: true,
@@ -196,11 +186,8 @@ class CheckCertificate extends Component {
       web3 = await getWeb3();
       await web3.eth.net.isListening();
       console.log("web3 started!");
-      // address change listener
-      const addressChangeListener = setInterval(this.userAddressChange, 500);
       this.setState({
-        isConnected: true,
-        addressChangeListener
+        isConnected: true
       });
       // fetch contract details if address is provided
       if (
@@ -271,7 +258,7 @@ class CheckCertificate extends Component {
               (this.state.certificateCheck.error === null ? (
                 <DisplayCertificateCheck
                   details={this.state.certificateCheck}
-                  currentUser={this.state.userAddress}
+                  currentUser={context.userAddress}
                   web3={web3}
                   updateBalance={this.updateBalance}
                   balance={this.state.certificateCheck.balance}

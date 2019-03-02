@@ -1,5 +1,12 @@
 import React, { Component } from "react";
-import { Segment, Divider, Header, Loader } from "semantic-ui-react";
+import {
+  Segment,
+  Divider,
+  Header,
+  Loader,
+  Dimmer,
+  Image
+} from "semantic-ui-react";
 import CanvasJSReact from "../../config/canvasjs.react";
 import upperFirst from "lodash/upperFirst";
 import { MIN_SCREEN_WIDTH } from "../../config/config";
@@ -122,7 +129,14 @@ class MarriagesGraph extends Component {
 
   render() {
     if (this.state.chartOptions.data.length === 0) {
-      return null;
+      return (
+        <Segment>
+          <Dimmer active inverted>
+            <Loader inverted content="Loading Marriages Information" />
+          </Dimmer>
+          <Image src="/images/short-paragraph.png" />
+        </Segment>
+      );
     } else if (
       this.state.chartOptions.data.length > 0 &&
       this.state.chartOptions.data[0].dataPoints.length === 0

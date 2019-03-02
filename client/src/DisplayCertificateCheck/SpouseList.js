@@ -18,6 +18,9 @@ import _ from "lodash";
 import moment from "moment";
 import CryptoJS from "crypto-js";
 
+import firebase from "firebase/app";
+import "firebase/firebase-functions";
+
 import getWeb3 from "../utils/getWeb3";
 
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
@@ -106,6 +109,7 @@ class SpouseList extends Component {
             console.log("error", error);
           } else {
             console.log("Tx hash: ", txHash);
+            // the state is updated
             this.setState({
               transactionModal: {
                 ...this.state.transactionModal,
@@ -113,6 +117,8 @@ class SpouseList extends Component {
                 txHash
               }
             });
+            // we log the update in the firestore
+            
           }
         }
       );

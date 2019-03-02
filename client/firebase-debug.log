@@ -1,0 +1,28 @@
+[debug] [2019-03-02T04:27:54.532Z] ----------------------------------------------------------------------
+[debug] [2019-03-02T04:27:54.534Z] Command:       /usr/local/bin/node /usr/local/bin/firebase functions:shell
+[debug] [2019-03-02T04:27:54.534Z] CLI Version:   6.3.1
+[debug] [2019-03-02T04:27:54.534Z] Platform:      darwin
+[debug] [2019-03-02T04:27:54.534Z] Node Version:  v8.12.0
+[debug] [2019-03-02T04:27:54.535Z] Time:          Sat Mar 02 2019 12:27:54 GMT+0800 (+08)
+[debug] [2019-03-02T04:27:54.535Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2019-03-02T04:27:54.544Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2019-03-02T04:27:54.544Z] > authorizing via signed-in user
+[debug] [2019-03-02T04:27:54.545Z] [iam] checking project marriage-on-blockchain for permissions ["firebase.projects.get"]
+[debug] [2019-03-02T04:27:54.546Z] >>> HTTP REQUEST POST https://cloudresourcemanager.googleapis.com/v1/projects/marriage-on-blockchain:testIamPermissions  
+
+[debug] [2019-03-02T04:27:55.763Z] <<< HTTP RESPONSE 200
+[info] i  functions: Preparing to emulate functions.
+[debug] [2019-03-02T04:27:56.662Z] Fetching environment
+[debug] [2019-03-02T04:27:56.664Z] >>> HTTP REQUEST GET https://cloudresourcemanager.googleapis.com/v1/projects/marriage-on-blockchain  
+ 
+[debug] [2019-03-02T04:27:57.886Z] <<< HTTP RESPONSE 200
+[debug] [2019-03-02T04:27:57.887Z] >>> HTTP REQUEST GET https://mobilesdk-pa.googleapis.com/v1/projects/430872786253:getServerAppConfig  
+ 
+[debug] [2019-03-02T04:27:58.224Z] <<< HTTP RESPONSE 200
+[debug] [2019-03-02T04:27:58.225Z] Starting @google-cloud/functions-emulator
+[debug] [2019-03-02T04:27:59.823Z] Parsing function triggers
+[info] ✔  functions: saveNewCertificate
+[info] ✔  functions: updateTxHistory
+[info] ✔  functions: fetchLocations
+[info] ✔  functions: saveLocation

@@ -2,13 +2,23 @@ import React, { Component } from "react";
 import { Modal, Header, Grid, Button, Icon } from "semantic-ui-react";
 import { withRouter } from "react-router-dom";
 
+import firebase from "firebase/app";
+import "firebase/firebase-functions";
+import { config } from "../config/firebaseConfig";
+
 import { GlobalStateProvider, NETWORK } from "../config/config";
+
+import getWeb3 from "../utils/getWeb3";
+let web3 = null;
+
+firebase.initializeApp(config);
 
 class BlockchainSwitch extends Component {
   state = {
     blockchain: null,
     blockchainModalOpen: false,
-    network: NETWORK
+    network: NETWORK,
+    addressChangeListener: null
   };
 
   openBlockchainModal = () => {
@@ -26,14 +36,34 @@ class BlockchainSwitch extends Component {
     }
   };
 
-  componentDidMount = () => {
+  // updates user address in case of change
+  userAddressChange = () => {
+    const currentAddress = web3.eth.accounts.currentProvider.selectedAddress;
+    if (currentAddress && currentAddress !== this.state.userAddress) {
+      this.setState({
+        userAddress: web3.eth.accounts.currentProvider.selectedAddress
+      });
+    }
+  };
+
+  componentDidMount = async () => {
     // displays modal to let user choose blockchain
     this.openBlockchainModal();
+    // loads web3
+    web3 = await getWeb3();
+    await web3.eth.net.isListening();
+    // address change listener
+    const addressChangeListener = setInterval(this.userAddressChange, 500);
+    this.setState({ addressChangeListener });
   };
 
   componentDidUpdate = () => {
     // displays modal to let user choose blockchain
     if (this.state.blockchainModalOpen === false) this.openBlockchainModal();
+  };
+
+  componentWillUnmount = () => {
+    clearInterval(this.state.addressChangeListener);
   };
 
   render() {
