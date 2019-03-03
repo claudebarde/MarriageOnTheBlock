@@ -4,6 +4,7 @@ import { withRouter } from "react-router-dom";
 
 import firebase from "firebase/app";
 import "firebase/firebase-functions";
+import "firebase/auth";
 import { config } from "../config/firebaseConfig";
 
 import { GlobalStateProvider, NETWORK } from "../config/config";
@@ -18,7 +19,8 @@ class BlockchainSwitch extends Component {
     blockchain: null,
     blockchainModalOpen: false,
     network: NETWORK,
-    addressChangeListener: null
+    addressChangeListener: null,
+    loggedInUser: null
   };
 
   openBlockchainModal = () => {
@@ -55,6 +57,12 @@ class BlockchainSwitch extends Component {
     // address change listener
     const addressChangeListener = setInterval(this.userAddressChange, 500);
     this.setState({ addressChangeListener });
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        this.setState({ loggedInUser: user.uid });
+      }
+    });
   };
 
   componentDidUpdate = () => {

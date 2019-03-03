@@ -34,6 +34,7 @@ import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
 import MarriagesGraph from "./infoComponents/MarriagesGraph";
 
 import firebase from "firebase/app";
+import "firebase/auth";
 import "firebase/firebase-functions";
 
 let web3 = null;
@@ -219,7 +220,7 @@ class App extends Component {
       const newCertificateAddress =
         newCertificateTx.events.LogNewCertificateCreated.returnValues
           .newCertificateAddress;
-      console.log(newCertificateAddress);
+      console.log("New certificate address: ", newCertificateAddress);
 
       if (newCertificateAddress) {
         //we update here the state of the app
@@ -240,31 +241,39 @@ class App extends Component {
           },
           congratulationModalOpen: true
         });
-        // we save some of the info from the certificate in the firestore
-        const saveNewCertificate = firebase
-          .functions()
-          .httpsCallable("saveNewCertificate");
-        const saveNewCtf = await saveNewCertificate({
-          address: newCertificateAddress,
-          location: {
-            city: this.state.city.toLowerCase(),
-            country: this.state.country.toLowerCase()
-          },
-          firstSpouse: {
-            firstName: this.state.spousesDetails.firstSpouseDetails.firstName,
-            lastName: this.state.spousesDetails.firstSpouseDetails.lastName,
-            address: this.state.spousesDetails.firstSpouseDetails.address
-          },
-          secondSpouse: {
-            firstName: this.state.spousesDetails.secondSpouseDetails.firstName,
-            lastName: this.state.spousesDetails.secondSpouseDetails.lastName,
-            address: this.state.spousesDetails.secondSpouseDetails.address
-          },
-          timestamp: Date.now(),
-          key: this.state.idEncodingKey.toString()
-        });
-        if (saveNewCtf.data !== "OK") {
-          console.log("Error while saving to the database: ", saveNewCtf);
+        // we create a new user in database who can udpdate tx history later
+        try {
+          const credentials = await firebase.auth().signInAnonymously();
+          // we save some of the info from the certificate in the firestore
+          const saveNewCertificate = firebase
+            .functions()
+            .httpsCallable("saveNewCertificate");
+          const saveNewCtf = await saveNewCertificate({
+            userID: credentials.user.uid,
+            address: newCertificateAddress,
+            location: {
+              city: this.state.city.toLowerCase(),
+              country: this.state.country.toLowerCase()
+            },
+            firstSpouse: {
+              firstName: this.state.spousesDetails.firstSpouseDetails.firstName,
+              lastName: this.state.spousesDetails.firstSpouseDetails.lastName,
+              address: this.state.spousesDetails.firstSpouseDetails.address
+            },
+            secondSpouse: {
+              firstName: this.state.spousesDetails.secondSpouseDetails
+                .firstName,
+              lastName: this.state.spousesDetails.secondSpouseDetails.lastName,
+              address: this.state.spousesDetails.secondSpouseDetails.address
+            },
+            timestamp: Date.now(),
+            key: this.state.idEncodingKey.toString()
+          });
+          if (saveNewCtf.data !== "OK") {
+            console.log("Error while saving to the database: ", saveNewCtf);
+          }
+        } catch (error) {
+          console.log(error.code, error.message);
         }
         // we update the firestore with the country of registration
         const saveLocation = firebase.functions().httpsCallable("saveLocation");

@@ -3,6 +3,7 @@ import { Grid, List, Segment } from "semantic-ui-react";
 import moment from "moment";
 
 import SpouseList from "./SpouseList";
+import TransactionsHistory from "./TransactionsHistory";
 
 import { isMarriageValid } from "../utils/functions";
 import { GlobalStateConsumer } from "../config/config";
@@ -95,6 +96,20 @@ const DisplayCertificateCheck = props => {
                                   )}  eth`}</List.Content>
                                 </List.Item>
                               </List>
+                            </List.Description>
+                          </List.Content>
+                        </List.Item>
+                        <List.Item>
+                          <List.Icon name="history" />
+                          <List.Content>
+                            <List.Header>Transactions History:</List.Header>
+                            <List.Description>
+                              <TransactionsHistory
+                                spousesAddresses={props.spousesAddresses}
+                                web3={props.web3}
+                                creationTimestamp={details.timestamp}
+                                certificateAddress={details.address}
+                              />
                             </List.Description>
                           </List.Content>
                         </List.Item>

@@ -104,7 +104,7 @@ class SpouseList extends Component {
       .changeMarriageStatus()
       .send(
         { from: this.props.currentAddress, gas: this.state.gasForTx },
-        (error, txHash) => {
+        async (error, txHash) => {
           if (error) {
             console.log("error", error);
           } else {
@@ -117,8 +117,6 @@ class SpouseList extends Component {
                 txHash
               }
             });
-            // we log the update in the firestore
-            
           }
         }
       );
@@ -128,6 +126,8 @@ class SpouseList extends Component {
       changeMarriageStatus.transactionHash
     );
   };
+
+  updateTxHistory = firebase.functions().httpsCallable("updateTxHistory");
 
   depositFunds = async () => {
     this.setState({
@@ -183,6 +183,21 @@ class SpouseList extends Component {
           funds,
           this.state.depositFundsModal.toAccount
         );
+        // we update transactions log in firestore
+        if (firebase.auth().currentUser) {
+          const data = {
+            userID: firebase.auth().currentUser.uid,
+            address: certificate.options.address,
+            tx: {
+              type: "deposit",
+              from: web3.eth.accounts.currentProvider.selectedAddress,
+              amount: funds,
+              account: this.state.depositFundsModal.toAccount,
+              txHash: depositTx.transactionHash
+            }
+          };
+          await this.updateTxHistory(data);
+        }
         this.setState({
           depositFundsModal: {
             open: false,
@@ -212,6 +227,46 @@ class SpouseList extends Component {
         },
         errorSend: true
       });
+    }
+  };
+
+  withdrawTxHistoryUpdate = async (
+    type,
+    amount,
+    account,
+    txHash,
+    requestID
+  ) => {
+    // we update transactions log in firestore
+    if (firebase.auth().currentUser) {
+      let data = {};
+      if (type === "withdrawal") {
+        data = {
+          userID: firebase.auth().currentUser.uid,
+          address: certificate.options.address,
+          tx: {
+            type,
+            from: web3.eth.accounts.currentProvider.selectedAddress,
+            amount,
+            account,
+            txHash
+          }
+        };
+      } else if (type === "withdrawalRequest") {
+        data = {
+          userID: firebase.auth().currentUser.uid,
+          address: certificate.options.address,
+          tx: {
+            type,
+            from: web3.eth.accounts.currentProvider.selectedAddress,
+            amount,
+            account,
+            requestID,
+            txHash
+          }
+        };
+      }
+      await this.updateTxHistory(data);
     }
   };
 
@@ -275,12 +330,21 @@ class SpouseList extends Component {
         this.closeTxModal(withdrawTx.status, withdrawTx.transactionHash);
         // we return the request number for a withdrawal from the savings account
         if (this.state.withdrawFundsModal.fromAccount === "savings") {
+          const requestID =
+            withdrawTx.events.LogNewWithdrawalRequestFromSavings.returnValues
+              .request;
+          // we log the transaction in the firestore
+          this.withdrawTxHistoryUpdate(
+            "withdrawalRequest",
+            funds,
+            this.state.withdrawFundsModal.fromAccount,
+            withdrawTx.transactionHash,
+            requestID
+          );
           this.setState({
             requestReceipt: {
               status: true,
-              tx:
-                withdrawTx.events.LogNewWithdrawalRequestFromSavings
-                  .returnValues.request
+              tx: requestID
             }
           });
         } else {
@@ -288,6 +352,14 @@ class SpouseList extends Component {
             "withdrawal",
             funds,
             this.state.withdrawFundsModal.fromAccount
+          );
+          // updates transactions history in firestore
+          this.withdrawTxHistoryUpdate(
+            "withdrawal",
+            funds,
+            this.state.withdrawFundsModal.fromAccount,
+            withdrawTx.transactionHash,
+            null
           );
           this.setState({
             withdrawFundsModal: {
@@ -417,6 +489,20 @@ class SpouseList extends Component {
       if (requestTx.status) {
         // when the tx is processed, we display a message to the user and close the modal
         this.closeTxModal(requestTx.status, requestTx.transactionHash);
+        // we update transactions log in firestore
+        if (firebase.auth().currentUser) {
+          const data = {
+            userID: firebase.auth().currentUser.uid,
+            address: certificate.options.address,
+            tx: {
+              type: "approvedRequest",
+              from: web3.eth.accounts.currentProvider.selectedAddress,
+              amount: this.state.fetchWithdrawRequest.amount,
+              txHash: requestTx.transactionHash
+            }
+          };
+          await this.updateTxHistory(data);
+        }
         // we update request info
         this.setState({
           fetchWithdrawRequest: {

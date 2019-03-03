@@ -11,6 +11,9 @@ import {
 } from "semantic-ui-react";
 import { withRouter } from "react-router-dom";
 
+import firebase from "firebase/app";
+import "firebase/firebase-functions";
+
 import DisplayCertificateCheck from "../DisplayCertificateCheck/DisplayCertificateCheck";
 import { checkCertificate } from "../utils/functions";
 import {
@@ -27,7 +30,6 @@ class CheckCertificate extends Component {
   state = {
     minScreenWidth: MIN_SCREEN_WIDTH,
     certificateCheck: CERTIFICATE_OBJ,
-    lastMarriage: { 0: "", 1: "", 2: "" },
     fetchingCertificateDetails: false,
     showCertificateCheckDetails: false
   };
@@ -117,14 +119,34 @@ class CheckCertificate extends Component {
           address: contract.options.address,
           topics: [eventJsonInterface.signature]
         },
-        (error, result) => {
+        async (error, result) => {
           if (!error) {
             const eventObj = web3.eth.abi.decodeLog(
               eventJsonInterface.inputs,
               result.data,
               result.topics.slice(1)
             );
-            console.log(`New ${eventName}!`, eventObj);
+            //console.log(`New ${eventName}!`, eventObj);
+            // we log the update in the firestore
+            if (firebase.auth().currentUser) {
+              const updateTxHistory = firebase
+                .functions()
+                .httpsCallable("updateTxHistory");
+              await updateTxHistory({
+                userID: firebase.auth().currentUser.uid,
+                address: contract.options.address,
+                tx: {
+                  type: "statusUpdate",
+                  from: web3.eth.accounts.currentProvider.selectedAddress,
+                  previousState: [
+                    this.state.certificateCheck.isMarriageValid[0],
+                    this.state.certificateCheck.isMarriageValid[1]
+                  ],
+                  newState: eventObj.validity,
+                  txHash: result.transactionHash
+                }
+              });
+            }
             // we update the state with new contract state
             if (eventName === "LogMarriageValidity") {
               this.setState({
@@ -262,6 +284,10 @@ class CheckCertificate extends Component {
                   web3={web3}
                   updateBalance={this.updateBalance}
                   balance={this.state.certificateCheck.balance}
+                  spousesAddresses={[
+                    this.state.certificateCheck.spousesDetails.firstSpouseDetails.address.toLowerCase(),
+                    this.state.certificateCheck.spousesDetails.secondSpouseDetails.address.toLowerCase()
+                  ]}
                 />
               ) : (
                 <Message
