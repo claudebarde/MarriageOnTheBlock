@@ -243,13 +243,11 @@ class App extends Component {
         });
         // we create a new user in database who can udpdate tx history later
         try {
-          const credentials = await firebase.auth().signInAnonymously();
           // we save some of the info from the certificate in the firestore
           const saveNewCertificate = firebase
             .functions()
             .httpsCallable("saveNewCertificate");
           const saveNewCtf = await saveNewCertificate({
-            userID: credentials.user.uid,
             address: newCertificateAddress,
             location: {
               city: this.state.city.toLowerCase(),

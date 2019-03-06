@@ -231,6 +231,25 @@ class CheckCertificate extends Component {
     }
   };
 
+  componentDidUpdate = () => {
+    // fetch contract details if address is provided
+    if (
+      this.props.match.params.address &&
+      web3.utils.isAddress(this.props.match.params.address) &&
+      !this.state.certificateCheck.address
+    ) {
+      this.setState(
+        {
+          certificateCheck: {
+            ...this.state.certificateCheck,
+            address: this.props.match.params.address
+          }
+        },
+        async () => await this.fetchCertificateDetails()
+      );
+    }
+  };
+
   componentWillUnmount = () => {
     clearInterval(this.state.addressChangeListener);
   };

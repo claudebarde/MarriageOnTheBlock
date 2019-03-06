@@ -4,6 +4,7 @@ import moment from "moment";
 
 import SpouseList from "./SpouseList";
 import TransactionsHistory from "./TransactionsHistory";
+import UserAuth from "../utils/UserAuth";
 
 import { isMarriageValid } from "../utils/functions";
 import { GlobalStateConsumer } from "../config/config";
@@ -103,14 +104,27 @@ const DisplayCertificateCheck = props => {
                           <List.Icon name="history" />
                           <List.Content>
                             <List.Header>Transactions History:</List.Header>
-                            <List.Description>
-                              <TransactionsHistory
-                                spousesAddresses={props.spousesAddresses}
-                                web3={props.web3}
-                                creationTimestamp={details.timestamp}
-                                certificateAddress={details.address}
-                              />
-                            </List.Description>
+                            {!context.loggedInUser ? (
+                              <List.Description>
+                                <UserAuth
+                                  certificateAddress={details.address}
+                                  currentUserAddress={
+                                    props.web3.eth.accounts.currentProvider
+                                      .selectedAddress
+                                  }
+                                  origin="check-page"
+                                />
+                              </List.Description>
+                            ) : (
+                              <List.Description>
+                                <TransactionsHistory
+                                  spousesAddresses={props.spousesAddresses}
+                                  web3={props.web3}
+                                  creationTimestamp={details.timestamp}
+                                  certificateAddress={details.address}
+                                />
+                              </List.Description>
+                            )}
                           </List.Content>
                         </List.Item>
                         <List.Item>

@@ -128,10 +128,8 @@ class MarriagesGraph extends Component {
   };
 
   render() {
-    if (this.state.chartOptions.data.length === 0) {
-      return null;
-    } else if (
-      this.state.chartOptions.data.length > 0 &&
+    if (
+      this.state.chartOptions.data.length === 0 ||
       this.state.chartOptions.data[0].dataPoints.length === 0
     ) {
       return (

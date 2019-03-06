@@ -22,6 +22,7 @@ import firebase from "firebase/app";
 import "firebase/firebase-functions";
 
 import getWeb3 from "../utils/getWeb3";
+import { GlobalStateConsumer } from "../config/config";
 
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 let web3 = null;
@@ -81,6 +82,16 @@ class SpouseList extends Component {
         message:
           "Your transaction has been successfully confirmed on the blockchain!"
       };
+    } else if (status === "error") {
+      return {
+        open: true,
+        icon: "exclamation triangle",
+        loading: false,
+        header: "Transaction error!",
+        txHash,
+        message:
+          "There was an error processing this transaction, please try again later."
+      };
     }
   };
 
@@ -137,6 +148,7 @@ class SpouseList extends Component {
         loading: true
       }
     });
+    let depositTxHash;
     try {
       const funds = web3.utils.toWei(
         this.state.ethToTransfer.toString(),
@@ -158,6 +170,7 @@ class SpouseList extends Component {
               console.log("error", error);
             } else {
               console.log("Tx hash: ", txHash);
+              depositTxHash = txHash;
               this.setState({
                 transactionModal: {
                   ...this.state.transactionModal,
@@ -219,13 +232,15 @@ class SpouseList extends Component {
       }
     } catch (error) {
       console.log(error);
+      const errorMessage = this.transactionModalData("error", depositTxHash);
       this.setState({
         depositFundsModal: {
           open: false,
           loading: false,
           toAccount: ""
         },
-        errorSend: true
+        errorSend: true,
+        transactionModal: errorMessage
       });
     }
   };
@@ -537,20 +552,26 @@ class SpouseList extends Component {
   decryptIdNumber = event => {
     const key = event.target.value;
     // decrypts first spouse id
-    const decrypt = CryptoJS.AES.decrypt(
-      this.props.details.spousesDetails[this.props.spouse].idNumber.toString(),
-      key.toString()
-    ).toString(CryptoJS.enc.Utf8);
-    // we update the Id Number field according to results
-    if (key.length > 0 && decrypt) {
-      this.setState({ decryptInput: { error: false, length: key.length } });
-      // we update the state with the id numbers
-      this.setState({
-        displayIdNumber: decrypt
-      });
-    } else if (key.length === 0 && !decrypt) {
-      this.setState({ decryptInput: { error: false, length: 0 } });
-    } else {
+    try {
+      const decrypt = CryptoJS.AES.decrypt(
+        this.props.details.spousesDetails[
+          this.props.spouse
+        ].idNumber.toString(),
+        key.toString()
+      ).toString(CryptoJS.enc.Utf8);
+      // we update the Id Number field according to results
+      if (key.length > 0 && decrypt) {
+        this.setState({ decryptInput: { error: false, length: key.length } });
+        // we update the state with the id numbers
+        this.setState({
+          displayIdNumber: decrypt
+        });
+      } else if (key.length === 0 && !decrypt) {
+        this.setState({ decryptInput: { error: false, length: 0 } });
+      } else {
+        this.setState({ decryptInput: { error: true, length: key.length } });
+      }
+    } catch (error) {
       this.setState({ decryptInput: { error: true, length: key.length } });
     }
   };
@@ -597,532 +618,584 @@ class SpouseList extends Component {
     const { accordionActiveIndex } = this.state;
 
     return (
-      <>
-        <Modal
-          open={this.state.transactionModal.open}
-          size="tiny"
-          onClose={() =>
-            this.setState({
-              transactionModal: {
-                ...this.state.transactionModal,
-                open: false,
-                txHash: null
+      <GlobalStateConsumer>
+        {context => (
+          <>
+            <Modal
+              open={this.state.transactionModal.open}
+              size="tiny"
+              onClose={() =>
+                this.setState({
+                  transactionModal: {
+                    ...this.state.transactionModal,
+                    open: false,
+                    txHash: null
+                  }
+                })
               }
-            })
-          }
-          closeIcon
-        >
-          <Modal.Header className="modal-header">
-            {this.state.transactionModal.header}
-          </Modal.Header>
-          <Modal.Content>
-            <Segment basic placeholder>
-              <Header icon>
-                <Icon
-                  name={this.state.transactionModal.icon}
-                  loading={this.state.transactionModal.loading}
-                />
-                {this.state.transactionModal.message}
-                <br />
-                <br />
-                <Segment
-                  size="tiny"
-                  basic
-                  secondary
-                  style={{ wordBreak: "break-word" }}
-                >
-                  {`Transaction hash: ${this.state.transactionModal.txHash}`}
+              closeIcon
+            >
+              <Modal.Header className="modal-header">
+                {this.state.transactionModal.header}
+              </Modal.Header>
+              <Modal.Content>
+                <Segment basic placeholder>
+                  <Header icon>
+                    <Icon
+                      name={this.state.transactionModal.icon}
+                      loading={this.state.transactionModal.loading}
+                    />
+                    {this.state.transactionModal.message}
+                    <br />
+                    <br />
+                    <Segment
+                      size="tiny"
+                      basic
+                      secondary
+                      style={{ wordBreak: "break-word" }}
+                    >
+                      {`Transaction hash: ${
+                        this.state.transactionModal.txHash
+                      }`}
+                    </Segment>
+                  </Header>
                 </Segment>
-              </Header>
-            </Segment>
-          </Modal.Content>
-        </Modal>
-        <List size="small" style={{ wordBreak: "break-word" }}>
-          <List.Item>
-            <List.Icon name="user" />
-            <List.Content>
-              <List.Header>{`${_.upperFirst(
-                details.spousesDetails[spouse].firstName
-              )} ${_.upperFirst(
-                details.spousesDetails[spouse].lastName
-              )}`}</List.Header>
-              <List.Description>
-                {index === 0 ? "Certificate Creator" : "Second Spouse"}
-              </List.Description>
-              <List.List>
-                <List.Item>
-                  <List.Icon name="id card" />
-                  <Popup
-                    trigger={
-                      <List.Content as="a">{`${_.upperFirst(
-                        details.spousesDetails[spouse].idType
-                      )} Number: ${this.state.displayIdNumber}`}</List.Content>
-                    }
-                    content={
-                      <Input
-                        placeholder="Enter security key"
-                        icon={
-                          !this.state.decryptInput.error &&
-                          this.state.decryptInput.length > 0
-                            ? "thumbs up outline"
-                            : "search"
+              </Modal.Content>
+            </Modal>
+            <List size="small" style={{ wordBreak: "break-word" }}>
+              <List.Item>
+                <List.Icon name="user" />
+                <List.Content>
+                  <List.Header>{`${_.upperFirst(
+                    details.spousesDetails[spouse].firstName
+                  )} ${_.upperFirst(
+                    details.spousesDetails[spouse].lastName
+                  )}`}</List.Header>
+                  <List.Description>
+                    {index === 0 ? "Certificate Creator" : "Second Spouse"}
+                  </List.Description>
+                  <List.List>
+                    <List.Item>
+                      <List.Icon name="id card" />
+                      <Popup
+                        trigger={
+                          <List.Content as="a">{`${_.upperFirst(
+                            details.spousesDetails[spouse].idType
+                          )} Number: ${
+                            this.state.displayIdNumber
+                          }`}</List.Content>
                         }
-                        onChange={this.decryptIdNumber}
-                        error={this.state.decryptInput.error}
-                        autoFocus
+                        content={
+                          <Input
+                            type="password"
+                            placeholder="Enter security key"
+                            icon={
+                              !this.state.decryptInput.error &&
+                              this.state.decryptInput.length > 0
+                                ? "thumbs up outline"
+                                : "search"
+                            }
+                            onChange={this.decryptIdNumber}
+                            error={this.state.decryptInput.error}
+                            autoFocus
+                          />
+                        }
+                        on="click"
+                        position="top left"
+                        onClose={() =>
+                          this.setState({
+                            decryptInput: { error: false, length: 0 }
+                          })
+                        }
                       />
-                    }
-                    on="click"
-                    position="top left"
-                    onClose={() =>
-                      this.setState({
-                        decryptInput: { error: false, length: 0 }
-                      })
-                    }
-                  />
-                </List.Item>
+                    </List.Item>
+                    <List.Item>
+                      <List.Icon name="linkify" />
+                      <List.Content>{`Address: ${
+                        details.spousesDetails[spouse].address
+                      }`}</List.Content>
+                    </List.Item>
+                  </List.List>
+                </List.Content>
+              </List.Item>
+              {currentUser && (
                 <List.Item>
-                  <List.Icon name="linkify" />
-                  <List.Content>{`Address: ${
-                    details.spousesDetails[spouse].address
-                  }`}</List.Content>
-                </List.Item>
-              </List.List>
-            </List.Content>
-          </List.Item>
-          {currentUser && (
-            <List.Item>
-              <List.Icon name="edit" />
-              <List.Content>
-                <List.Header>Actions</List.Header>
-                <List.Description>
-                  Choose one of the actions below:
-                </List.Description>
-                <br />
-                <Accordion styled fluid>
-                  <Accordion.Title
-                    active={accordionActiveIndex === 0}
-                    index={0}
-                    onClick={this.accordionSwitch}
-                  >
-                    <Icon name="dropdown" />
-                    Joined Account
-                  </Accordion.Title>
-                  <Accordion.Content active={accordionActiveIndex === 0}>
-                    <List divided relaxed>
-                      <List.Item>
-                        <List.Icon name="university" />
-                        <List.Content
-                          onClick={() =>
-                            this.setState({
-                              depositFundsModal: {
-                                open: true,
-                                loading: false,
-                                toAccount: "joined"
+                  <List.Icon name="edit" />
+                  <List.Content>
+                    <List.Header>Actions</List.Header>
+                    <List.Description>
+                      Choose one of the actions below:
+                    </List.Description>
+                    <br />
+                    <Accordion styled fluid>
+                      <Accordion.Title
+                        active={accordionActiveIndex === 0}
+                        index={0}
+                        onClick={this.accordionSwitch}
+                      >
+                        <Icon name="dropdown" />
+                        Joined Account
+                      </Accordion.Title>
+                      <Accordion.Content active={accordionActiveIndex === 0}>
+                        <List divided relaxed>
+                          <List.Item>
+                            <List.Icon name="university" />
+                            <List.Content
+                              onClick={() =>
+                                this.setState({
+                                  depositFundsModal: {
+                                    open: true,
+                                    loading: false,
+                                    toAccount: "joined"
+                                  }
+                                })
                               }
-                            })
-                          }
-                        >
-                          <List.Header as="a">
-                            Deposit Funds in Joined Account
-                          </List.Header>
-                          <List.Description as="a">
-                            This will deposit the chosen amount in the joined
-                            account.
-                          </List.Description>
-                        </List.Content>
-                        <Modal
-                          size="mini"
-                          open={this.state.depositFundsModal.open}
-                          onClose={() =>
-                            this.setState({
-                              depositFundsModal: {
-                                open: false,
-                                loading: false,
-                                toAccount: ""
-                              }
-                            })
-                          }
-                          closeIcon
-                        >
-                          <Modal.Header className="modal-header">
-                            {`Deposit Funds to ${_.upperFirst(
-                              this.state.depositFundsModal.toAccount
-                            )} Account`}
-                          </Modal.Header>
-                          <Modal.Content>
-                            {this.state.errorSend && (
-                              <Message
-                                header="An error has occurred"
-                                text="There was an error transferring the funds."
-                              />
-                            )}
-                            {balance &&
-                              web3 &&
-                              this.state.depositFundsModal.toAccount && (
-                                <Segment size="mini" basic secondary>
-                                  {`Current balance: ${web3.utils.fromWei(
-                                    balance[
-                                      this.state.depositFundsModal.toAccount
-                                    ].toString(),
-                                    "ether"
-                                  )} ether`}
-                                </Segment>
-                              )}
-                            <Header as="h4">Amount in ether :</Header>
-                            <Input
-                              type="number"
-                              id="input-transfer"
-                              value={this.state.ethToTransfer}
-                              onChange={this.convertEthToDollars}
-                              icon="ethereum"
-                              iconPosition="left"
-                              autoComplete="off"
-                              autoFocus
-                              fluid
-                            />
-                          </Modal.Content>
-                          <Modal.Actions
-                            style={{ background: "none", borderTop: "none" }}
-                          >
-                            <Button
-                              content="Send"
-                              label={{
-                                as: "a",
-                                basic: true,
-                                pointing: "right",
-                                content: `≈ $${this.state.convertEthToDollars}`
-                              }}
-                              labelPosition="left"
-                              onClick={this.depositFunds}
-                              disabled={!this.state.ethToTransfer}
-                            />
-                          </Modal.Actions>
-                        </Modal>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon name="share square" />
-                        <List.Content
-                          onClick={() =>
-                            this.setState({
-                              withdrawFundsModal: {
-                                open: true,
-                                loading: false,
-                                fromAccount: "joined"
-                              }
-                            })
-                          }
-                        >
-                          <List.Header as="a">
-                            Withdraw Funds from Joined Account
-                          </List.Header>
-                          <List.Description as="a">
-                            This will withdraw the chosen amount from the joined
-                            account.
-                          </List.Description>
-                        </List.Content>
-                        <Modal
-                          size="mini"
-                          open={this.state.withdrawFundsModal.open}
-                          onClose={() =>
-                            this.setState({
-                              withdrawFundsModal: {
-                                open: false,
-                                loading: false,
-                                fromAccount: "joined"
-                              }
-                            })
-                          }
-                          closeIcon
-                        >
-                          <Modal.Header className="modal-header">
-                            {`Withdraw Funds from ${_.upperFirst(
-                              this.state.withdrawFundsModal.fromAccount
-                            )} Account`}
-                          </Modal.Header>
-                          <Modal.Content>
-                            {this.state.errorSend && (
-                              <Message
-                                header="An error has occurred"
-                                text="There was an error withdrawing the funds."
-                                error
-                              />
-                            )}
-                            {balance &&
-                              web3 &&
-                              this.state.withdrawFundsModal.fromAccount && (
-                                <Segment size="mini" basic secondary>
-                                  {`Available balance: ${web3.utils.fromWei(
-                                    balance[
-                                      this.state.withdrawFundsModal.fromAccount
-                                    ].toString(),
-                                    "ether"
-                                  )} ether`}
-                                </Segment>
-                              )}
-                            <Header as="h4">Amount in ether :</Header>
-                            <Input
-                              type="number"
-                              placeholder="Amount to withdraw..."
-                              id="input-withdraw"
-                              value={this.state.ethToTransfer}
-                              onChange={this.convertEthToDollars}
-                              icon="ethereum"
-                              autoComplete="off"
-                              iconPosition="left"
-                              autoFocus
-                              fluid
-                            />
-                            {this.state.requestReceipt.status && (
-                              <Message
-                                header="Withdrawal Request Receipt :"
-                                content={`${
-                                  this.state.requestReceipt.tx
-                                } -> Please give this receipt number to your spouse to confirm the withdrawal.`}
-                                size="mini"
-                                style={{ wordBreak: "break-word" }}
-                                info
-                              />
-                            )}
-                          </Modal.Content>
-                          <Modal.Actions
-                            style={{ background: "none", borderTop: "none" }}
-                          >
-                            <Button
-                              content="Withdraw"
-                              label={{
-                                as: "a",
-                                basic: true,
-                                pointing: "right",
-                                content: `≈ $${this.state.convertEthToDollars}`
-                              }}
-                              labelPosition="left"
-                              onClick={this.withdrawFunds}
-                              disabled={!this.state.ethToTransfer}
-                            />
-                          </Modal.Actions>
-                        </Modal>
-                      </List.Item>
-                    </List>
-                  </Accordion.Content>
-
-                  <Accordion.Title
-                    active={accordionActiveIndex === 1}
-                    index={1}
-                    onClick={this.accordionSwitch}
-                  >
-                    <Icon name="dropdown" />
-                    Savings Account
-                  </Accordion.Title>
-                  <Accordion.Content active={accordionActiveIndex === 1}>
-                    <List divided relaxed>
-                      <List.Item>
-                        <List.Icon name="lock" />
-                        <List.Content
-                          onClick={() =>
-                            this.setState({
-                              depositFundsModal: {
-                                open: true,
-                                loading: false,
-                                toAccount: "savings"
-                              }
-                            })
-                          }
-                        >
-                          <List.Header as="a">
-                            Deposit Funds in Savings Account
-                          </List.Header>
-                          <List.Description as="a">
-                            This will desposit the chosen amount in the savings
-                            account.
-                          </List.Description>
-                        </List.Content>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon name="lock open" />
-                        <List.Content
-                          onClick={() =>
-                            this.setState({
-                              withdrawFundsModal: {
-                                open: true,
-                                loading: false,
-                                fromAccount: "savings"
-                              }
-                            })
-                          }
-                        >
-                          <List.Header as="a">
-                            Withdraw Funds from Savings Account
-                          </List.Header>
-                          <List.Description as="a">
-                            This will withdraw the chosen amount from the
-                            savings account.
-                            <br />
-                            The approval of the second spouse is required.
-                          </List.Description>
-                        </List.Content>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon name="certificate" />
-                        <Modal
-                          trigger={
-                            <List.Content>
+                            >
                               <List.Header as="a">
-                                Check Withdrawal Request
+                                Deposit Funds in Joined Account
                               </List.Header>
                               <List.Description as="a">
-                                You can check and approve a withdrawal request
-                                made from the savings account.
+                                This will deposit the chosen amount in the
+                                joined account.
                               </List.Description>
                             </List.Content>
-                          }
-                          size="tiny"
-                          onOpen={() =>
-                            this.setState({
-                              fetchWithdrawRequest: {
-                                loading: false,
-                                status: false,
-                                sender: "",
-                                amount: 0,
-                                timestamp: 0,
-                                approved: true
-                              }
-                            })
-                          }
-                          closeIcon
-                        >
-                          <Modal.Header className="modal-header">
-                            Check Withdrawal Request
-                          </Modal.Header>
-                          <Modal.Content>
-                            <Header as="h4">Enter Request Number :</Header>
-                            <Input
-                              id="request-number"
-                              type="number"
-                              placeholder="Request Number"
-                              action={{
-                                icon: "search",
-                                onClick: async () =>
-                                  this.fetchWithdrawRequest(
-                                    document.getElementById("request-number")
-                                      .value
-                                  )
-                              }}
-                              fluid
-                              autoFocus
-                            />
-                            {this.state.fetchWithdrawRequest.loading && (
-                              <Segment>
-                                <Dimmer active inverted>
-                                  <Loader inverted content="Loading" />
-                                </Dimmer>
-                                <Image src="/images/short-paragraph.png" />
-                              </Segment>
-                            )}
-                            {this.state.fetchWithdrawRequest.error ? (
-                              <Message
-                                header="An error has occurred"
-                                content="There is no request corresponding to this number."
-                                error
-                              />
-                            ) : (
-                              this.state.fetchWithdrawRequest.status && (
-                                <List bulleted>
-                                  <List.Item>
-                                    Creator's Address:{" "}
-                                    {this.state.fetchWithdrawRequest.sender}
-                                  </List.Item>
-                                  <List.Item>
-                                    Requested Amount:{" "}
-                                    {web3.utils.fromWei(
-                                      this.state.fetchWithdrawRequest.amount.toString(),
-                                      "ether"
-                                    )}{" "}
-                                    ether
-                                  </List.Item>
-                                  <List.Item>
-                                    Sent on{" "}
-                                    {moment
-                                      .unix(
-                                        this.state.fetchWithdrawRequest
-                                          .timestamp
-                                      )
-                                      .format("dddd, MMMM Do YYYY, h:mm:ss a")}
-                                  </List.Item>
-                                  <List.Item>
-                                    Approval status:{" "}
-                                    {this.state.fetchWithdrawRequest.approved
-                                      ? "Approved"
-                                      : "Pending"}
-                                  </List.Item>
-                                </List>
-                              )
-                            )}
-                          </Modal.Content>
-                          {!this.state.fetchWithdrawRequest.approved &&
-                            this.state.fetchWithdrawRequest.sender &&
-                            this.state.fetchWithdrawRequest.sender.toLowerCase() !==
-                              currentAddress.toLowerCase() && (
-                              <Modal.Actions>
-                                <Button
-                                  onClick={() =>
-                                    this.approveRequest(
-                                      this.state.fetchWithdrawRequest.requestID
-                                    )
+                            <Modal
+                              size="mini"
+                              open={this.state.depositFundsModal.open}
+                              onClose={() =>
+                                this.setState({
+                                  depositFundsModal: {
+                                    open: false,
+                                    loading: false,
+                                    toAccount: ""
                                   }
-                                >
-                                  Approve Request
-                                </Button>
+                                })
+                              }
+                              closeIcon
+                            >
+                              <Modal.Header className="modal-header">
+                                {`Deposit Funds to ${_.upperFirst(
+                                  this.state.depositFundsModal.toAccount
+                                )} Account`}
+                              </Modal.Header>
+                              <Modal.Content>
+                                {this.state.errorSend && (
+                                  <Message
+                                    header="An error has occurred"
+                                    content="There was an error transferring the funds."
+                                    size="tiny"
+                                    error
+                                  />
+                                )}
+                                {!context.loggedInUser && (
+                                  <Message
+                                    header="You are not logged in."
+                                    content="This will not be saved in your off-chain transaction history."
+                                    size="mini"
+                                    warning
+                                  />
+                                )}
+                                {balance &&
+                                  web3 &&
+                                  this.state.depositFundsModal.toAccount && (
+                                    <Message
+                                      header="Current balance:"
+                                      content={`${web3.utils.fromWei(
+                                        balance[
+                                          this.state.depositFundsModal.toAccount
+                                        ].toString(),
+                                        "ether"
+                                      )} ether`}
+                                      size="mini"
+                                      info
+                                    />
+                                  )}
+                                <Header as="h4">Amount in ether :</Header>
+                                <Input
+                                  type="number"
+                                  id="input-transfer"
+                                  value={this.state.ethToTransfer}
+                                  onChange={this.convertEthToDollars}
+                                  icon="ethereum"
+                                  iconPosition="left"
+                                  autoComplete="off"
+                                  autoFocus
+                                  fluid
+                                />
+                              </Modal.Content>
+                              <Modal.Actions
+                                style={{
+                                  background: "none",
+                                  borderTop: "none"
+                                }}
+                              >
+                                <Button
+                                  content="Send"
+                                  label={{
+                                    as: "a",
+                                    basic: true,
+                                    pointing: "right",
+                                    content: `≈ $${
+                                      this.state.convertEthToDollars
+                                    }`
+                                  }}
+                                  labelPosition="left"
+                                  onClick={this.depositFunds}
+                                  disabled={!this.state.ethToTransfer}
+                                />
                               </Modal.Actions>
-                            )}
-                        </Modal>
-                      </List.Item>
-                    </List>
-                  </Accordion.Content>
+                            </Modal>
+                          </List.Item>
+                          <List.Item>
+                            <List.Icon name="share square" />
+                            <List.Content
+                              onClick={() =>
+                                this.setState({
+                                  withdrawFundsModal: {
+                                    open: true,
+                                    loading: false,
+                                    fromAccount: "joined"
+                                  }
+                                })
+                              }
+                            >
+                              <List.Header as="a">
+                                Withdraw Funds from Joined Account
+                              </List.Header>
+                              <List.Description as="a">
+                                This will withdraw the chosen amount from the
+                                joined account.
+                              </List.Description>
+                            </List.Content>
+                            <Modal
+                              size="mini"
+                              open={this.state.withdrawFundsModal.open}
+                              onClose={() =>
+                                this.setState({
+                                  withdrawFundsModal: {
+                                    open: false,
+                                    loading: false,
+                                    fromAccount: "joined"
+                                  }
+                                })
+                              }
+                              closeIcon
+                            >
+                              <Modal.Header className="modal-header">
+                                {`Withdraw Funds from ${_.upperFirst(
+                                  this.state.withdrawFundsModal.fromAccount
+                                )} Account`}
+                              </Modal.Header>
+                              <Modal.Content>
+                                {this.state.errorSend && (
+                                  <Message
+                                    header="An error has occurred"
+                                    content="There was an error withdrawing the funds."
+                                    size="mini"
+                                    error
+                                  />
+                                )}
+                                {!context.loggedInUser && (
+                                  <Message
+                                    header="You are not logged in."
+                                    content="This will not be saved in your off-chain transaction history."
+                                    size="mini"
+                                    warning
+                                  />
+                                )}
+                                {balance &&
+                                  web3 &&
+                                  this.state.withdrawFundsModal.fromAccount && (
+                                    <Message
+                                      header="Available balance:"
+                                      content={`${web3.utils.fromWei(
+                                        balance[
+                                          this.state.withdrawFundsModal
+                                            .fromAccount
+                                        ].toString(),
+                                        "ether"
+                                      )} ether`}
+                                      size="mini"
+                                      info
+                                    />
+                                  )}
+                                <Header as="h4">Amount in ether :</Header>
+                                <Input
+                                  type="number"
+                                  placeholder="Amount to withdraw..."
+                                  id="input-withdraw"
+                                  value={this.state.ethToTransfer}
+                                  onChange={this.convertEthToDollars}
+                                  icon="ethereum"
+                                  autoComplete="off"
+                                  iconPosition="left"
+                                  autoFocus
+                                  fluid
+                                />
+                                {this.state.requestReceipt.status && (
+                                  <Message
+                                    header="Withdrawal Request Receipt :"
+                                    content={`${
+                                      this.state.requestReceipt.tx
+                                    } -> Please give this receipt number to your spouse to confirm the withdrawal.`}
+                                    size="mini"
+                                    style={{ wordBreak: "break-word" }}
+                                    info
+                                  />
+                                )}
+                              </Modal.Content>
+                              <Modal.Actions
+                                style={{
+                                  background: "none",
+                                  borderTop: "none"
+                                }}
+                              >
+                                <Button
+                                  content="Withdraw"
+                                  label={{
+                                    as: "a",
+                                    basic: true,
+                                    pointing: "right",
+                                    content: `≈ $${
+                                      this.state.convertEthToDollars
+                                    }`
+                                  }}
+                                  labelPosition="left"
+                                  onClick={this.withdrawFunds}
+                                  disabled={!this.state.ethToTransfer}
+                                />
+                              </Modal.Actions>
+                            </Modal>
+                          </List.Item>
+                        </List>
+                      </Accordion.Content>
 
-                  <Accordion.Title
-                    active={accordionActiveIndex === 2}
-                    index={2}
-                    onClick={this.accordionSwitch}
-                  >
-                    <Icon name="dropdown" />
-                    Marriage Status
-                  </Accordion.Title>
-                  <Accordion.Content active={accordionActiveIndex === 2}>
-                    <List divided relaxed>
-                      {isValid[index] ? (
-                        <List.Item onClick={this.changeMarriageStatus}>
-                          <List.Icon name="thumbs down" />
-                          <List.Content>
-                            <List.Header as="a">
-                              Petition for divorce
-                            </List.Header>
-                            <List.Description as="a">
-                              This will update your status in the marriage
-                              contract.
-                            </List.Description>
-                          </List.Content>
-                        </List.Item>
-                      ) : (
-                        <List.Item onClick={this.changeMarriageStatus}>
-                          <List.Icon name="thumbs up" />
-                          <List.Content>
-                            <List.Header as="a">Approve marriage</List.Header>
-                            <List.Description as="a">
-                              This will update your status in the marriage
-                              contract.
-                            </List.Description>
-                          </List.Content>
-                        </List.Item>
-                      )}
-                    </List>
-                  </Accordion.Content>
-                </Accordion>
-              </List.Content>
-            </List.Item>
-          )}
-        </List>
-      </>
+                      <Accordion.Title
+                        active={accordionActiveIndex === 1}
+                        index={1}
+                        onClick={this.accordionSwitch}
+                      >
+                        <Icon name="dropdown" />
+                        Savings Account
+                      </Accordion.Title>
+                      <Accordion.Content active={accordionActiveIndex === 1}>
+                        <List divided relaxed>
+                          <List.Item>
+                            <List.Icon name="lock" />
+                            <List.Content
+                              onClick={() =>
+                                this.setState({
+                                  depositFundsModal: {
+                                    open: true,
+                                    loading: false,
+                                    toAccount: "savings"
+                                  }
+                                })
+                              }
+                            >
+                              <List.Header as="a">
+                                Deposit Funds in Savings Account
+                              </List.Header>
+                              <List.Description as="a">
+                                This will desposit the chosen amount in the
+                                savings account.
+                              </List.Description>
+                            </List.Content>
+                          </List.Item>
+                          <List.Item>
+                            <List.Icon name="lock open" />
+                            <List.Content
+                              onClick={() =>
+                                this.setState({
+                                  withdrawFundsModal: {
+                                    open: true,
+                                    loading: false,
+                                    fromAccount: "savings"
+                                  }
+                                })
+                              }
+                            >
+                              <List.Header as="a">
+                                Withdraw Funds from Savings Account
+                              </List.Header>
+                              <List.Description as="a">
+                                This will withdraw the chosen amount from the
+                                savings account.
+                                <br />
+                                The approval of the second spouse is required.
+                              </List.Description>
+                            </List.Content>
+                          </List.Item>
+                          <List.Item>
+                            <List.Icon name="certificate" />
+                            <Modal
+                              trigger={
+                                <List.Content>
+                                  <List.Header as="a">
+                                    Check Withdrawal Request
+                                  </List.Header>
+                                  <List.Description as="a">
+                                    You can check and approve a withdrawal
+                                    request made from the savings account.
+                                  </List.Description>
+                                </List.Content>
+                              }
+                              size="tiny"
+                              onOpen={() =>
+                                this.setState({
+                                  fetchWithdrawRequest: {
+                                    loading: false,
+                                    status: false,
+                                    sender: "",
+                                    amount: 0,
+                                    timestamp: 0,
+                                    approved: true
+                                  }
+                                })
+                              }
+                              closeIcon
+                            >
+                              <Modal.Header className="modal-header">
+                                Check Withdrawal Request
+                              </Modal.Header>
+                              <Modal.Content>
+                                <Header as="h4">Enter Request Number :</Header>
+                                <Input
+                                  id="request-number"
+                                  type="number"
+                                  placeholder="Request Number"
+                                  action={{
+                                    icon: "search",
+                                    onClick: async () =>
+                                      this.fetchWithdrawRequest(
+                                        document.getElementById(
+                                          "request-number"
+                                        ).value
+                                      )
+                                  }}
+                                  fluid
+                                  autoFocus
+                                />
+                                {this.state.fetchWithdrawRequest.loading && (
+                                  <Segment>
+                                    <Dimmer active inverted>
+                                      <Loader inverted content="Loading" />
+                                    </Dimmer>
+                                    <Image src="/images/short-paragraph.png" />
+                                  </Segment>
+                                )}
+                                {this.state.fetchWithdrawRequest.error ? (
+                                  <Message
+                                    header="An error has occurred"
+                                    content="There is no request corresponding to this number."
+                                    error
+                                  />
+                                ) : (
+                                  this.state.fetchWithdrawRequest.status && (
+                                    <List bulleted>
+                                      <List.Item>
+                                        Creator's Address:{" "}
+                                        {this.state.fetchWithdrawRequest.sender}
+                                      </List.Item>
+                                      <List.Item>
+                                        Requested Amount:{" "}
+                                        {web3.utils.fromWei(
+                                          this.state.fetchWithdrawRequest.amount.toString(),
+                                          "ether"
+                                        )}{" "}
+                                        ether
+                                      </List.Item>
+                                      <List.Item>
+                                        Sent on{" "}
+                                        {moment
+                                          .unix(
+                                            this.state.fetchWithdrawRequest
+                                              .timestamp
+                                          )
+                                          .format(
+                                            "dddd, MMMM Do YYYY, h:mm:ss a"
+                                          )}
+                                      </List.Item>
+                                      <List.Item>
+                                        Approval status:{" "}
+                                        {this.state.fetchWithdrawRequest
+                                          .approved
+                                          ? "Approved"
+                                          : "Pending"}
+                                      </List.Item>
+                                    </List>
+                                  )
+                                )}
+                              </Modal.Content>
+                              {!this.state.fetchWithdrawRequest.approved &&
+                                this.state.fetchWithdrawRequest.sender &&
+                                this.state.fetchWithdrawRequest.sender.toLowerCase() !==
+                                  currentAddress.toLowerCase() && (
+                                  <Modal.Actions>
+                                    <Button
+                                      onClick={() =>
+                                        this.approveRequest(
+                                          this.state.fetchWithdrawRequest
+                                            .requestID
+                                        )
+                                      }
+                                    >
+                                      Approve Request
+                                    </Button>
+                                  </Modal.Actions>
+                                )}
+                            </Modal>
+                          </List.Item>
+                        </List>
+                      </Accordion.Content>
+
+                      <Accordion.Title
+                        active={accordionActiveIndex === 2}
+                        index={2}
+                        onClick={this.accordionSwitch}
+                      >
+                        <Icon name="dropdown" />
+                        Marriage Status
+                      </Accordion.Title>
+                      <Accordion.Content active={accordionActiveIndex === 2}>
+                        <List divided relaxed>
+                          {isValid[index] ? (
+                            <List.Item onClick={this.changeMarriageStatus}>
+                              <List.Icon name="thumbs down" />
+                              <List.Content>
+                                <List.Header as="a">
+                                  Petition for divorce
+                                </List.Header>
+                                <List.Description as="a">
+                                  This will update your status in the marriage
+                                  contract.
+                                </List.Description>
+                              </List.Content>
+                            </List.Item>
+                          ) : (
+                            <List.Item onClick={this.changeMarriageStatus}>
+                              <List.Icon name="thumbs up" />
+                              <List.Content>
+                                <List.Header as="a">
+                                  Approve marriage
+                                </List.Header>
+                                <List.Description as="a">
+                                  This will update your status in the marriage
+                                  contract.
+                                </List.Description>
+                              </List.Content>
+                            </List.Item>
+                          )}
+                        </List>
+                      </Accordion.Content>
+                    </Accordion>
+                  </List.Content>
+                </List.Item>
+              )}
+            </List>
+          </>
+        )}
+      </GlobalStateConsumer>
     );
   }
 }

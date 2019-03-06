@@ -14,6 +14,7 @@ import {
 import _ from "lodash";
 
 import { checkIfDetailsAreValid } from "../utils/functions";
+import { COUNTRY_LIST } from "../utils/validCountries";
 
 class NewCertificateForm extends Component {
   state = {
@@ -41,7 +42,17 @@ class NewCertificateForm extends Component {
       { key: "id", text: "ID", value: "id" }
     ],
     loadingLocation: false,
-    errorAddress: { firstSpouse: false, secondSpouse: false }
+    errorAddress: { firstSpouse: false, secondSpouse: false },
+    countryOptions: []
+  };
+
+  countryOptions = () => {
+    const countryOptions = COUNTRY_LIST.map(country => ({
+      key: country.toLowerCase(),
+      value: country.toLowerCase(),
+      text: country
+    }));
+    this.setState({ countryOptions });
   };
 
   updateSpouseInfo = event => {
@@ -120,13 +131,14 @@ class NewCertificateForm extends Component {
     );
   };
 
-  updateCountry = country => {
-    this.setState({ country }, () =>
+  updateCountry = (event, { value }) => {
+    this.setState({ country: value }, () =>
       this.props.updateCityAndCountry(this.state.city, this.state.country)
     );
   };
 
   componentDidMount = () => {
+    this.countryOptions();
     // if the geolocation api is supported
     if (navigator.geolocation) {
       this.setState({ loadingLocation: true }, () =>
@@ -142,11 +154,12 @@ class NewCertificateForm extends Component {
           );
           const location = await query.json();
           // we update the location in the state if found
+          let city, country;
           if ("city" in location.address && "country" in location.address) {
-            this.updateCity(location.address.city);
-            this.updateCountry(location.address.country);
+            city = location.address.city;
+            country = location.address.country.toLowerCase();
           }
-          this.setState({ loadingLocation: false });
+          this.setState({ loadingLocation: false, city, country });
         },
         error => {
           if (error) {
@@ -197,13 +210,14 @@ class NewCertificateForm extends Component {
           </Grid.Column>
           <Grid.Column>
             <Header as="h5">Country of registration</Header>
-            <Input
+            <Dropdown
+              placeholder="Select Country"
               fluid
-              placeholder="Country of registration..."
-              icon="globe"
-              iconPosition="left"
+              selection
+              closeOnBlur
+              options={this.state.countryOptions}
               value={this.state.country}
-              onChange={event => this.updateCountry(event.target.value)}
+              onChange={this.updateCountry}
               loading={this.state.loadingLocation}
               disabled={this.state.loadingLocation}
             />

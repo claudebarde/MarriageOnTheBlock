@@ -7,15 +7,24 @@ import {
   Label,
   Loader,
   Dimmer,
-  Image
+  Image,
+  Message
 } from "semantic-ui-react";
 import moment from "moment";
 
 import firebase from "firebase/app";
 import "firebase/firebase-functions";
+import "firebase/auth";
+
+import { NETWORK } from "../config/config";
 
 class TransactionsHistory extends Component {
-  state = { activeIndex: 0, transactionsHistory: {}, loadingTxHistory: true };
+  state = {
+    activeIndex: 0,
+    transactionsHistory: {},
+    loadingTxHistory: true,
+    errorLoadingHistory: ""
+  };
 
   truncateAddress = address => `${address.slice(0, 6)}...${address.slice(-4)}`;
 
@@ -26,6 +35,21 @@ class TransactionsHistory extends Component {
 
     this.setState({ activeIndex: newIndex });
   };
+
+  txLink = txHash => (
+    <div>
+      Transaction Hash:
+      <br />
+      <a
+        href={`https://${NETWORK}.etherscan.io/tx/${txHash}`}
+        alt="certificate-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {txHash}
+      </a>
+    </div>
+  );
 
   displayTransactions = () => {
     const txHistory = this.state.transactionsHistory;
@@ -59,7 +83,9 @@ class TransactionsHistory extends Component {
                   size="tiny"
                   style={{ wordBreak: "break-word" }}
                   attached="bottom"
-                >{`Transaction Hash: ${txHistory[tx].txHash}`}</Segment>
+                >
+                  {this.txLink(txHistory[tx].txHash)}
+                </Segment>
               </div>
             );
             break;
@@ -86,7 +112,9 @@ class TransactionsHistory extends Component {
                   size="tiny"
                   style={{ wordBreak: "break-word" }}
                   attached="bottom"
-                >{`Transaction Hash: ${txHistory[tx].txHash}`}</Segment>
+                >
+                  {this.txLink(txHistory[tx].txHash)}
+                </Segment>
               </div>
             );
             break;
@@ -113,7 +141,9 @@ class TransactionsHistory extends Component {
                   size="tiny"
                   style={{ wordBreak: "break-word" }}
                   attached="bottom"
-                >{`Transaction Hash: ${txHistory[tx].txHash}`}</Segment>
+                >
+                  {this.txLink(txHistory[tx].txHash)}
+                </Segment>
               </div>
             );
             break;
@@ -143,7 +173,9 @@ class TransactionsHistory extends Component {
                   size="tiny"
                   style={{ wordBreak: "break-word" }}
                   attached="bottom"
-                >{`Transaction Hash: ${txHistory[tx].txHash}`}</Segment>
+                >
+                  {this.txLink(txHistory[tx].txHash)}
+                </Segment>
               </div>
             );
             break;
@@ -169,7 +201,9 @@ class TransactionsHistory extends Component {
                   size="tiny"
                   style={{ wordBreak: "break-word" }}
                   attached="bottom"
-                >{`Transaction Hash: ${txHistory[tx].txHash}`}</Segment>
+                >
+                  {this.txLink(txHistory[tx].txHash)}
+                </Segment>
               </div>
             );
             break;
@@ -200,14 +234,29 @@ class TransactionsHistory extends Component {
       const { spousesAddresses, web3, certificateAddress } = this.props;
       // we fetch transaction history if one of the two spouses checks the contract
       const currentUser = web3.eth.accounts.currentProvider.selectedAddress.toLowerCase();
-      if (spousesAddresses.includes(currentUser)) {
+      if (
+        spousesAddresses.includes(currentUser) &&
+        firebase.auth().currentUser
+      ) {
+        const idToken = await firebase.auth().currentUser.getIdToken(true);
         const fetchTxHistory = firebase
           .functions()
           .httpsCallable("fetchTxHistory");
-        const txHistory = await fetchTxHistory(certificateAddress);
-        this.setState({ transactionsHistory: txHistory.data }, () =>
-          this.setState({ loadingTxHistory: false })
-        );
+        const txHistory = await fetchTxHistory({ certificateAddress, idToken });
+        if (txHistory.data.status === "OK") {
+          this.setState(
+            {
+              transactionsHistory: txHistory.data.data,
+              errorLoadingHistory: ""
+            },
+            () => this.setState({ loadingTxHistory: false })
+          );
+        } else if (txHistory.data.status === "error") {
+          this.setState({
+            loadingTxHistory: false,
+            errorLoadingHistory: txHistory.data.message
+          });
+        }
       }
     });
   };
@@ -230,6 +279,13 @@ class TransactionsHistory extends Component {
           Transactions History
         </Modal.Header>
         <Modal.Content scrolling>
+          {this.state.errorLoadingHistory && (
+            <Message
+              header="Warning!"
+              content={this.state.errorLoadingHistory}
+              warning
+            />
+          )}
           {this.state.loadingTxHistory ? (
             <Segment>
               <Dimmer active inverted>

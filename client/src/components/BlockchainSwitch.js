@@ -20,7 +20,11 @@ class BlockchainSwitch extends Component {
     blockchainModalOpen: false,
     network: NETWORK,
     addressChangeListener: null,
-    loggedInUser: null
+    userAddress: null,
+    userCertificate: null,
+    currentCertificate: null,
+    loggedInUser: false,
+    signOutUser: () => firebase.auth().signOut()
   };
 
   openBlockchainModal = () => {
@@ -58,9 +62,24 @@ class BlockchainSwitch extends Component {
     const addressChangeListener = setInterval(this.userAddressChange, 500);
     this.setState({ addressChangeListener });
 
-    firebase.auth().onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(async user => {
       if (user) {
-        this.setState({ loggedInUser: user.uid });
+        this.setState({
+          loggedInUser: user.uid
+        });
+        // if user exists, we fetch their certificate address
+        const fetchUserCertificate = firebase
+          .functions()
+          .httpsCallable("fetchUserCertificate");
+        const idToken = await firebase.auth().currentUser.getIdToken(true);
+        const userCertificate = await fetchUserCertificate(idToken);
+        if (userCertificate.data) {
+          this.setState({ userCertificate: userCertificate.data });
+        }
+      } else {
+        this.setState({
+          loggedInUser: false
+        });
       }
     });
   };

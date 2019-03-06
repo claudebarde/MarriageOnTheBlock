@@ -4,10 +4,17 @@ import getWeb3 from "./getWeb3";
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 
 export const checkIfDetailsAreValid = details => {
-  // returns false if at least one element is empty
-  return Object.keys(details)
-    .map(key => details[key].trim().length > 0)
-    .reduce((a, b) => a && b);
+  try {
+    // returns false if at least one element is empty
+    if (Object.keys(details).length > 0) {
+      return Object.keys(details)
+        .map(key => details[key].trim().length > 0)
+        .reduce((a, b) => a && b);
+    }
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
 };
 
 export const checkCertificate = async certificateAddress => {

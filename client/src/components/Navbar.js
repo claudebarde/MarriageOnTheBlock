@@ -3,13 +3,18 @@ import { Menu, Dropdown, Icon, Container } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
 import { MIN_SCREEN_WIDTH, GlobalStateConsumer } from "../config/config";
+import UserAuth from "../utils/UserAuth";
+import SignInModal from "./SignInModal";
 
 class Navbar extends Component {
   state = {
     minScreenWidth: MIN_SCREEN_WIDTH,
     screenWidth: window.innerWidth,
     navbarHeight: 0,
-    onScrollDetected: false
+    onScrollDetected: false,
+    authError: { open: false, message: "" },
+    email: "",
+    password: ""
   };
 
   handleWindowSizeChange = () => {
@@ -73,6 +78,7 @@ class Navbar extends Component {
                       icon="bars"
                       floating
                       button
+                      closeOnBlur
                       className="icon"
                       size={!this.state.onScrollDetected ? "small" : "mini"}
                     >
@@ -97,21 +103,41 @@ class Navbar extends Component {
                           </Link>
                         </Dropdown.Item>
                         <Dropdown.Item>
-                          <Link
-                            to={
-                              context.blockchain
-                                ? `/check/${context.blockchain}`
-                                : "/check"
-                            }
-                            className="router-link"
-                          >
-                            <Icon
-                              name="id card outline"
-                              className="navbar-icon"
-                            />
-                            Check a certificate
-                          </Link>
+                          {context.userCertificate ? (
+                            <Link
+                              to={
+                                context.blockchain
+                                  ? `/check/${context.blockchain}/${
+                                      context.userCertificate
+                                    }`
+                                  : "/check"
+                              }
+                              className="router-link"
+                            >
+                              <Icon
+                                name="id card outline"
+                                className="navbar-icon"
+                              />
+                              Check a certificate
+                            </Link>
+                          ) : (
+                            <Link
+                              to={
+                                context.blockchain
+                                  ? `/check/${context.blockchain}`
+                                  : "/check"
+                              }
+                              className="router-link"
+                            >
+                              <Icon
+                                name="id card outline"
+                                className="navbar-icon"
+                              />
+                              Check a certificate
+                            </Link>
+                          )}
                         </Dropdown.Item>
+                        <Dropdown.Divider />
                         <Dropdown.Item>
                           <a
                             href="https://github.com/claudebarde/GetMarriedOnTheBlockchain"
@@ -134,6 +160,44 @@ class Navbar extends Component {
                             Contact form
                           </a>
                         </Dropdown.Item>
+                        <Dropdown.Item>
+                          <a
+                            href="#"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="router-link"
+                          >
+                            <Icon name="medium m" className="navbar-icon" />
+                            Interface Explanation
+                          </a>
+                        </Dropdown.Item>
+                        <Dropdown.Item>
+                          <a
+                            href="#"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="router-link"
+                          >
+                            <Icon name="medium m" className="navbar-icon" />
+                            Smart Contract Details
+                          </a>
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        {context.loggedInUser ? (
+                          <Dropdown.Item as="a" onClick={context.signOutUser}>
+                            <Icon name="sign-out" className="navbar-icon" />
+                            Sign Out
+                          </Dropdown.Item>
+                        ) : (
+                          <>
+                            <UserAuth
+                              certificateAddress=""
+                              currentUserAddress={context.userAddress}
+                              origin="navbar"
+                            />
+                            <SignInModal />
+                          </>
+                        )}
                       </Dropdown.Menu>
                     </Dropdown>
                   </Menu.Item>
