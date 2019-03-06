@@ -224,7 +224,7 @@ contract MarriageCertificate {
     
     /// @notice fallback function to send money directly, money stored in deposit account by default
     function() external payable {
-        accounts["deposit"] += msg.value;
+        accounts["joined"] += msg.value;
     }
     
     function closeCertificate() public onlySpouses {
