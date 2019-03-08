@@ -168,17 +168,6 @@ class Navbar extends Component {
                             className="router-link"
                           >
                             <Icon name="medium m" className="navbar-icon" />
-                            Interface Explanation
-                          </a>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                          <a
-                            href="#"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="router-link"
-                          >
-                            <Icon name="medium m" className="navbar-icon" />
                             Smart Contract Details
                           </a>
                         </Dropdown.Item>

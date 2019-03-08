@@ -14,7 +14,8 @@ import {
 import _ from "lodash";
 
 import { checkIfDetailsAreValid } from "../utils/functions";
-import { COUNTRY_LIST } from "../utils/validCountries";
+
+const countries = require("country-data").countries;
 
 class NewCertificateForm extends Component {
   state = {
@@ -47,10 +48,13 @@ class NewCertificateForm extends Component {
   };
 
   countryOptions = () => {
-    const countryOptions = COUNTRY_LIST.map(country => ({
-      key: country.toLowerCase(),
-      value: country.toLowerCase(),
-      text: country
+    const sortedCountries = countries.all.sort((a, b) =>
+      a.name > b.name ? 1 : b.name > a.name ? -1 : 0
+    );
+    const countryOptions = sortedCountries.map((country, index) => ({
+      key: index,
+      value: country.alpha2,
+      text: country.name
     }));
     this.setState({ countryOptions });
   };
@@ -127,13 +131,19 @@ class NewCertificateForm extends Component {
 
   updateCity = city => {
     this.setState({ city }, () =>
-      this.props.updateCityAndCountry(this.state.city, this.state.country)
+      this.props.updateCityAndCountry(
+        this.state.city,
+        countries[this.state.country].name
+      )
     );
   };
 
   updateCountry = (event, { value }) => {
     this.setState({ country: value }, () =>
-      this.props.updateCityAndCountry(this.state.city, this.state.country)
+      this.props.updateCityAndCountry(
+        this.state.city,
+        countries[this.state.country].name
+      )
     );
   };
 
@@ -153,12 +163,17 @@ class NewCertificateForm extends Component {
             }&lon=${position.coords.longitude}&format=json`
           );
           const location = await query.json();
+          console.log(location);
           // we update the location in the state if found
           let city, country;
-          if ("city" in location.address && "country" in location.address) {
+          if (
+            "city" in location.address &&
+            "country_code" in location.address
+          ) {
             city = location.address.city;
-            country = location.address.country.toLowerCase();
+            country = location.address.country_code;
           }
+          this.props.updateCityAndCountry(city, countries[country].name);
           this.setState({ loadingLocation: false, city, country });
         },
         error => {

@@ -33,7 +33,9 @@ class SignInModal extends Component {
           authLoading: false,
           authError: {
             open: true,
-            message: "You couldn't be signed in, please try again later."
+            message:
+              error.message ||
+              "You couldn't be signed in, please try again later."
           }
         });
       }

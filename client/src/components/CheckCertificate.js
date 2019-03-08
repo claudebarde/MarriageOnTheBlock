@@ -132,8 +132,11 @@ class CheckCertificate extends Component {
               const updateTxHistory = firebase
                 .functions()
                 .httpsCallable("updateTxHistory");
+              const idToken = await firebase
+                .auth()
+                .currentUser.getIdToken(true);
               await updateTxHistory({
-                userID: firebase.auth().currentUser.uid,
+                idToken,
                 address: contract.options.address,
                 tx: {
                   type: "statusUpdate",

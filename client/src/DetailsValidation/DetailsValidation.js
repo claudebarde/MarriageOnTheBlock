@@ -106,15 +106,24 @@ class DetailsValidation extends Component {
                 </List.Content>
               </List.Item>
             </List>
-            <Segment size="mini" basic>
-              By clicking the button below, you understand that the information
-              you entered and your subsequent transactions will be visible on
-              the blockchain (except for the ID number which is encrypted) and
-              that we may save them to enhance your experience on this website.
-            </Segment>
-            <Button onClick={this.confirmRegistration} fluid>
-              Register Marriage Certificate
-            </Button>
+            {this.props.userHasCertificate ? (
+              <Segment inverted tertiary color="red" textAlign="center">
+                You already have a marriage certificate!
+              </Segment>
+            ) : (
+              <>
+                <Segment size="mini" basic>
+                  By clicking the button below, you understand that the
+                  information you entered and your subsequent transactions will
+                  be visible on the blockchain (except for the ID number which
+                  is encrypted) and that we may save them to enhance your
+                  experience on this website.
+                </Segment>
+                <Button onClick={this.confirmRegistration} fluid>
+                  Register Marriage Certificate
+                </Button>
+              </>
+            )}
           </Modal.Description>
         </Modal.Content>
       </Modal>

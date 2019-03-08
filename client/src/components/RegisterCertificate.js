@@ -32,6 +32,7 @@ import {
 } from "../config/config";
 import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
 import MarriagesGraph from "./infoComponents/MarriagesGraph";
+import UserAuth from "../utils/UserAuth";
 
 import firebase from "firebase/app";
 import "firebase/auth";
@@ -247,7 +248,13 @@ class App extends Component {
           const saveNewCertificate = firebase
             .functions()
             .httpsCallable("saveNewCertificate");
+          // if the user is logged in, we will link the certificate to their account
+          let idToken = 0;
+          if (firebase.auth().currentUser)
+            idToken = await firebase.auth().currentUser.getIdToken(true);
+          // we save the new certificate
           const saveNewCtf = await saveNewCertificate({
+            idToken,
             address: newCertificateAddress,
             location: {
               city: this.state.city.toLowerCase(),
@@ -267,7 +274,8 @@ class App extends Component {
             timestamp: Date.now(),
             key: this.state.idEncodingKey.toString()
           });
-          if (saveNewCtf.data !== "OK") {
+          console.log(saveNewCtf);
+          if (saveNewCtf.data.status !== "OK") {
             console.log("Error while saving to the database: ", saveNewCtf);
           }
         } catch (error) {
@@ -341,17 +349,12 @@ class App extends Component {
         }
       });
     } catch (error) {
-      console.log("Error while fetching details from contract: ", error);
+      console.log(error);
       this.setState({
         headerMessage: {
-          open: true,
-          header: "An error has occurred",
-          content:
-            "The contract does not exist or you are not connected to Metamask.",
-          icon: "exclamation triangle",
+          ...this.state.headerMessage,
           iconLoading: false,
-          info: false,
-          error: true
+          open: false
         }
       });
     }
@@ -416,23 +419,62 @@ class App extends Component {
                             <Divider horizontal>
                               <Header as="h4">Register a new marriage</Header>
                             </Divider>
-                            <Segment secondary basic>
-                              Fill in the form to register a new marriage.
-                            </Segment>
-                            <NewCertificateForm
-                              userAddress={context.userAddress}
-                              updateCityAndCountry={this.updateCityAndCountry}
-                              updateSpouseDetails={this.updateSpouseDetails}
-                              spousesDetails={this.state.spousesDetails}
-                              isAddress={web3.utils.isAddress}
-                            />
+                            {context.loggedInUser ? (
+                              <>
+                                <Segment secondary basic>
+                                  Fill in the form to register a new marriage.
+                                </Segment>
+                                <NewCertificateForm
+                                  userAddress={context.userAddress}
+                                  updateCityAndCountry={
+                                    this.updateCityAndCountry
+                                  }
+                                  updateSpouseDetails={this.updateSpouseDetails}
+                                  spousesDetails={this.state.spousesDetails}
+                                  isAddress={web3.utils.isAddress}
+                                />
+                              </>
+                            ) : (
+                              <Segment basic padded>
+                                <Header as="h4">
+                                  Here are a few benefits of having an off-chain
+                                  account:
+                                </Header>
+                                <List style={{ textAlign: "left" }} bulleted>
+                                  <List.Item>
+                                    Saving transactions details off-chain saves
+                                    you gas when sending transactions to the
+                                    certificate.
+                                  </List.Item>
+                                  <List.Item>
+                                    Only you and your partner have access to
+                                    transactions history and control panel.
+                                  </List.Item>
+                                  <List.Item>
+                                    You can easily retrieve you marriage
+                                    certificate number if you lose it.
+                                  </List.Item>
+                                  <List.Item>
+                                    Your secret key is safely saved in case you
+                                    need it later.
+                                  </List.Item>
+                                  <List.Item>
+                                    Withdrawal request receipt numbers will
+                                    appear in transactions history for easy
+                                    access.
+                                  </List.Item>
+                                </List>
+                                <UserAuth origin="register-page" />
+                              </Segment>
+                            )}
                           </Segment>
                           {checkIfDetailsAreValid(
                             this.state.spousesDetails.firstSpouseDetails
                           ) &&
                             checkIfDetailsAreValid(
                               this.state.spousesDetails.secondSpouseDetails
-                            ) && (
+                            ) &&
+                            context.loggedInUser && (
                               <DetailsValidation
                                 spousesDetails={this.state.spousesDetails}
                                 city={this.state.city}
@@ -442,6 +484,7 @@ class App extends Component {
                                 confirmRegistration={() =>
                                   this.confirmRegistration(context.userAddress)
                                 }
+                                userHasCertificate={!!context.userCertificate}
                               />
                             )}
                         </>
@@ -613,19 +656,19 @@ class App extends Component {
                       </List.Item>
                       <List.Item>
                         <List.Icon
-                          name="file pdf outline"
+                          name="id card"
                           size="large"
                           verticalAlign="middle"
                         />
                         <List.Content>
-                          <List.Header>Copy of the certificate</List.Header>
+                          <List.Header>Certificate Control Panel</List.Header>
                           <List.Description>
                             <Link
-                              to={`/certificate/${
-                                this.props.context.blockchain
-                              }/${this.state.certificate.address}`}
+                              to={`/check/${this.props.context.blockchain}/${
+                                this.state.certificate.address
+                              }`}
                             >
-                              Save a copy of the certificate!
+                              Access you certificate control panel
                             </Link>
                           </List.Description>
                         </List.Content>

@@ -198,8 +198,9 @@ class SpouseList extends Component {
         );
         // we update transactions log in firestore
         if (firebase.auth().currentUser) {
+          const idToken = await firebase.auth().currentUser.getIdToken(true);
           const data = {
-            userID: firebase.auth().currentUser.uid,
+            idToken,
             address: certificate.options.address,
             tx: {
               type: "deposit",
@@ -254,10 +255,11 @@ class SpouseList extends Component {
   ) => {
     // we update transactions log in firestore
     if (firebase.auth().currentUser) {
+      const idToken = await firebase.auth().currentUser.getIdToken(true);
       let data = {};
       if (type === "withdrawal") {
         data = {
-          userID: firebase.auth().currentUser.uid,
+          idToken,
           address: certificate.options.address,
           tx: {
             type,
@@ -269,7 +271,7 @@ class SpouseList extends Component {
         };
       } else if (type === "withdrawalRequest") {
         data = {
-          userID: firebase.auth().currentUser.uid,
+          idToken,
           address: certificate.options.address,
           tx: {
             type,
@@ -506,8 +508,9 @@ class SpouseList extends Component {
         this.closeTxModal(requestTx.status, requestTx.transactionHash);
         // we update transactions log in firestore
         if (firebase.auth().currentUser) {
+          const idToken = await firebase.auth().currentUser.getIdToken(true);
           const data = {
-            userID: firebase.auth().currentUser.uid,
+            idToken,
             address: certificate.options.address,
             tx: {
               type: "approvedRequest",
@@ -718,7 +721,7 @@ class SpouseList extends Component {
                   </List.List>
                 </List.Content>
               </List.Item>
-              {currentUser && (
+              {currentUser && context.loggedInUser && (
                 <List.Item>
                   <List.Icon name="edit" />
                   <List.Content>

@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import {
-  Segment,
+  Form,
   Modal,
   Input,
   Button,
@@ -56,12 +56,12 @@ class UserAuth extends Component {
               });
             }
           } else {
-            if (authResult.data.errorInfo) {
+            if (authResult.data.message) {
               this.setState({
                 authLoading: false,
                 authError: {
                   open: true,
-                  message: authResult.data.errorInfo.message
+                  message: authResult.data.message.errorInfo.message
                 }
               });
             } else {
@@ -73,7 +73,13 @@ class UserAuth extends Component {
           }
         } catch (error) {
           console.log(error);
-          this.setState({ authLoading: false });
+          this.setState({
+            authLoading: false,
+            authError: {
+              open: true,
+              message: error
+            }
+          });
         }
       }
     );
@@ -91,18 +97,10 @@ class UserAuth extends Component {
     return (
       <Modal
         trigger={
-          this.props.origin === "check-page" ? (
-            <Segment
-              as="a"
-              style={{
-                fontWeight: "bold",
-                fontStyle: "italic",
-                paddingLeft: "0px"
-              }}
-              basic
-            >
-              Create a new account to see and save transactions details
-            </Segment>
+          this.props.origin === "register-page" ? (
+            <Button color="orange" fluid>
+              Create a New Account
+            </Button>
           ) : (
             <Dropdown.Item as="a">
               <Icon name="user plus" className="navbar-icon" />
@@ -110,7 +108,7 @@ class UserAuth extends Component {
             </Dropdown.Item>
           )
         }
-        size="mini"
+        size="small"
         closeIcon
       >
         <Modal.Header className="modal-header">Create an Account</Modal.Header>
@@ -122,54 +120,84 @@ class UserAuth extends Component {
               error
             />
           )}
-          <Input
-            type="email"
-            icon="at"
-            iconPosition="left"
-            placeholder="Email"
-            onChange={event => this.setState({ email: event.target.value })}
-            value={this.state.email}
-            fluid
-          />
-          <br />
-          <Input
-            type="text"
-            icon="lock"
-            iconPosition="left"
-            placeholder="Password"
-            onChange={event => this.setState({ password: event.target.value })}
-            value={this.state.password}
-            fluid
-          />
-          <br />
-          <Input
-            type="text"
-            icon="certificate"
-            iconPosition="left"
-            placeholder="Marriage Certificate Address"
-            onChange={event =>
-              this.setState({
-                certificateAddress: event.target.value
-              })
-            }
-            value={this.state.certificateAddress}
-            fluid
-          />
-          <br />
-          <Input
-            type="text"
-            icon="key"
-            iconPosition="left"
-            placeholder="Secret Key"
-            onChange={event => this.setState({ secretKey: event.target.value })}
-            value={this.state.secretKey}
-            fluid
-          />
+          {!window.web3 && (
+            <Message
+              header="No web3 provided detected"
+              content="You must use a web3 provider like Metamask to use this website."
+              warning
+            />
+          )}
+          <Form>
+            <Form.Field required>
+              <label>Your Email Address:</label>
+              <Input
+                type="email"
+                icon="at"
+                iconPosition="left"
+                placeholder="Email"
+                onChange={event => this.setState({ email: event.target.value })}
+                value={this.state.email}
+                fluid
+              />
+            </Form.Field>
+            <Form.Field required>
+              <label>Your Password:</label>
+              <Input
+                type="text"
+                icon="lock"
+                iconPosition="left"
+                placeholder="Password"
+                onChange={event =>
+                  this.setState({ password: event.target.value })
+                }
+                value={this.state.password}
+                fluid
+              />
+            </Form.Field>
+            <Message
+              icon="hand point right"
+              header="Please note"
+              content="The certificate address and secret key are only required if you wish to link a newly created account to an existing certificate. If you created the account before the marriage certificate, the two will be automatically linked together."
+              size="tiny"
+              info
+            />
+            <Form.Field>
+              <label>Your Certificate Address:</label>
+              <Input
+                type="text"
+                icon="certificate"
+                iconPosition="left"
+                placeholder="Marriage Certificate Address"
+                onChange={event =>
+                  this.setState({
+                    certificateAddress: event.target.value
+                  })
+                }
+                value={this.state.certificateAddress}
+                fluid
+              />
+            </Form.Field>
+            <Form.Field>
+              <label>Your Secret Key:</label>
+              <Input
+                type="text"
+                icon="key"
+                iconPosition="left"
+                placeholder="Secret Key"
+                onChange={event =>
+                  this.setState({ secretKey: event.target.value })
+                }
+                value={this.state.secretKey}
+                fluid
+              />
+            </Form.Field>
+          </Form>
         </Modal.Content>
         <Modal.Actions>
           <Button
             loading={this.state.authLoading}
             onClick={this.authenticateUser}
+            disabled={!window.web3}
           >
             Sign Up
           </Button>

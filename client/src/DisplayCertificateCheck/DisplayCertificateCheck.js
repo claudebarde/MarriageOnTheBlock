@@ -4,7 +4,6 @@ import moment from "moment";
 
 import SpouseList from "./SpouseList";
 import TransactionsHistory from "./TransactionsHistory";
-import UserAuth from "../utils/UserAuth";
 
 import { isMarriageValid } from "../utils/functions";
 import { GlobalStateConsumer } from "../config/config";
@@ -62,7 +61,8 @@ const DisplayCertificateCheck = props => {
                     details.spousesDetails.firstSpouseDetails.address ||
                     props.currentUser ===
                       details.spousesDetails.secondSpouseDetails.address) &&
-                    web3 && (
+                    web3 &&
+                    context.loggedInUser && (
                       <>
                         <List.Item>
                           <List.Icon name="calculator" />
@@ -104,27 +104,14 @@ const DisplayCertificateCheck = props => {
                           <List.Icon name="history" />
                           <List.Content>
                             <List.Header>Transactions History:</List.Header>
-                            {!context.loggedInUser ? (
-                              <List.Description>
-                                <UserAuth
-                                  certificateAddress={details.address}
-                                  currentUserAddress={
-                                    props.web3.eth.accounts.currentProvider
-                                      .selectedAddress
-                                  }
-                                  origin="check-page"
-                                />
-                              </List.Description>
-                            ) : (
-                              <List.Description>
-                                <TransactionsHistory
-                                  spousesAddresses={props.spousesAddresses}
-                                  web3={props.web3}
-                                  creationTimestamp={details.timestamp}
-                                  certificateAddress={details.address}
-                                />
-                              </List.Description>
-                            )}
+                            <List.Description>
+                              <TransactionsHistory
+                                spousesAddresses={props.spousesAddresses}
+                                web3={props.web3}
+                                creationTimestamp={details.timestamp}
+                                certificateAddress={details.address}
+                              />
+                            </List.Description>
                           </List.Content>
                         </List.Item>
                         <List.Item>
