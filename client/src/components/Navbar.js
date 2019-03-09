@@ -140,7 +140,7 @@ class Navbar extends Component {
                         <Dropdown.Divider />
                         <Dropdown.Item>
                           <a
-                            href="https://github.com/claudebarde/GetMarriedOnTheBlockchain"
+                            href="https://github.com/claudebarde/MarriageOnTheBlock"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="router-link"

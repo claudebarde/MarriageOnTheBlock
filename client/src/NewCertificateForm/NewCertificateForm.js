@@ -131,19 +131,13 @@ class NewCertificateForm extends Component {
 
   updateCity = city => {
     this.setState({ city }, () =>
-      this.props.updateCityAndCountry(
-        this.state.city,
-        countries[this.state.country].name
-      )
+      this.props.updateCityAndCountry(this.state.city, this.state.country)
     );
   };
 
   updateCountry = (event, { value }) => {
     this.setState({ country: value }, () =>
-      this.props.updateCityAndCountry(
-        this.state.city,
-        countries[this.state.country].name
-      )
+      this.props.updateCityAndCountry(this.state.city, this.state.country)
     );
   };
 
@@ -163,7 +157,6 @@ class NewCertificateForm extends Component {
             }&lon=${position.coords.longitude}&format=json`
           );
           const location = await query.json();
-          console.log(location);
           // we update the location in the state if found
           let city, country;
           if (
@@ -173,8 +166,12 @@ class NewCertificateForm extends Component {
             city = location.address.city;
             country = location.address.country_code;
           }
-          this.props.updateCityAndCountry(city, countries[country].name);
-          this.setState({ loadingLocation: false, city, country });
+          this.props.updateCityAndCountry(city, country.toUpperCase());
+          this.setState({
+            loadingLocation: false,
+            city,
+            country: country.toUpperCase()
+          });
         },
         error => {
           if (error) {

@@ -23,6 +23,7 @@ import "firebase/firebase-functions";
 
 import getWeb3 from "../utils/getWeb3";
 import { GlobalStateConsumer } from "../config/config";
+import { estimateTxTime } from "../utils/functions";
 
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 let web3 = null;
@@ -56,7 +57,8 @@ class SpouseList extends Component {
       header: "Waiting for confirmation...",
       txHash: null,
       message:
-        "Your transaction is being confirmed on the blockchain, please wait."
+        "Your transaction is being confirmed on the blockchain, please wait.",
+      estimateTime: null
     },
     accordionActiveIndex: null
   };
@@ -70,7 +72,8 @@ class SpouseList extends Component {
         header: "Waiting for confirmation...",
         txHash,
         message:
-          "Your transaction is being confirmed on the blockchain, please wait."
+          "Your transaction is being confirmed on the blockchain, please wait.",
+        estimateTime: null
       };
     } else if (status === "confirmed") {
       return {
@@ -80,7 +83,8 @@ class SpouseList extends Component {
         header: "Transaction confirmed!",
         txHash,
         message:
-          "Your transaction has been successfully confirmed on the blockchain!"
+          "Your transaction has been successfully confirmed on the blockchain!",
+        estimateTime: null
       };
     } else if (status === "error") {
       return {
@@ -90,7 +94,8 @@ class SpouseList extends Component {
         header: "Transaction error!",
         txHash,
         message:
-          "There was an error processing this transaction, please try again later."
+          "There was an error processing this transaction, please try again later.",
+        estimateTime: null
       };
     }
   };
@@ -111,6 +116,7 @@ class SpouseList extends Component {
   };
 
   changeMarriageStatus = async () => {
+    const estimateTime = await estimateTxTime();
     const changeMarriageStatus = await certificate.methods
       .changeMarriageStatus()
       .send(
@@ -125,7 +131,8 @@ class SpouseList extends Component {
               transactionModal: {
                 ...this.state.transactionModal,
                 open: true,
-                txHash
+                txHash,
+                estimateTime
               }
             });
           }
@@ -141,6 +148,7 @@ class SpouseList extends Component {
   updateTxHistory = firebase.functions().httpsCallable("updateTxHistory");
 
   depositFunds = async () => {
+    const estimateTime = await estimateTxTime();
     this.setState({
       depositFundsModal: {
         ...this.state.depositFundsModal,
@@ -175,7 +183,8 @@ class SpouseList extends Component {
                 transactionModal: {
                   ...this.state.transactionModal,
                   txHash,
-                  open: true
+                  open: true,
+                  estimateTime
                 },
                 depositFundsModal: {
                   ...this.state.depositFundsModal,
@@ -288,6 +297,7 @@ class SpouseList extends Component {
   };
 
   withdrawFunds = async () => {
+    const estimateTime = await estimateTxTime();
     if (
       parseFloat(this.state.ethToTransfer) >
       parseFloat(
@@ -334,7 +344,8 @@ class SpouseList extends Component {
                 transactionModal: {
                   ...this.state.transactionModal,
                   open: true,
-                  txHash
+                  txHash,
+                  estimateTime
                 },
                 errorSend: false
               });
@@ -479,6 +490,7 @@ class SpouseList extends Component {
   };
 
   approveRequest = async requestID => {
+    const estimateTime = await estimateTxTime();
     try {
       const requestTx = await certificate.methods
         .approveWithdrawRequestFromSavings(requestID)
@@ -496,7 +508,8 @@ class SpouseList extends Component {
                 transactionModal: {
                   ...this.state.transactionModal,
                   open: true,
-                  txHash
+                  txHash,
+                  estimateTime
                 }
               });
             }
@@ -660,6 +673,11 @@ class SpouseList extends Component {
                       {`Transaction hash: ${
                         this.state.transactionModal.txHash
                       }`}
+                      <br />
+                      {this.state.transactionModal.estimateTime &&
+                        `Estimate waiting time: ${
+                          this.state.transactionModal.estimateTime
+                        } seconds`}
                     </Segment>
                   </Header>
                 </Segment>

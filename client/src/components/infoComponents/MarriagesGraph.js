@@ -11,8 +11,9 @@ import CanvasJSReact from "../../config/canvasjs.react";
 import upperFirst from "lodash/upperFirst";
 import { MIN_SCREEN_WIDTH } from "../../config/config";
 
-const lookup = require("country-data").lookup;
 const CanvasJSChart = CanvasJSReact.CanvasJSChart;
+
+const countries = require("country-data").countries;
 
 class MarriagesGraph extends Component {
   state = {
@@ -20,14 +21,6 @@ class MarriagesGraph extends Component {
     chartOptions: { data: [] },
     screenWidth: this.props.screenWidth
   };
-
-  formatCountryNameForLookup = string =>
-    string
-      .toLowerCase()
-      .replace("-", " ")
-      .split(" ")
-      .map(substr => upperFirst(substr))
-      .join(" ");
 
   displayCouplesLocations = couplesLocations => {
     // we sort the values to get the highest ones first
@@ -45,35 +38,15 @@ class MarriagesGraph extends Component {
           showInLegend: true,
           legendText: "{label} - {y}",
           dataPoints: sortedData.map(country => ({
-            label: `${upperFirst(country)} ${
-              lookup.countries({
-                name: this.formatCountryNameForLookup(country)
-              })[0]
-                ? lookup.countries({
-                    name: this.formatCountryNameForLookup(country)
-                  })[0].emoji
-                : ""
+            label: `${upperFirst(countries[country].name)} ${
+              countries[country].emoji ? countries[country].emoji : ""
             }`,
             y: couplesLocations[country],
             indexLabel:
               this.state.screenWidth < MIN_SCREEN_WIDTH
-                ? `${
-                    lookup.countries({
-                      name: this.formatCountryNameForLookup(country)
-                    })[0]
-                      ? lookup.countries({
-                          name: this.formatCountryNameForLookup(country)
-                        })[0].emoji
-                      : ""
-                  }`
-                : `${upperFirst(country)} ${
-                    lookup.countries({
-                      name: this.formatCountryNameForLookup(country)
-                    })[0]
-                      ? lookup.countries({
-                          name: this.formatCountryNameForLookup(country)
-                        })[0].emoji
-                      : ""
+                ? `${countries[country].emoji ? countries[country].emoji : ""}`
+                : `${upperFirst(countries[country].name)} ${
+                    countries[country].emoji ? countries[country].emoji : ""
                   }`
           }))
         }

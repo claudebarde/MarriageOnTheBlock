@@ -160,7 +160,10 @@ class App extends Component {
     secondSpouseDetails.idNumber = encrypt2;
 
     return [
-      JSON.stringify({ city: this.state.city, country: this.state.country }),
+      JSON.stringify({
+        city: this.state.city,
+        country: this.state.country.toUpperCase()
+      }),
       JSON.stringify(firstSpouseDetails),
       JSON.stringify(secondSpouseDetails)
     ];

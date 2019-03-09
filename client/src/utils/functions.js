@@ -122,3 +122,17 @@ export const isMarriageValid = marriageValidityData => {
 
   return marriageValidity;
 };
+
+export const estimateTxTime = async () => {
+  const web3 = await getWeb3();
+  const span = 1000;
+  // we fetch the current block and the block 100 places before
+  const blockNumber = await web3.eth.getBlockNumber();
+  const currentBlock = await web3.eth.getBlock(blockNumber);
+  const pastBlock = await web3.eth.getBlock(blockNumber - span);
+  // we get the difference in their timestamps
+  const diff = currentBlock.timestamp - pastBlock.timestamp;
+  const estimateTime = diff / span;
+
+  return Math.round(estimateTime);
+};

@@ -10,6 +10,8 @@ import {
 } from "semantic-ui-react";
 import _ from "lodash";
 
+const countries = require("country-data").countries;
+
 class DetailsValidation extends Component {
   state = {
     modalOpen: false
@@ -60,7 +62,8 @@ class DetailsValidation extends Component {
                 <List.Icon name="globe" />
                 <List.Content>
                   <List.Header>
-                    {this.props.city}, {this.props.country}
+                    {this.props.city},{" "}
+                    {countries[this.props.country.toUpperCase()].name}
                   </List.Header>
                 </List.Content>
               </List.Item>
