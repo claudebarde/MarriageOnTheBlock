@@ -3,6 +3,10 @@ import getWeb3 from "./getWeb3";
 
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 
+export const truncateAddress = address => {
+  if (address) return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
 export const checkIfDetailsAreValid = details => {
   try {
     // returns false if at least one element is empty

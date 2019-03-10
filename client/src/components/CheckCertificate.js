@@ -19,7 +19,7 @@ import { checkCertificate } from "../utils/functions";
 import {
   MIN_SCREEN_WIDTH,
   CERTIFICATE_OBJ,
-  GlobalStateConsumer
+  withContext
 } from "../config/config";
 import getWeb3 from "../utils/getWeb3";
 let web3 = null;
@@ -238,6 +238,7 @@ class CheckCertificate extends Component {
     // fetch contract details if address is provided
     if (
       this.props.match.params.address &&
+      web3 &&
       web3.utils.isAddress(this.props.match.params.address) &&
       !this.state.certificateCheck.address
     ) {
@@ -258,71 +259,67 @@ class CheckCertificate extends Component {
   };
 
   render() {
+    const { context } = this.props;
     return (
-      <GlobalStateConsumer>
-        {context => (
-          <Container>
-            <Form>
-              <Form.Field
-                id="form-input-certificate-address"
-                control={Input}
-                label="Please enter your certificate address :"
-                placeholder={`Certificate Address ${
-                  context.blockchain
-                    ? context.blockchain === "eth"
-                      ? "on Ethereum"
-                      : "on Tron"
-                    : ""
-                }`}
-                action={{
-                  icon: "search",
-                  content: "Search",
-                  onClick: this.fetchCertificateDetails
-                }}
-                value={this.state.certificateCheck.address}
-                onChange={event =>
-                  this.setState({
-                    certificateCheck: {
-                      ...this.state.certificateCheck,
-                      address: event.target.value
-                    }
-                  })
+      <Container>
+        <Form>
+          <Form.Field
+            id="form-input-certificate-address"
+            control={Input}
+            label="Please enter your certificate address :"
+            placeholder={`Certificate Address ${
+              context.blockchain
+                ? context.blockchain === "eth"
+                  ? "on Ethereum"
+                  : "on Tron"
+                : ""
+            }`}
+            action={{
+              icon: "search",
+              content: "Search",
+              onClick: this.fetchCertificateDetails
+            }}
+            value={this.state.certificateCheck.address}
+            onChange={event =>
+              this.setState({
+                certificateCheck: {
+                  ...this.state.certificateCheck,
+                  address: event.target.value
                 }
-              />
-            </Form>
-            {this.state.fetchingCertificateDetails && (
-              <Segment>
-                <Dimmer active inverted>
-                  <Loader inverted content="Loading" />
-                </Dimmer>
-                <Image src="/images/short-paragraph.png" />
-              </Segment>
-            )}
-            {this.state.showCertificateCheckDetails &&
-              (this.state.certificateCheck.error === null ? (
-                <DisplayCertificateCheck
-                  details={this.state.certificateCheck}
-                  currentUser={context.userAddress}
-                  web3={web3}
-                  updateBalance={this.updateBalance}
-                  balance={this.state.certificateCheck.balance}
-                  spousesAddresses={[
-                    this.state.certificateCheck.spousesDetails.firstSpouseDetails.address.toLowerCase(),
-                    this.state.certificateCheck.spousesDetails.secondSpouseDetails.address.toLowerCase()
-                  ]}
-                />
-              ) : (
-                <Message
-                  header="An error occurred"
-                  content="Please check if the certificate address is correct and retry"
-                  error
-                />
-              ))}
-          </Container>
+              })
+            }
+          />
+        </Form>
+        {this.state.fetchingCertificateDetails && (
+          <Segment>
+            <Dimmer active inverted>
+              <Loader inverted content="Loading" />
+            </Dimmer>
+            <Image src="/images/short-paragraph.png" />
+          </Segment>
         )}
-      </GlobalStateConsumer>
+        {this.state.showCertificateCheckDetails &&
+          (this.state.certificateCheck.error === null ? (
+            <DisplayCertificateCheck
+              details={this.state.certificateCheck}
+              web3={web3}
+              updateBalance={this.updateBalance}
+              balance={this.state.certificateCheck.balance}
+              spousesAddresses={[
+                this.state.certificateCheck.spousesDetails.firstSpouseDetails.address.toLowerCase(),
+                this.state.certificateCheck.spousesDetails.secondSpouseDetails.address.toLowerCase()
+              ]}
+            />
+          ) : (
+            <Message
+              header="An error occurred"
+              content="Please check if the certificate address is correct and retry"
+              error
+            />
+          ))}
+      </Container>
     );
   }
 }
 
-export default withRouter(CheckCertificate);
+export default withRouter(withContext(CheckCertificate));

@@ -17,6 +17,7 @@ import "firebase/firebase-functions";
 import "firebase/auth";
 
 import { NETWORK } from "../config/config";
+import { truncateAddress } from "../utils/functions";
 
 class TransactionsHistory extends Component {
   state = {
@@ -25,8 +26,6 @@ class TransactionsHistory extends Component {
     loadingTxHistory: true,
     errorLoadingHistory: ""
   };
-
-  truncateAddress = address => `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   txSwitch = (e, titleProps) => {
     const { index } = titleProps;
@@ -105,7 +104,7 @@ class TransactionsHistory extends Component {
                   txHistory[tx].amount.toString()
                 )} ether deposited to ${
                   txHistory[tx].account
-                } account from ${this.truncateAddress(
+                } account from ${truncateAddress(
                   txHistory[tx].from
                 )}`}</Segment>
                 <Segment
@@ -134,9 +133,7 @@ class TransactionsHistory extends Component {
                   txHistory[tx].amount.toString()
                 )} ether withdrawn from ${
                   txHistory[tx].account
-                } account from ${this.truncateAddress(
-                  txHistory[tx].from
-                )}`}</Segment>
+                } account to ${truncateAddress(txHistory[tx].from)}`}</Segment>
                 <Segment
                   size="tiny"
                   style={{ wordBreak: "break-word" }}
@@ -163,9 +160,7 @@ class TransactionsHistory extends Component {
                   txHistory[tx].amount.toString()
                 )} ether to be withdrawn from ${
                   txHistory[tx].account
-                } account from ${this.truncateAddress(
-                  txHistory[tx].from
-                )}`}</Segment>
+                } account to ${truncateAddress(txHistory[tx].from)}`}</Segment>
                 <Segment attached>
                   Request ID: {txHistory[tx].requestID}
                 </Segment>
@@ -194,8 +189,8 @@ class TransactionsHistory extends Component {
                   .format("MMMM Do YYYY, h:mm:ss a")}`}</Segment>
                 <Segment attached>{`${this.props.web3.utils.fromWei(
                   txHistory[tx].amount.toString()
-                )} ether withdrawn from savings account from ${this.truncateAddress(
-                  txHistory[tx].from
+                )} ether withdrawn from savings account to ${truncateAddress(
+                  txHistory[tx].to
                 )}`}</Segment>
                 <Segment
                   size="tiny"
@@ -273,6 +268,7 @@ class TransactionsHistory extends Component {
         }
         size="tiny"
         onOpen={async () => await this.fetchTxHistory()}
+        onClose={() => this.setState({ activeIndex: 0 })}
         closeIcon
       >
         <Modal.Header className="modal-header">

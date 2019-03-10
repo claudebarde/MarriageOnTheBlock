@@ -28,7 +28,7 @@ import {
 import {
   MIN_SCREEN_WIDTH,
   CERTIFICATE_OBJ,
-  GlobalStateConsumer
+  withContext
 } from "../config/config";
 import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
 import MarriagesGraph from "./infoComponents/MarriagesGraph";
@@ -100,7 +100,8 @@ class App extends Component {
           address: ""
         }
       },
-      chartOptions: null
+      chartOptions: null,
+      disclaimerModal: { open: false }
     };
   }
 
@@ -368,360 +369,417 @@ class App extends Component {
   };
 
   render() {
+    const { context } = this.props;
     return (
-      <GlobalStateConsumer>
-        {context => (
-          <Container fluid>
-            {this.state.headerMessage.open && (
-              <>
-                <Container text>
-                  <Message
-                    size="small"
-                    info={this.state.headerMessage.info}
-                    error={this.state.headerMessage.error}
-                    icon
-                  >
-                    <Icon
-                      name={this.state.headerMessage.icon}
-                      loading={this.state.headerMessage.iconLoading}
+      <Container fluid>
+        {this.state.headerMessage.open && (
+          <>
+            <Container text>
+              <Message
+                size="small"
+                info={this.state.headerMessage.info}
+                error={this.state.headerMessage.error}
+                icon
+              >
+                <Icon
+                  name={this.state.headerMessage.icon}
+                  loading={this.state.headerMessage.iconLoading}
+                />
+                <Message.Content>
+                  <Message.Header>
+                    {this.state.headerMessage.header}
+                  </Message.Header>
+                  {this.state.headerMessage.content}
+                </Message.Content>
+              </Message>
+            </Container>
+            <br />
+          </>
+        )}
+        <Container textAlign="center">
+          {this.state.headerMessage.iconLoading ? (
+            <Segment>
+              <Dimmer active inverted>
+                <Loader inverted content="Loading" />
+              </Dimmer>
+              <Image src="/images/short-paragraph.png" />
+            </Segment>
+          ) : (
+            <Grid columns={2} stackable>
+              <Grid.Row stretched>
+                {this.state.screenWidth < MIN_SCREEN_WIDTH && (
+                  <Grid.Column>
+                    <NumberOfMarriages
+                      certificatesTotal={this.state.certificatesTotal}
                     />
-                    <Message.Content>
-                      <Message.Header>
-                        {this.state.headerMessage.header}
-                      </Message.Header>
-                      {this.state.headerMessage.content}
-                    </Message.Content>
-                  </Message>
-                </Container>
-                <br />
-              </>
-            )}
-            <Container textAlign="center">
-              {this.state.headerMessage.iconLoading ? (
-                <Segment>
-                  <Dimmer active inverted>
-                    <Loader inverted content="Loading" />
-                  </Dimmer>
-                  <Image src="/images/short-paragraph.png" />
-                </Segment>
-              ) : (
-                <Grid columns={2} stackable>
-                  <Grid.Row stretched>
-                    {this.state.screenWidth < MIN_SCREEN_WIDTH && (
-                      <Grid.Column>
-                        <NumberOfMarriages
-                          certificatesTotal={this.state.certificatesTotal}
-                        />
-                      </Grid.Column>
-                    )}
+                  </Grid.Column>
+                )}
 
-                    <Grid.Column>
-                      {!this.state.headerMessage.open ? (
-                        <>
-                          <Segment>
-                            <Divider horizontal>
-                              <Header as="h4">Register a new marriage</Header>
-                            </Divider>
-                            {context.loggedInUser ? (
-                              <>
-                                <Segment secondary basic>
-                                  Fill in the form to register a new marriage.
-                                </Segment>
-                                <NewCertificateForm
-                                  userAddress={context.userAddress}
-                                  updateCityAndCountry={
-                                    this.updateCityAndCountry
-                                  }
-                                  updateSpouseDetails={this.updateSpouseDetails}
-                                  spousesDetails={this.state.spousesDetails}
-                                  isAddress={web3.utils.isAddress}
-                                />
-                              </>
-                            ) : (
-                              <Segment basic padded>
-                                <Header as="h4">
-                                  Here are a few benefits of having an off-chain
-                                  account:
-                                </Header>
-                                <List style={{ textAlign: "left" }} bulleted>
-                                  <List.Item>
-                                    Saving transactions details off-chain saves
-                                    you gas when sending transactions to the
-                                    certificate.
-                                  </List.Item>
-                                  <List.Item>
-                                    Only you and your partner have access to
-                                    transactions history and control panel.
-                                  </List.Item>
-                                  <List.Item>
-                                    You can easily retrieve you marriage
-                                    certificate number if you lose it.
-                                  </List.Item>
-                                  <List.Item>
-                                    Your secret key is safely saved in case you
-                                    need it later.
-                                  </List.Item>
-                                  <List.Item>
-                                    Withdrawal request receipt numbers will
-                                    appear in transactions history for easy
-                                    access.
-                                  </List.Item>
-                                </List>
-                                <UserAuth origin="register-page" />
-                              </Segment>
-                            )}
-                          </Segment>
-                          {checkIfDetailsAreValid(
-                            this.state.spousesDetails.firstSpouseDetails
-                          ) &&
-                            checkIfDetailsAreValid(
-                              this.state.spousesDetails.secondSpouseDetails
-                            ) &&
-                            context.loggedInUser && (
-                              <DetailsValidation
-                                spousesDetails={this.state.spousesDetails}
-                                city={this.state.city}
-                                country={this.state.country}
-                                currentFee={this.state.fee}
-                                gasToUse={this.state.gasToUse}
-                                confirmRegistration={() =>
-                                  this.confirmRegistration(context.userAddress)
-                                }
-                                userHasCertificate={!!context.userCertificate}
-                              />
-                            )}
-                        </>
-                      ) : (
-                        <MarriagesGraph
-                          firebase={firebase}
-                          screenWidth={this.state.screenWidth}
-                        />
-                      )}
-                    </Grid.Column>
-                    <Grid.Column>
-                      {this.state.screenWidth >= MIN_SCREEN_WIDTH && (
-                        <NumberOfMarriages
-                          certificatesTotal={this.state.certificatesTotal}
-                        />
-                      )}
+                <Grid.Column>
+                  {!this.state.headerMessage.open ? (
+                    <>
                       <Segment>
                         <Divider horizontal>
-                          <Header as="h4">Last marriage</Header>
+                          <Header as="h4">Register a new marriage</Header>
                         </Divider>
-                        {checkIfDetailsAreValid(this.state.lastMarriage) ? (
-                          <p>{lastMarriageDisplay(this.state.lastMarriage)}</p>
+                        {context.loggedInUser ? (
+                          <>
+                            <Segment secondary basic>
+                              Fill in the form to register a new marriage.
+                            </Segment>
+                            <NewCertificateForm
+                              userAddress={context.userAddress}
+                              updateCityAndCountry={this.updateCityAndCountry}
+                              updateSpouseDetails={this.updateSpouseDetails}
+                              spousesDetails={this.state.spousesDetails}
+                              isAddress={web3.utils.isAddress}
+                            />
+                          </>
                         ) : (
-                          <p>No marriage to show.</p>
+                          <Segment basic padded>
+                            <Header as="h4">
+                              Here are a few benefits of having an off-chain
+                              account:
+                            </Header>
+                            <List style={{ textAlign: "left" }} bulleted>
+                              <List.Item>
+                                Saving transactions details off-chain saves you
+                                gas when sending transactions to the
+                                certificate.
+                              </List.Item>
+                              <List.Item>
+                                Only you and your partner have access to
+                                transactions history and control panel.
+                              </List.Item>
+                              <List.Item>
+                                You can easily retrieve you marriage certificate
+                                number if you lose it.
+                              </List.Item>
+                              <List.Item>
+                                Your secret key is safely saved in case you need
+                                it later.
+                              </List.Item>
+                              <List.Item>
+                                Withdrawal request receipt numbers will appear
+                                in transactions history for easy access.
+                              </List.Item>
+                            </List>
+                            <DisclaimerModal
+                              open={this.state.disclaimerModal.open}
+                              openDisclaimer={() =>
+                                this.setState({
+                                  disclaimerModal: {
+                                    ...this.state.disclaimerModal,
+                                    open: true
+                                  }
+                                })
+                              }
+                              closeDisclaimer={() =>
+                                this.setState({
+                                  disclaimerModal: {
+                                    ...this.state.disclaimerModal,
+                                    open: false
+                                  }
+                                })
+                              }
+                            />
+                          </Segment>
                         )}
                       </Segment>
-                      <Segment>
-                        <Divider horizontal>
-                          <Header as="h4">Exchange</Header>
-                        </Divider>
-                        <Modal
-                          trigger={
-                            <Button color="green">
-                              Exchange Bitcoin for Ethereum
-                            </Button>
-                          }
-                          size="small"
-                          closeIcon
-                        >
-                          <Modal.Header>Exchange with Changelly</Modal.Header>
-                          <Modal.Content>
-                            <Header as="h1">
-                              Exchange your Bitcoin for Ethereum to validate
-                              your marriage certificate
-                            </Header>
-                            <Header as="h3">
-                              or exchange other cryptocurrencies{" "}
-                              <a
-                                href="https://old.changelly.com/?ref_id=vab5l967wagye3m2"
-                                alt="changelly"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                on this page
-                              </a>
-                              .
-                            </Header>
-                            <iframe
-                              src="https://old.changelly.com/widget/v1?auth=email&from=BTC&to=ETH&merchant_id=vab5l967wagye3m2&address=&amount=1&ref_id=vab5l967wagye3m2&color=00cf70"
-                              title="changelly"
-                              width="600"
-                              height="450"
-                              className="changelly"
-                              scrolling="no"
-                              style={{ overflowY: "hidden", border: "none" }}
-                            >
-                              {" "}
-                              Can't load widget{" "}
-                            </iframe>
-                          </Modal.Content>
-                        </Modal>
-                      </Segment>
-                    </Grid.Column>
-                  </Grid.Row>
-                  {!this.state.headerMessage.open && (
-                    <Grid.Row stretched>
-                      <Grid.Column width={16}>
-                        <MarriagesGraph
-                          firebase={firebase}
-                          screenWidth={this.state.screenWidth}
-                          chartOptions={this.state.chartOptions}
-                        />
-                      </Grid.Column>
-                    </Grid.Row>
+                      {checkIfDetailsAreValid(
+                        this.state.spousesDetails.firstSpouseDetails
+                      ) &&
+                        checkIfDetailsAreValid(
+                          this.state.spousesDetails.secondSpouseDetails
+                        ) &&
+                        context.loggedInUser && (
+                          <DetailsValidation
+                            spousesDetails={this.state.spousesDetails}
+                            city={this.state.city}
+                            country={this.state.country}
+                            currentFee={this.state.fee}
+                            gasToUse={this.state.gasToUse}
+                            confirmRegistration={() =>
+                              this.confirmRegistration(context.userAddress)
+                            }
+                            userHasCertificate={!!context.userCertificate}
+                          />
+                        )}
+                    </>
+                  ) : (
+                    <MarriagesGraph
+                      firebase={firebase}
+                      screenWidth={this.state.screenWidth}
+                    />
                   )}
-                </Grid>
-              )}
-            </Container>
-            <Modal open={this.state.confirmationModal.open} basic size="small">
-              <Header>
-                {this.state.confirmationModal.header}
-                {this.state.confirmationModal.headerMessage}
-              </Header>
-              <Modal.Content>
-                <p>{this.state.confirmationModal.message}</p>
-              </Modal.Content>
-            </Modal>
-
-            <Modal
-              open={this.state.congratulationModalOpen}
-              size="small"
-              centered={false}
-              onClose={() =>
-                this.setState({
-                  congratulationModalOpen: false
-                })
-              }
-              closeIcon
-            >
-              <Modal.Header className="modal-header">
-                Congratulations!
-              </Modal.Header>
-              <Modal.Content image id="congratulations">
-                <Image
-                  wrapped
-                  size="small"
-                  src="/images/undraw_wedding_t1yl.svg"
-                />
-                <Modal.Description>
-                  <Header as="h3">
-                    You are now officially married on the Ethereum blockchain!
-                  </Header>
-                  <Segment basic style={{ wordBreak: "break-word" }}>
-                    <List divided relaxed="very">
-                      <List.Item>
-                        <List.Icon
-                          name="linkify"
-                          size="large"
-                          verticalAlign="middle"
-                        />
-                        <List.Content>
-                          <List.Header>
-                            {this.state.newCertificateTxHash}
-                          </List.Header>
-                          <List.Description>
-                            This is the transaction number you can look up here.
-                          </List.Description>
-                        </List.Content>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon
-                          name="file alternate outline"
-                          size="large"
-                          verticalAlign="middle"
-                        />
-                        <List.Content>
-                          <List.Header>
-                            {this.state.certificate.address}
-                          </List.Header>
-                          <List.Description>
-                            Please keep the certificate address in a safe place
-                            as you cannot access your certificate without it.
-                          </List.Description>
-                        </List.Content>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon
-                          name="key"
-                          size="large"
-                          verticalAlign="middle"
-                        />
-                        <List.Content>
-                          <List.Header>{this.state.idEncodingKey}</List.Header>
-                          <List.Description>
-                            Your secret key allows to read your encrypted ID
-                            number from the blockchain.
-                          </List.Description>
-                        </List.Content>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon
-                          name="id card"
-                          size="large"
-                          verticalAlign="middle"
-                        />
-                        <List.Content>
-                          <List.Header>Certificate Control Panel</List.Header>
-                          <List.Description>
-                            <Link
-                              to={`/check/${this.props.context.blockchain}/${
-                                this.state.certificate.address
-                              }`}
-                            >
-                              Access you certificate control panel
-                            </Link>
-                          </List.Description>
-                        </List.Content>
-                      </List.Item>
-                      <List.Item>
-                        <List.Icon
-                          name="share"
-                          size="large"
-                          verticalAlign="middle"
-                        />
-                        <List.Content>
-                          <List.Header>Announce your marriage</List.Header>
-                          <List.Description style={{ paddingTop: "5px" }}>
-                            <iframe
-                              title="facebook-share"
-                              src="https://www.facebook.com/plugins/share_button.php?href=https%3A%2F%2Fwww.getmarriedontheblockchain.com&layout=button_count&size=small&mobile_iframe=true&width=69&height=20&appId"
-                              width="69"
-                              height="20"
-                              style={{
-                                border: "none",
-                                overflow: "hidden",
-                                marginRight: "20px"
-                              }}
-                              scrolling="no"
-                              frameBorder="0"
-                              allowtransparency="true"
-                              allow="encrypted-media"
-                            />
-                            <a
-                              className="twitter-share-button"
-                              href="https://twitter.com/intent/tweet"
-                              text="Get Married on the Blockchain!"
-                              url="https://www.getmarriedontheblockchain.com"
-                              hashtags="ethereum,blockchain,crypto"
-                            >
-                              Tweet
-                            </a>
-                          </List.Description>
-                        </List.Content>
-                      </List.Item>
-                    </List>
+                </Grid.Column>
+                <Grid.Column>
+                  {this.state.screenWidth >= MIN_SCREEN_WIDTH && (
+                    <NumberOfMarriages
+                      certificatesTotal={this.state.certificatesTotal}
+                    />
+                  )}
+                  <Segment>
+                    <Divider horizontal>
+                      <Header as="h4">Last marriage</Header>
+                    </Divider>
+                    {checkIfDetailsAreValid(this.state.lastMarriage) ? (
+                      <p>{lastMarriageDisplay(this.state.lastMarriage)}</p>
+                    ) : (
+                      <p>No marriage to show.</p>
+                    )}
                   </Segment>
-                </Modal.Description>
-              </Modal.Content>
-            </Modal>
-          </Container>
-        )}
-      </GlobalStateConsumer>
+                  <Segment>
+                    <Divider horizontal>
+                      <Header as="h4">Exchange</Header>
+                    </Divider>
+                    <Modal
+                      trigger={
+                        <Button color="green">
+                          Exchange Bitcoin for Ethereum
+                        </Button>
+                      }
+                      size="small"
+                      closeIcon
+                    >
+                      <Modal.Header>Exchange with Changelly</Modal.Header>
+                      <Modal.Content>
+                        <Header as="h1">
+                          Exchange your Bitcoin for Ethereum to validate your
+                          marriage certificate
+                        </Header>
+                        <Header as="h3">
+                          or exchange other cryptocurrencies{" "}
+                          <a
+                            href="https://old.changelly.com/?ref_id=vab5l967wagye3m2"
+                            alt="changelly"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            on this page
+                          </a>
+                          .
+                        </Header>
+                        <iframe
+                          src="https://old.changelly.com/widget/v1?auth=email&from=BTC&to=ETH&merchant_id=vab5l967wagye3m2&address=&amount=1&ref_id=vab5l967wagye3m2&color=00cf70"
+                          title="changelly"
+                          width="600"
+                          height="450"
+                          className="changelly"
+                          scrolling="no"
+                          style={{ overflowY: "hidden", border: "none" }}
+                        >
+                          {" "}
+                          Can't load widget{" "}
+                        </iframe>
+                      </Modal.Content>
+                    </Modal>
+                  </Segment>
+                </Grid.Column>
+              </Grid.Row>
+              {!this.state.headerMessage.open && (
+                <Grid.Row stretched>
+                  <Grid.Column width={16}>
+                    <MarriagesGraph
+                      firebase={firebase}
+                      screenWidth={this.state.screenWidth}
+                      chartOptions={this.state.chartOptions}
+                    />
+                  </Grid.Column>
+                </Grid.Row>
+              )}
+            </Grid>
+          )}
+        </Container>
+        <Modal open={this.state.confirmationModal.open} basic size="small">
+          <Header>
+            {this.state.confirmationModal.header}
+            {this.state.confirmationModal.headerMessage}
+          </Header>
+          <Modal.Content>
+            <p>{this.state.confirmationModal.message}</p>
+          </Modal.Content>
+        </Modal>
+
+        <Modal
+          open={this.state.congratulationModalOpen}
+          size="small"
+          centered={false}
+          onClose={() =>
+            this.setState({
+              congratulationModalOpen: false
+            })
+          }
+          closeIcon
+        >
+          <Modal.Header className="modal-header">Congratulations!</Modal.Header>
+          <Modal.Content image id="congratulations">
+            <Image wrapped size="small" src="/images/undraw_wedding_t1yl.svg" />
+            <Modal.Description>
+              <Header as="h3">
+                You are now officially married on the Ethereum blockchain!
+              </Header>
+              <Segment basic style={{ wordBreak: "break-word" }}>
+                <List divided relaxed="very">
+                  <List.Item>
+                    <List.Icon
+                      name="linkify"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>
+                        {this.state.newCertificateTxHash}
+                      </List.Header>
+                      <List.Description>
+                        This is the transaction number you can look up here.
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon
+                      name="file alternate outline"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>
+                        {this.state.certificate.address}
+                      </List.Header>
+                      <List.Description>
+                        Please keep the certificate address in a safe place as
+                        you cannot access your certificate without it.
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon name="key" size="large" verticalAlign="middle" />
+                    <List.Content>
+                      <List.Header>{this.state.idEncodingKey}</List.Header>
+                      <List.Description>
+                        Your secret key allows to read your encrypted ID number
+                        from the blockchain.
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon
+                      name="id card"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>Certificate Control Panel</List.Header>
+                      <List.Description>
+                        <Link
+                          to={`/check/${this.props.context.blockchain}/${
+                            this.state.certificate.address
+                          }`}
+                        >
+                          Access you certificate control panel
+                        </Link>
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                  <List.Item>
+                    <List.Icon
+                      name="share"
+                      size="large"
+                      verticalAlign="middle"
+                    />
+                    <List.Content>
+                      <List.Header>Announce your marriage</List.Header>
+                      <List.Description style={{ paddingTop: "5px" }}>
+                        <iframe
+                          title="facebook-share"
+                          src="https://www.facebook.com/plugins/share_button.php?href=https%3A%2F%2Fwww.getmarriedontheblockchain.com&layout=button_count&size=small&mobile_iframe=true&width=69&height=20&appId"
+                          width="69"
+                          height="20"
+                          style={{
+                            border: "none",
+                            overflow: "hidden",
+                            marginRight: "20px"
+                          }}
+                          scrolling="no"
+                          frameBorder="0"
+                          allowtransparency="true"
+                          allow="encrypted-media"
+                        />
+                        <a
+                          className="twitter-share-button"
+                          href="https://twitter.com/intent/tweet"
+                          text="Get Married on the Blockchain!"
+                          url="https://www.getmarriedontheblockchain.com"
+                          hashtags="ethereum,blockchain,crypto"
+                        >
+                          Tweet
+                        </a>
+                      </List.Description>
+                    </List.Content>
+                  </List.Item>
+                </List>
+              </Segment>
+            </Modal.Description>
+          </Modal.Content>
+        </Modal>
+      </Container>
     );
   }
 }
 
-export default App;
+const DisclaimerModal = props => (
+  <Modal
+    open={props.open}
+    trigger={
+      <Button fluid onClick={props.openDisclaimer}>
+        I want to get married!
+      </Button>
+    }
+  >
+    <Modal.Header className="modal-header">
+      Disclaimer of Liabilities and Warranties
+    </Modal.Header>
+    <Modal.Content>
+      <Modal.Description>
+        <Header as="h2">Legal Warning</Header>
+        <p>
+          By creating an account on marriageontheblock.com, you agree to the
+          following:
+        </p>
+        <List bulleted>
+          <List.Item>
+            You expressly know and agree that you are using the Ethereum
+            platform at your sole risk.
+          </List.Item>
+          <List.Item>
+            You acknowledge that you have an adequate understanding of the
+            risks, usage and intricacies of cryptographic tokens and
+            blockchain-based open source software, ethereum platform and
+            ethereum.
+          </List.Item>
+          <List.Item>
+            You acknowledge and agree that, to the fullest extent permitted by
+            any applicable law, the disclaimers of liability contained herein
+            apply to any and all damages or injury whatsoever caused by or
+            related to risks of, use of, or inability to use, ethereum or the
+            Ethereum platform under any cause or action whatsoever of any kind
+            in any jurisdiction, including, without limitation, actions for
+            breach of warranty, breach of contract or tort (including
+            negligence) and that the present website shall be liable for any
+            indirect, incidental, special, exemplary or consequential damages,
+            including for loss of profits, goodwill or data that occurs as a
+            result.
+          </List.Item>
+        </List>
+      </Modal.Description>
+    </Modal.Content>
+    <Modal.Actions>
+      <Button onClick={props.closeDisclaimer} primary>
+        I changed my mind!
+      </Button>
+      <UserAuth origin="register-page" />
+    </Modal.Actions>
+  </Modal>
+);
+
+export default withContext(App);

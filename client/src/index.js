@@ -4,7 +4,7 @@ import { Route, BrowserRouter as Router, Switch } from "react-router-dom";
 import "semantic-ui-css/semantic.min.css";
 import "./index.css";
 import App from "./components/App";
-import RegisterCertificateContextWrapper from "./components/RegisterCertificateContextWrapper";
+import RegisterCertificate from "./components/RegisterCertificate";
 import CheckCertificate from "./components/CheckCertificate";
 import ViewCertificate from "./components/ViewCertificate";
 import Navbar from "./components/Navbar";
@@ -22,7 +22,7 @@ const routing = (
           <Route exact path="/" component={App} />
           <Route
             path="/register/:blockchain?"
-            component={RegisterCertificateContextWrapper}
+            component={RegisterCertificate}
           />
           <Route
             path="/check/:blockchain?/:address"

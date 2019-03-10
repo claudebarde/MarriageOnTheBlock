@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Menu, Dropdown, Icon, Container } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
-import { MIN_SCREEN_WIDTH, GlobalStateConsumer } from "../config/config";
+import { MIN_SCREEN_WIDTH, withContext } from "../config/config";
 import UserAuth from "../utils/UserAuth";
 import SignInModal from "./SignInModal";
 
@@ -50,160 +50,158 @@ class Navbar extends Component {
       this.state.navbarHeight + this.state.navbarHeight / 4
     );
 
+    const { context } = this.props;
+
     return (
-      <GlobalStateConsumer>
-        {context => (
-          <>
-            <Menu
-              size={!this.state.onScrollDetected ? "small" : "mini"}
-              id="navbar"
-              fixed="top"
-              borderless
-              fluid
-              secondary={!this.state.onScrollDetected}
+      <>
+        <Menu
+          size={!this.state.onScrollDetected ? "small" : "mini"}
+          id="navbar"
+          fixed="top"
+          borderless
+          fluid
+          secondary={!this.state.onScrollDetected}
+        >
+          <Container>
+            <Menu.Item
+              className={
+                !this.state.onScrollDetected ? "title" : "title-scroll"
+              }
             >
-              <Container>
-                <Menu.Item
-                  className={
-                    !this.state.onScrollDetected ? "title" : "title-scroll"
-                  }
+              <Link to="/" className="router-link">
+                Marriage On The Block
+              </Link>
+            </Menu.Item>
+            <Menu.Menu position="right">
+              <Menu.Item>
+                <Dropdown
+                  icon="bars"
+                  floating
+                  button
+                  closeOnBlur
+                  className="icon"
+                  size={!this.state.onScrollDetected ? "small" : "mini"}
                 >
-                  <Link to="/" className="router-link">
-                    Marriage On The Block
-                  </Link>
-                </Menu.Item>
-                <Menu.Menu position="right">
-                  <Menu.Item>
-                    <Dropdown
-                      icon="bars"
-                      floating
-                      button
-                      closeOnBlur
-                      className="icon"
-                      size={!this.state.onScrollDetected ? "small" : "mini"}
-                    >
-                      <Dropdown.Menu>
-                        <Dropdown.Item>
-                          <Link to="/" className="router-link">
-                            <Icon name="home" className="navbar-icon" />
-                            Home
-                          </Link>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                          <Link
-                            to={
-                              context.blockchain
-                                ? `/register/${context.blockchain}`
-                                : "/register"
-                            }
-                            className="router-link"
-                          >
-                            <Icon name="edit" className="navbar-icon" />
-                            Register a certificate
-                          </Link>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                          {context.userCertificate ? (
-                            <Link
-                              to={
-                                context.blockchain
-                                  ? `/check/${context.blockchain}/${
-                                      context.userCertificate
-                                    }`
-                                  : "/check"
-                              }
-                              className="router-link"
-                            >
-                              <Icon
-                                name="id card outline"
-                                className="navbar-icon"
-                              />
-                              Check a certificate
-                            </Link>
-                          ) : (
-                            <Link
-                              to={
-                                context.blockchain
-                                  ? `/check/${context.blockchain}`
-                                  : "/check"
-                              }
-                              className="router-link"
-                            >
-                              <Icon
-                                name="id card outline"
-                                className="navbar-icon"
-                              />
-                              Check a certificate
-                            </Link>
-                          )}
-                        </Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item>
-                          <a
-                            href="https://github.com/claudebarde/MarriageOnTheBlock"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="router-link"
-                          >
-                            <Icon name="github" className="navbar-icon" />
-                            Github Repo
-                          </a>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                          <a
-                            href="https://docs.google.com/forms/d/e/1FAIpQLSfN9zRRHz78REQa85JeQvWsp5zHpS6bYRK7PWwHcSY7DR4Jxw/viewform?usp=sf_link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="router-link"
-                          >
-                            <Icon name="wpforms" className="navbar-icon" />
-                            Contact form
-                          </a>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                          <a
-                            href="#"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="router-link"
-                          >
-                            <Icon name="medium m" className="navbar-icon" />
-                            Smart Contract Details
-                          </a>
-                        </Dropdown.Item>
-                        <Dropdown.Divider />
-                        {context.loggedInUser ? (
-                          <Dropdown.Item as="a" onClick={context.signOutUser}>
-                            <Icon name="sign-out" className="navbar-icon" />
-                            Sign Out
-                          </Dropdown.Item>
-                        ) : (
-                          <>
-                            <UserAuth
-                              certificateAddress=""
-                              currentUserAddress={context.userAddress}
-                              origin="navbar"
-                            />
-                            <SignInModal />
-                          </>
-                        )}
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  </Menu.Item>
-                </Menu.Menu>
-              </Container>
-            </Menu>
-            <div
-              id="navbar-padding"
-              style={{
-                height: navbarPadding
-              }}
-            />
-          </>
-        )}
-      </GlobalStateConsumer>
+                  <Dropdown.Menu>
+                    <Dropdown.Item>
+                      <Link to="/" className="router-link">
+                        <Icon name="home" className="navbar-icon" />
+                        Home
+                      </Link>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      <Link
+                        to={
+                          context.blockchain
+                            ? `/register/${context.blockchain}`
+                            : "/register"
+                        }
+                        className="router-link"
+                      >
+                        <Icon name="edit" className="navbar-icon" />
+                        Register a certificate
+                      </Link>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      {context.userCertificate ? (
+                        <Link
+                          to={
+                            context.blockchain
+                              ? `/check/${context.blockchain}/${
+                                  context.userCertificate
+                                }`
+                              : "/check"
+                          }
+                          className="router-link"
+                        >
+                          <Icon
+                            name="id card outline"
+                            className="navbar-icon"
+                          />
+                          Check a certificate
+                        </Link>
+                      ) : (
+                        <Link
+                          to={
+                            context.blockchain
+                              ? `/check/${context.blockchain}`
+                              : "/check"
+                          }
+                          className="router-link"
+                        >
+                          <Icon
+                            name="id card outline"
+                            className="navbar-icon"
+                          />
+                          Check a certificate
+                        </Link>
+                      )}
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    <Dropdown.Item>
+                      <a
+                        href="https://github.com/claudebarde/MarriageOnTheBlock"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="router-link"
+                      >
+                        <Icon name="github" className="navbar-icon" />
+                        Github Repo
+                      </a>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      <a
+                        href="https://docs.google.com/forms/d/e/1FAIpQLSfN9zRRHz78REQa85JeQvWsp5zHpS6bYRK7PWwHcSY7DR4Jxw/viewform?usp=sf_link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="router-link"
+                      >
+                        <Icon name="wpforms" className="navbar-icon" />
+                        Contact form
+                      </a>
+                    </Dropdown.Item>
+                    <Dropdown.Item>
+                      <a
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="router-link"
+                      >
+                        <Icon name="medium m" className="navbar-icon" />
+                        Smart Contract Details
+                      </a>
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    {context.loggedInUser ? (
+                      <Dropdown.Item as="a" onClick={context.signOutUser}>
+                        <Icon name="sign-out" className="navbar-icon" />
+                        Sign Out
+                      </Dropdown.Item>
+                    ) : (
+                      <>
+                        <UserAuth
+                          certificateAddress=""
+                          currentUserAddress={context.userAddress}
+                          origin="navbar"
+                        />
+                        <SignInModal />
+                      </>
+                    )}
+                  </Dropdown.Menu>
+                </Dropdown>
+              </Menu.Item>
+            </Menu.Menu>
+          </Container>
+        </Menu>
+        <div
+          id="navbar-padding"
+          style={{
+            height: navbarPadding
+          }}
+        />
+      </>
     );
   }
 }
 
-export default Navbar;
+export default withContext(Navbar);

@@ -98,9 +98,7 @@ class UserAuth extends Component {
       <Modal
         trigger={
           this.props.origin === "register-page" ? (
-            <Button color="orange" fluid>
-              Create a New Account
-            </Button>
+            <Button color="orange">Create a New Account</Button>
           ) : (
             <Dropdown.Item as="a">
               <Icon name="user plus" className="navbar-icon" />

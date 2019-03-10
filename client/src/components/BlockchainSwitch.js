@@ -44,11 +44,13 @@ class BlockchainSwitch extends Component {
 
   // updates user address in case of change
   userAddressChange = () => {
-    const currentAddress = web3.eth.accounts.currentProvider.selectedAddress;
-    if (currentAddress && currentAddress !== this.state.userAddress) {
-      this.setState({
-        userAddress: web3.eth.accounts.currentProvider.selectedAddress
-      });
+    if (web3.eth.accounts.currentProvider.selectedAddress) {
+      const currentAddress = web3.eth.accounts.currentProvider.selectedAddress.toLowerCase();
+      if (currentAddress && currentAddress !== this.state.userAddress) {
+        this.setState({
+          userAddress: currentAddress
+        });
+      }
     }
   };
 

@@ -32,4 +32,14 @@ export const NETWORK = "ropsten";
 
 const GlobalState = React.createContext();
 export const GlobalStateProvider = GlobalState.Provider;
-export const GlobalStateConsumer = GlobalState.Consumer;
+export const withContext = WrappedComponent => {
+  return class extends React.Component {
+    render() {
+      return (
+        <GlobalState.Consumer>
+          {context => <WrappedComponent context={context} {...this.props} />}
+        </GlobalState.Consumer>
+      );
+    }
+  };
+};
