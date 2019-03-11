@@ -25,6 +25,7 @@ class BlockchainSwitch extends Component {
     currentCertificate: null,
     loggedInUser: false,
     screenWidth: 0,
+    gasForTx: 1000000,
     signOutUser: () => {
       firebase.auth().signOut();
       this.setState({

@@ -30,7 +30,8 @@ class Account extends Component {
   state = {
     loadingAccount: true,
     certificate: CERTIFICATE_OBJ,
-    activeMenuItem: "send"
+    activeMenuItem: "send",
+    ethToDollarChange: 0
   };
 
   fetchCertificateDetails = async address => {
@@ -54,6 +55,7 @@ class Account extends Component {
             },
             isMarriageValid: certificate.isMarriageValid,
             balance: certificate.balance,
+            instance: certificate.instance,
             error: null
           },
           loadingAccount: false
@@ -61,7 +63,7 @@ class Account extends Component {
       } else {
         this.setState({
           certificate: {
-            ...this.state.certificateCheck,
+            ...this.state.certificate,
             error: certificate.error
           }
         });
@@ -69,9 +71,50 @@ class Account extends Component {
     }
   };
 
+  updateBalance = (txType, newTxAmount, account) => {
+    let newBalance = { ...this.state.certificate.balance };
+    // if deposit, we add values
+    if (txType === "deposit") {
+      // update the total balance
+      newBalance.total = parseInt(newBalance.total) + parseInt(newTxAmount);
+      if (account === "joined") {
+        // update the joined account
+        newBalance.joined = parseInt(newBalance.joined) + parseInt(newTxAmount);
+      } else if (account === "savings") {
+        // update the joined account
+        newBalance.savings =
+          parseInt(newBalance.savings) + parseInt(newTxAmount);
+      }
+    } else if (txType === "withdrawal") {
+      // update the total balance
+      newBalance.total = parseInt(newBalance.total) - parseInt(newTxAmount);
+      if (account === "joined") {
+        // update the joined account
+        newBalance.joined = parseInt(newBalance.joined) - parseInt(newTxAmount);
+      } else if (account === "savings") {
+        // update the joined account
+        newBalance.savings =
+          parseInt(newBalance.savings) - parseInt(newTxAmount);
+      }
+    }
+    this.setState({
+      certificate: {
+        ...this.state.certificate,
+        balance: newBalance
+      }
+    });
+  };
+
   handleMenuClick = (e, { name }) => this.setState({ activeMenuItem: name });
 
   componentDidMount = async () => {
+    // fetches ether price in dollars
+    const ethToDollar = await fetch(
+      "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
+    );
+    ethToDollar
+      .json()
+      .then(price => this.setState({ ethToDollarChange: price["USD"] }));
     // we check if user is already logged in
     if (this.props.context.userCertificate) {
       this.setState(
@@ -97,6 +140,7 @@ class Account extends Component {
   };
 
   componentDidUpdate = () => {
+    // checks user certificate and screen width
     const { userCertificate, screenWidth } = this.props.context;
     // checks if different certificate is loaded
     if (userCertificate !== this.state.certificate.address) {
@@ -119,7 +163,7 @@ class Account extends Component {
 
   render() {
     const { context } = this.props;
-    const { activeMenuItem, certificate } = this.state;
+    const { activeMenuItem, certificate, ethToDollarChange } = this.state;
     // we store spouses addresses in an array for later comparison
     const spousesAddresses = [
       certificate.spousesDetails.firstSpouseDetails.address,
@@ -161,6 +205,11 @@ class Account extends Component {
           </Container>
         );
 
+      const totalBalanceInETH = web3.utils.fromWei(
+        this.state.certificate.balance.total.toString(),
+        "ether"
+      );
+
       return (
         <Container>
           <Grid columns={2} stackable>
@@ -171,10 +220,10 @@ class Account extends Component {
                   <Grid.Column width={7}>
                     <Message
                       icon="money"
-                      header={`Total balance: ${web3.utils.fromWei(
-                        this.state.certificate.balance.total.toString(),
-                        "ether"
-                      )} ether`}
+                      header={`Total balance: ${totalBalanceInETH} ether (≈ $${Math.round(
+                        parseFloat(totalBalanceInETH) *
+                          this.state.ethToDollarChange
+                      )})`}
                       list={[
                         `Joined account: ${web3.utils.fromWei(
                           this.state.certificate.balance.joined.toString(),
@@ -256,13 +305,25 @@ class Account extends Component {
                 </Menu>
               </Grid.Column>
               <Grid.Column width={13}>
-                {this.state.activeMenuItem === "send" && <Deposit />}
-                {this.state.activeMenuItem === "withdraw" && <Withdraw />}
+                {this.state.activeMenuItem === "send" && (
+                  <Deposit
+                    web3={web3}
+                    certificate={certificate.instance}
+                    userAddress={context.userAddress}
+                    updateBalance={this.updateBalance}
+                    gasForTx={context.gasForTx}
+                    ethToDollarChange={ethToDollarChange}
+                  />
+                )}
+                {this.state.activeMenuItem === "withdraw" && (
+                  <Withdraw web3={web3} />
+                )}
                 {this.state.activeMenuItem === "status" && (
                   <MarriageStatus
                     isMarriageValid={certificate.isMarriageValid}
                     spousesAddresses={spousesAddresses}
                     userAddress={context.userAddress}
+                    web3={web3}
                   />
                 )}
                 {this.state.activeMenuItem === "transactions" && (
