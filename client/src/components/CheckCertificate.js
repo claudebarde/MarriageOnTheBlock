@@ -34,76 +34,78 @@ class CheckCertificate extends Component {
     showCertificateCheckDetails: false
   };
 
-  fetchCertificateDetails = async () => {
+  fetchCertificateDetails = async address => {
     this.setState({
       fetchingCertificateDetails: true,
       showCertificateCheckDetails: false
     });
-    const address = this.state.certificateCheck.address;
-    const certificate = await checkCertificate(address);
-    if (certificate.return === "OK") {
-      // we lowercase the address to compare it later with current user address
-      let spouse1details = JSON.parse(certificate.spouse1);
-      let spouse2details = JSON.parse(certificate.spouse2);
-      spouse1details.address = spouse1details.address.toLowerCase();
-      spouse2details.address = spouse2details.address.toLowerCase();
-      // we update the state with the data
-      this.setState({
-        certificateCheck: {
-          ...this.state.certificateCheck,
-          timestamp: certificate.timestamp,
-          location: JSON.parse(certificate.location),
-          spousesDetails: {
-            firstSpouseDetails: spouse1details,
-            secondSpouseDetails: spouse2details
+    if (address) {
+      const certificate = await checkCertificate(address);
+      if (certificate.return === "OK") {
+        // we lowercase the address to compare it later with current user address
+        let spouse1details = JSON.parse(certificate.spouse1);
+        let spouse2details = JSON.parse(certificate.spouse2);
+        spouse1details.address = spouse1details.address.toLowerCase();
+        spouse2details.address = spouse2details.address.toLowerCase();
+        // we update the state with the data
+        this.setState({
+          certificateCheck: {
+            ...this.state.certificateCheck,
+            timestamp: certificate.timestamp,
+            location: JSON.parse(certificate.location),
+            spousesDetails: {
+              firstSpouseDetails: spouse1details,
+              secondSpouseDetails: spouse2details
+            },
+            isMarriageValid: certificate.isMarriageValid,
+            balance: certificate.balance,
+            error: null
           },
-          isMarriageValid: certificate.isMarriageValid,
-          balance: certificate.balance,
-          error: null
-        },
-        showCertificateCheckDetails: true,
-        fetchingCertificateDetails: false
-      });
-      // subscription to events
-      this.subscribeLogEvent(certificate.instance, "LogMarriageValidity");
-      // updates the URL to include contract address
-      if (
-        this.props.location &&
-        !web3.utils.isAddress(this.props.match.params.address)
-      ) {
-        // if there is no address in the url
-        let url = this.props.location.pathname;
-        // we make sure there is no trailing slash at the end
-        if (url[url.length - 1] === "/") {
-          url = url.slice(0, -1);
+          showCertificateCheckDetails: true,
+          fetchingCertificateDetails: false
+        });
+        // subscription to events
+        this.subscribeLogEvent(certificate.instance, "LogMarriageValidity");
+        // updates the URL to include contract address
+        if (
+          this.props.location &&
+          !web3.utils.isAddress(this.props.match.params.address)
+        ) {
+          // if there is no address in the url
+          let url = this.props.location.pathname;
+          // we make sure there is no trailing slash at the end
+          if (url[url.length - 1] === "/") {
+            url = url.slice(0, -1);
+          }
+          // we create the url including the address
+          let newURL = url + `/${address}`;
+          this.props.history.push(newURL);
+        } else if (
+          this.props.location &&
+          web3.utils.isAddress(this.props.match.params.address) &&
+          this.props.match.params.address.toLowerCase() !==
+            address.toLowerCase()
+        ) {
+          // if there is a different address in the url
+          let url = this.props.location.pathname;
+          // we make sure there is no trailing slash at the end
+          if (url[url.length - 1] === "/") {
+            url = url.slice(0, -1);
+          }
+          // we create the url including the address
+          let newURL = url.replace(this.props.match.params.address, address);
+          this.props.history.push(newURL);
         }
-        // we create the url including the address
-        let newURL = url + `/${address}`;
-        this.props.history.push(newURL);
-      } else if (
-        this.props.location &&
-        web3.utils.isAddress(this.props.match.params.address) &&
-        this.props.match.params.address.toLowerCase() !== address.toLowerCase()
-      ) {
-        // if there is a different address in the url
-        let url = this.props.location.pathname;
-        // we make sure there is no trailing slash at the end
-        if (url[url.length - 1] === "/") {
-          url = url.slice(0, -1);
-        }
-        // we create the url including the address
-        let newURL = url.replace(this.props.match.params.address, address);
-        this.props.history.push(newURL);
+      } else {
+        this.setState({
+          certificateCheck: {
+            ...this.state.certificateCheck,
+            error: certificate.error
+          },
+          showCertificateCheckDetails: true,
+          fetchingCertificateDetails: false
+        });
       }
-    } else {
-      this.setState({
-        certificateCheck: {
-          ...this.state.certificateCheck,
-          error: certificate.error
-        },
-        showCertificateCheckDetails: true,
-        fetchingCertificateDetails: false
-      });
     }
   };
 
@@ -226,7 +228,10 @@ class CheckCertificate extends Component {
               address: this.props.match.params.address
             }
           },
-          async () => await this.fetchCertificateDetails()
+          async () =>
+            await this.fetchCertificateDetails(
+              this.state.certificateCheck.address
+            )
         );
       }
     } catch (error) {

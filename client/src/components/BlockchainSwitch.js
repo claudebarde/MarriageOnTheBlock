@@ -24,14 +24,23 @@ class BlockchainSwitch extends Component {
     userCertificate: null,
     currentCertificate: null,
     loggedInUser: false,
-    signOutUser: () => firebase.auth().signOut()
+    screenWidth: 0,
+    signOutUser: () => {
+      firebase.auth().signOut();
+      this.setState({
+        userCertificate: null,
+        currentCertificate: null
+      });
+    }
   };
 
   openBlockchainModal = () => {
     const path = this.props.location.pathname;
     if (
       this.state.blockchain === null &&
-      (path.includes("/check") || path.includes("/register")) &&
+      (path.includes("/check") ||
+        path.includes("/register") ||
+        path.includes("/account")) &&
       (!path.includes("/eth") && !path.includes("/trx"))
     ) {
       this.setState({ blockchainModalOpen: true });
@@ -54,7 +63,15 @@ class BlockchainSwitch extends Component {
     }
   };
 
+  handleWindowSizeChange = () => {
+    this.setState({ screenWidth: window.innerWidth });
+  };
+
   componentDidMount = async () => {
+    // checks window size
+    window.addEventListener("resize", this.handleWindowSizeChange);
+    // we fire the function linked to the event once to save screen width
+    this.handleWindowSizeChange();
     // displays modal to let user choose blockchain
     this.openBlockchainModal();
     // loads web3
@@ -137,6 +154,10 @@ class BlockchainSwitch extends Component {
                             .replace(
                               "/register",
                               `/register/${this.state.blockchain}`
+                            )
+                            .replace(
+                              "/account",
+                              `/account/${this.state.blockchain}`
                             );
                           this.props.history.push(newURL);
                         }

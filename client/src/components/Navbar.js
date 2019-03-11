@@ -173,10 +173,18 @@ class Navbar extends Component {
                     </Dropdown.Item>
                     <Dropdown.Divider />
                     {context.loggedInUser ? (
-                      <Dropdown.Item as="a" onClick={context.signOutUser}>
-                        <Icon name="sign-out" className="navbar-icon" />
-                        Sign Out
-                      </Dropdown.Item>
+                      <>
+                        <Dropdown.Item>
+                          <Link to="/account" className="router-link">
+                            <Icon name="user" className="navbar-icon" />
+                            Your account
+                          </Link>
+                        </Dropdown.Item>
+                        <Dropdown.Item as="a" onClick={context.signOutUser}>
+                          <Icon name="sign-out" className="navbar-icon" />
+                          Sign Out
+                        </Dropdown.Item>
+                      </>
                     ) : (
                       <>
                         <UserAuth

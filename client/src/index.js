@@ -9,6 +9,7 @@ import CheckCertificate from "./components/CheckCertificate";
 import ViewCertificate from "./components/ViewCertificate";
 import Navbar from "./components/Navbar";
 import BlockchainSwitch from "./components/BlockchainSwitch";
+import Account from "./components/Account/Account";
 import "./App.css";
 import * as serviceWorker from "./serviceWorker";
 import "./config/firebaseConfig";
@@ -33,6 +34,7 @@ const routing = (
             path="/certificate/:blockchain?/:address"
             component={ViewCertificate}
           />
+          <Route path="/account" component={Account} />
           <Route component={App} />
         </Switch>
       </BlockchainSwitch>

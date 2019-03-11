@@ -7,6 +7,7 @@ export const CERTIFICATE_OBJ = {
   timestamp: "",
   location: "",
   isMarriageValid: {},
+  balance: {},
   spousesDetails: {
     firstSpouseDetails: {
       firstName: "",
