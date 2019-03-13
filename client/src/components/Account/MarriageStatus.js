@@ -108,7 +108,7 @@ class MarriageStatus extends Component {
             </Grid.Column>
             <Grid.Column width={8}>
               <Message
-                icon="calendar"
+                icon="calendar alternate"
                 header="Date of registration"
                 content={moment
                   .unix(certificate.timestamp)

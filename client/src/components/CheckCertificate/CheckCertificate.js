@@ -7,24 +7,21 @@ import {
   Loader,
   Segment,
   Image,
-  Container
+  Container,
+  Grid
 } from "semantic-ui-react";
+import moment from "moment";
 import { withRouter } from "react-router-dom";
 
-import firebase from "firebase/app";
-import "firebase/firebase-functions";
-
-import DisplayCertificateCheck from "../DisplayCertificateCheck/DisplayCertificateCheck";
-import { checkCertificate } from "../utils/functions";
+import SpouseInfoComponent from "../Account/SpouseInfoComponent";
+import { checkCertificate } from "../../utils/functions";
 import {
   MIN_SCREEN_WIDTH,
   CERTIFICATE_OBJ,
   withContext
-} from "../config/config";
-import getWeb3 from "../utils/getWeb3";
+} from "../../config/config";
+import getWeb3 from "../../utils/getWeb3";
 let web3 = null;
-
-let subscribedEvents = {};
 
 class CheckCertificate extends Component {
   state = {
@@ -64,8 +61,6 @@ class CheckCertificate extends Component {
           showCertificateCheckDetails: true,
           fetchingCertificateDetails: false
         });
-        // subscription to events
-        this.subscribeLogEvent(certificate.instance, "LogMarriageValidity");
         // updates the URL to include contract address
         if (
           this.props.location &&
@@ -107,102 +102,6 @@ class CheckCertificate extends Component {
         });
       }
     }
-  };
-
-  subscribeLogEvent = (contract, eventName) => {
-    if (subscribedEvents.hasOwnProperty(eventName) === false) {
-      const eventJsonInterface = web3.utils._.find(
-        contract._jsonInterface,
-        o => o.name === eventName && o.type === "event"
-      );
-      const subscription = web3.eth.subscribe(
-        "logs",
-        {
-          address: contract.options.address,
-          topics: [eventJsonInterface.signature]
-        },
-        async (error, result) => {
-          if (!error) {
-            const eventObj = web3.eth.abi.decodeLog(
-              eventJsonInterface.inputs,
-              result.data,
-              result.topics.slice(1)
-            );
-            //console.log(`New ${eventName}!`, eventObj);
-            // we log the update in the firestore
-            if (firebase.auth().currentUser) {
-              const updateTxHistory = firebase
-                .functions()
-                .httpsCallable("updateTxHistory");
-              const idToken = await firebase
-                .auth()
-                .currentUser.getIdToken(true);
-              await updateTxHistory({
-                idToken,
-                address: contract.options.address,
-                tx: {
-                  type: "statusUpdate",
-                  from: web3.eth.accounts.currentProvider.selectedAddress,
-                  previousState: [
-                    this.state.certificateCheck.isMarriageValid[0],
-                    this.state.certificateCheck.isMarriageValid[1]
-                  ],
-                  newState: eventObj.validity,
-                  txHash: result.transactionHash
-                }
-              });
-            }
-            // we update the state with new contract state
-            if (eventName === "LogMarriageValidity") {
-              this.setState({
-                certificateCheck: {
-                  ...this.state.certificateCheck,
-                  isMarriageValid: {
-                    0: eventObj.validity[0],
-                    1: eventObj.validity[1]
-                  }
-                }
-              });
-            }
-          }
-        }
-      );
-      subscribedEvents[eventName] = subscription;
-    }
-  };
-
-  updateBalance = (txType, newTxAmount, account) => {
-    let newBalance = { ...this.state.certificateCheck.balance };
-    // if deposit, we add values
-    if (txType === "deposit") {
-      // update the total balance
-      newBalance.total = parseInt(newBalance.total) + parseInt(newTxAmount);
-      if (account === "joined") {
-        // update the joined account
-        newBalance.joined = parseInt(newBalance.joined) + parseInt(newTxAmount);
-      } else if (account === "savings") {
-        // update the joined account
-        newBalance.savings =
-          parseInt(newBalance.savings) + parseInt(newTxAmount);
-      }
-    } else if (txType === "withdrawal") {
-      // update the total balance
-      newBalance.total = parseInt(newBalance.total) - parseInt(newTxAmount);
-      if (account === "joined") {
-        // update the joined account
-        newBalance.joined = parseInt(newBalance.joined) - parseInt(newTxAmount);
-      } else if (account === "savings") {
-        // update the joined account
-        newBalance.savings =
-          parseInt(newBalance.savings) - parseInt(newTxAmount);
-      }
-    }
-    this.setState({
-      certificateCheck: {
-        ...this.state.certificateCheck,
-        balance: newBalance
-      }
-    });
   };
 
   componentDidMount = async () => {
@@ -264,6 +163,7 @@ class CheckCertificate extends Component {
   };
 
   render() {
+    const certificate = this.state.certificateCheck;
     return (
       <Container>
         <Form>
@@ -277,11 +177,11 @@ class CheckCertificate extends Component {
               content: "Search",
               onClick: this.fetchCertificateDetails
             }}
-            value={this.state.certificateCheck.address}
+            value={certificate.address}
             onChange={event =>
               this.setState({
                 certificateCheck: {
-                  ...this.state.certificateCheck,
+                  ...certificate,
                   address: event.target.value
                 }
               })
@@ -297,17 +197,45 @@ class CheckCertificate extends Component {
           </Segment>
         )}
         {this.state.showCertificateCheckDetails &&
-          (this.state.certificateCheck.error === null ? (
-            <DisplayCertificateCheck
-              details={this.state.certificateCheck}
-              web3={web3}
-              updateBalance={this.updateBalance}
-              balance={this.state.certificateCheck.balance}
-              spousesAddresses={[
-                this.state.certificateCheck.spousesDetails.firstSpouseDetails.address.toLowerCase(),
-                this.state.certificateCheck.spousesDetails.secondSpouseDetails.address.toLowerCase()
-              ]}
-            />
+          (certificate.error === null ? (
+            <Segment secondary>
+              <Grid columns={2} stackable>
+                <Grid.Row>
+                  <Grid.Column width={8}>
+                    <Message
+                      icon="globe"
+                      header="Place of registration"
+                      content={`${certificate.location.city}, ${
+                        certificate.location.country
+                      }`}
+                    />
+                  </Grid.Column>
+                  <Grid.Column width={8}>
+                    <Message
+                      icon="calendar alternate"
+                      header="Date of registration"
+                      content={moment
+                        .unix(certificate.timestamp)
+                        .format("dddd, MMMM Do YYYY, h:mm:ss a")}
+                    />
+                  </Grid.Column>
+                </Grid.Row>
+                <Grid.Row>
+                  <Grid.Column width={8}>
+                    <SpouseInfoComponent
+                      spouse={certificate.spousesDetails.firstSpouseDetails}
+                      approved={certificate.isMarriageValid[0]}
+                    />
+                  </Grid.Column>
+                  <Grid.Column width={8}>
+                    <SpouseInfoComponent
+                      spouse={certificate.spousesDetails.secondSpouseDetails}
+                      approved={certificate.isMarriageValid[1]}
+                    />
+                  </Grid.Column>
+                </Grid.Row>
+              </Grid>
+            </Segment>
           ) : (
             <Message
               header="An error occurred"

@@ -5,7 +5,7 @@ import "semantic-ui-css/semantic.min.css";
 import "./index.css";
 import App from "./components/App";
 import RegisterCertificate from "./components/RegisterCertificate";
-import CheckCertificate from "./components/CheckCertificate";
+import CheckCertificate from "./components/CheckCertificate/CheckCertificate";
 import ViewCertificate from "./components/ViewCertificate";
 import Navbar from "./components/Navbar";
 import BlockchainSwitch from "./components/BlockchainSwitch";
