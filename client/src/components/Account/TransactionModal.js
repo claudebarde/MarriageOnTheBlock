@@ -1,8 +1,6 @@
 import React from "react";
 import { Modal, Segment, Header, Icon } from "semantic-ui-react";
 
-import { truncateAddress } from "../../utils/functions";
-
 export const transactionModalData = (status, txHash) => {
   if (status === "pending") {
     return {
@@ -28,7 +26,7 @@ export const transactionModalData = (status, txHash) => {
     };
   } else if (status === "error") {
     return {
-      open: true,
+      open: false,
       icon: "exclamation triangle",
       loading: false,
       header: "Transaction error!",
@@ -44,7 +42,7 @@ export const TransactionModal = props => {
   const { open, header, icon, loading, message, txHash, estimateTime } = props;
 
   return (
-    <Modal open={open} size="tiny" closeIcon>
+    <Modal open={open} size="tiny">
       <Modal.Header className="modal-header">{header}</Modal.Header>
       <Modal.Content>
         <Segment basic placeholder>
@@ -59,7 +57,7 @@ export const TransactionModal = props => {
               secondary
               style={{ wordBreak: "break-word" }}
             >
-              {`Transaction hash: ${truncateAddress(txHash)}`}
+              {`Transaction hash: ${txHash}`}
               <br />
               {estimateTime && `Estimate waiting time: ${estimateTime} seconds`}
             </Segment>

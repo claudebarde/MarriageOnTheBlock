@@ -264,7 +264,6 @@ class CheckCertificate extends Component {
   };
 
   render() {
-    const { context } = this.props;
     return (
       <Container>
         <Form>
@@ -272,13 +271,7 @@ class CheckCertificate extends Component {
             id="form-input-certificate-address"
             control={Input}
             label="Please enter your certificate address :"
-            placeholder={`Certificate Address ${
-              context.blockchain
-                ? context.blockchain === "eth"
-                  ? "on Ethereum"
-                  : "on Tron"
-                : ""
-            }`}
+            placeholder="Certificate Address on Ethereum"
             action={{
               icon: "search",
               content: "Search",

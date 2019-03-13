@@ -109,7 +109,8 @@ class Deposit extends Component {
               txHash,
               open: true,
               estimateTime
-            }
+            },
+            loadingTx: { ...this.state.loadingTx, [_to]: false }
           });
         })
         .on("receipt", async receipt => {
@@ -141,8 +142,7 @@ class Deposit extends Component {
                 ...this.state.convertEthToDollars,
                 [_to]: 0
               },
-              ethToTransfer: { ...this.state.ethToTransfer, [_to]: "" },
-              loadingTx: { ...this.state.loadingTx, [_to]: false }
+              ethToTransfer: { ...this.state.ethToTransfer, [_to]: "" }
             });
           } else {
             this.setState({
@@ -151,7 +151,10 @@ class Deposit extends Component {
             this.closeTxModal("error", receipt.transactionHash);
           }
         })
-        .on("error", console.error);
+        .on("error", error => {
+          console.log(error);
+          this.closeTxModal("error", depositTxHash);
+        });
     } catch (error) {
       console.log(error);
       this.closeTxModal("error", depositTxHash);

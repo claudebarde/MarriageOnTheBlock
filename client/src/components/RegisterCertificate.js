@@ -671,11 +671,7 @@ class App extends Component {
                     <List.Content>
                       <List.Header>Certificate Control Panel</List.Header>
                       <List.Description>
-                        <Link
-                          to={`/check/${this.props.context.blockchain}/${
-                            this.state.certificate.address
-                          }`}
-                        >
+                        <Link to={`/check/${this.state.certificate.address}`}>
                           Access you certificate control panel
                         </Link>
                       </List.Description>

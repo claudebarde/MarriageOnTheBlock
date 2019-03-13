@@ -119,27 +119,7 @@ class SpouseList extends Component {
     // the user address must be locked to avoid tempering during tx process
     const userAddress = this.props.currentAddress;
     const estimateTime = await estimateTxTime();
-    /*const changeMarriageStatus = await certificate.methods
-      .changeMarriageStatus()
-      .send(
-        { from: userAddress, gas: this.state.gasForTx },
-        async (error, txHash) => {
-          if (error) {
-            console.log("error", error);
-          } else {
-            console.log("Tx hash: ", txHash);
-            // the state is updated
-            this.setState({
-              transactionModal: {
-                ...this.state.transactionModal,
-                open: true,
-                txHash,
-                estimateTime
-              }
-            });
-          }
-        }
-      );*/
+
     await certificate.methods
       .changeMarriageStatus()
       .send({ from: userAddress, gas: this.state.gasForTx })
@@ -156,7 +136,6 @@ class SpouseList extends Component {
         });
       })
       .on("receipt", receipt => {
-        console.log(receipt);
         // when the tx is processed, we display a message to the user and close the modal
         this.closeTxModal(receipt.status, receipt.transactionHash);
       })

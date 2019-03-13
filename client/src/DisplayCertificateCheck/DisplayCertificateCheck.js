@@ -136,9 +136,7 @@ const DisplayCertificateCheck = props => {
                         <List.Header>Copy of the certificate:</List.Header>
                         <List.Description>
                           <a
-                            href={`/certificate/${context.blockchain}/${
-                              details.address
-                            }`}
+                            href={`/certificate/${details.address}`}
                             alt="certificate-link"
                           >
                             Click here to download a copy of your certificate

@@ -90,14 +90,7 @@ class Navbar extends Component {
                       </Link>
                     </Dropdown.Item>
                     <Dropdown.Item>
-                      <Link
-                        to={
-                          context.blockchain
-                            ? `/register/${context.blockchain}`
-                            : "/register"
-                        }
-                        className="router-link"
-                      >
+                      <Link to="/register" className="router-link">
                         <Icon name="edit" className="navbar-icon" />
                         Register a certificate
                       </Link>
@@ -105,13 +98,7 @@ class Navbar extends Component {
                     <Dropdown.Item>
                       {context.userCertificate ? (
                         <Link
-                          to={
-                            context.blockchain
-                              ? `/check/${context.blockchain}/${
-                                  context.userCertificate
-                                }`
-                              : "/check"
-                          }
+                          to={`/check/${context.userCertificate}`}
                           className="router-link"
                         >
                           <Icon
@@ -121,14 +108,7 @@ class Navbar extends Component {
                           Check a certificate
                         </Link>
                       ) : (
-                        <Link
-                          to={
-                            context.blockchain
-                              ? `/check/${context.blockchain}`
-                              : "/check"
-                          }
-                          className="router-link"
-                        >
+                        <Link to="/check" className="router-link">
                           <Icon
                             name="id card outline"
                             className="navbar-icon"
