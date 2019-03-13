@@ -72,6 +72,8 @@ contract MarriageCertificateCreator {
     function close() public onlyOwner {
         selfdestruct(owner);
     }
+    
+    function() external payable {}
 }
 
 contract MarriageCertificate {
@@ -92,6 +94,7 @@ contract MarriageCertificate {
     
     event LogMarriageValidity(bool[2] validity);
     event LogNewWithdrawalRequestFromSavings(uint request);
+    event LogBalance(uint total, uint joined, uint savings);
     
     /** 
         @dev function is called every time someone wants to register a new marriage certificate
@@ -165,6 +168,8 @@ contract MarriageCertificate {
         }
         // we make sure the sum of the joined and savings accounts is equal to the total sum
         assert(accounts["joined"] + accounts["savings"] == address(this).balance);
+        // we log the new balance
+        emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
     }
     
     /// @notice allows spouses to withdraw money from the account
@@ -196,6 +201,8 @@ contract MarriageCertificate {
         }
         // we make sure the sum of the joined and savings accounts is equal to the total sum
         assert(accounts["joined"] + accounts["savings"] == address(this).balance);
+        // we log the new balance
+        emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
     }
     
     /** @notice allows spouse to accept withdrawal request from savings
@@ -203,6 +210,8 @@ contract MarriageCertificate {
     **/
     function approveWithdrawRequestFromSavings(uint requestID) public onlySpouses {
         withdrawRequestFromSavings storage request = withdrawRequests[requestID];
+        // code makes sure there are enough funds to withdraw
+        require(request.amount <= accounts["savings"], "There are not enough funds to process the request.");
         // the request cannot have been approved before
         if(request.approved == false) {
             // the spouse approving the request cannot be the one who initiated it
@@ -212,14 +221,31 @@ contract MarriageCertificate {
                 request.approved = true;
                 // deduct amount from accounts mapping
                 accounts["savings"] -= request.amount;
+                // we make sure the sum of the joined and savings accounts is equal to the total sum
+                assert(accounts["joined"] + accounts["savings"] == address(this).balance);
                 // we transfer the money
                 request.sender.transfer(request.amount);
+                // we log the new balance
+                emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
             } else {
             revert("The request cannot be approved by the same person who created it!");
             }
         } else {
             revert("This request has already been approved!");
         }
+    }
+    
+    /// @notice allows spouses to use the deposit account for payments
+    function pay(address payable _address, uint amount) public onlySpouses {
+        require(amount <= accounts["joined"], "There are not enough funds to proceed with transaction");
+        
+        accounts["joined"] -= amount;
+        // we make sure the sum of the joined and savings accounts is equal to the total sum
+        assert(accounts["joined"] + accounts["savings"] == address(this).balance);
+        // we transfer the money to the provided address
+        _address.transfer(amount);
+        // we log the new balance
+        emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
     }
     
     /// @notice fallback function to send money directly, money stored in deposit account by default
