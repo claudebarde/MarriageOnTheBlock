@@ -59,7 +59,8 @@ export const TransactionModal = props => {
             >
               {`Transaction hash: ${txHash}`}
               <br />
-              {estimateTime && `Estimate waiting time: ${estimateTime} seconds`}
+              {estimateTime &&
+                `Estimated waiting time: ${estimateTime} seconds`}
             </Segment>
           </Header>
         </Segment>

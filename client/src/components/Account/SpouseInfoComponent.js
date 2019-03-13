@@ -52,35 +52,41 @@ class SpouseInfoComponent extends Component {
         )}`}</Message.Header>
         <Message.List>
           <Message.Item>Certificate Creator</Message.Item>
-          <Popup
-            trigger={
-              <Message.Item>{`${upperFirst(spouse.idType)} Number: ${
-                this.state.displayIdNumber
-              }`}</Message.Item>
-            }
-            content={
-              <Input
-                type="password"
-                placeholder="Enter security key"
-                icon={
-                  !this.state.decryptInput.error &&
-                  this.state.decryptInput.length > 0
-                    ? "thumbs up outline"
-                    : "search"
-                }
-                onChange={this.decryptIdNumber}
-                error={this.state.decryptInput.error}
-                autoFocus
-              />
-            }
-            on="click"
-            position="top left"
-            onClose={() =>
-              this.setState({
-                decryptInput: { error: false, length: 0 }
-              })
-            }
-          />
+          {this.state.displayIdNumber === "••••••••••••••••••" ? (
+            <Popup
+              trigger={
+                <Message.Item>{`${upperFirst(spouse.idType)} Number: ${
+                  this.state.displayIdNumber
+                }`}</Message.Item>
+              }
+              content={
+                <Input
+                  type="password"
+                  placeholder="Enter security key"
+                  icon={
+                    !this.state.decryptInput.error &&
+                    this.state.decryptInput.length > 0
+                      ? "thumbs up outline"
+                      : "search"
+                  }
+                  onChange={this.decryptIdNumber}
+                  error={this.state.decryptInput.error}
+                  autoFocus
+                />
+              }
+              on="click"
+              position="top left"
+              onClose={() =>
+                this.setState({
+                  decryptInput: { error: false, length: 0 }
+                })
+              }
+            />
+          ) : (
+            <Message.Item>{`${upperFirst(spouse.idType)} Number: ${
+              this.state.displayIdNumber
+            }`}</Message.Item>
+          )}
 
           <Message.Item>{`Address: ${spouse.address}`}</Message.Item>
           {approved ? (

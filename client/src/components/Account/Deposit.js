@@ -14,7 +14,7 @@ import {
 import firebase from "firebase/app";
 import "firebase/firebase-functions";
 
-import { TransactionModal, transactionModalData } from "./TransactionModal";
+import { TransactionModal, transactionModalData } from "../TransactionModal";
 
 import { estimateTxTime } from "../../utils/functions";
 
@@ -146,7 +146,8 @@ class Deposit extends Component {
             });
           } else {
             this.setState({
-              errorSend: { ...this.state.errorSend, [_to]: true }
+              errorSend: { ...this.state.errorSend, [_to]: true },
+              loadingTx: { ...this.state.loadingTx, [_to]: false }
             });
             this.closeTxModal("error", receipt.transactionHash);
           }
@@ -159,7 +160,8 @@ class Deposit extends Component {
       console.log(error);
       this.closeTxModal("error", depositTxHash);
       this.setState({
-        errorSend: true
+        errorSend: { ...this.state.errorSend, [_to]: true },
+        loadingTx: { ...this.state.loadingTx, [_to]: false }
       });
     }
   };

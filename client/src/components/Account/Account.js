@@ -12,6 +12,7 @@ import {
   Transition
 } from "semantic-ui-react";
 import moment from "moment";
+import { Redirect } from "react-router";
 
 import firebase from "firebase/app";
 import "firebase/firebase-functions";
@@ -67,12 +68,17 @@ class Account extends Component {
             },
             loadingAccount: false
           },
-          () =>
+          () => {
             // subscription to events
             this.subscribeLogEvent(
               this.state.certificate.instance,
               "LogMarriageValidity"
-            )
+            );
+            this.subscribeLogEvent(
+              this.state.certificate.instance,
+              "LogBalance"
+            );
+          }
         );
       } else {
         this.setState({
@@ -175,6 +181,8 @@ class Account extends Component {
                   }
                 }
               });
+            } else if (eventName === "LogBalance") {
+              console.log(eventObj.total, eventObj.joined, eventObj.savings);
             }
           }
         }
@@ -217,7 +225,7 @@ class Account extends Component {
 
   componentDidUpdate = () => {
     // checks user certificate and screen width
-    const { userCertificate, screenWidth } = this.props.context;
+    const { userCertificate, screenWidth, loggedInUser } = this.props.context;
     // checks if different certificate is loaded
     if (userCertificate !== this.state.certificate.address) {
       this.setState(
@@ -234,6 +242,14 @@ class Account extends Component {
     // checks screen width changes
     if (screenWidth !== this.state.screenWidth) {
       this.setState({ screenWidth });
+    }
+    // checks if logged in user created a certificate
+    if (
+      loggedInUser &&
+      userCertificate === null &&
+      this.state.loadingAccount === true
+    ) {
+      this.setState({ loadingAccount: false });
     }
   };
 
@@ -257,7 +273,10 @@ class Account extends Component {
       menuAttributes.widths = 4;
     }
 
-    if (this.state.loadingAccount) {
+    // if user is not logged in
+    if (context.loggedInUser === false) return <Redirect to="/" />;
+
+    if (this.state.loadingAccount)
       return (
         <Container text>
           <Segment>
@@ -268,219 +287,219 @@ class Account extends Component {
           </Segment>
         </Container>
       );
-    } else {
-      if (!context.loggedInUser)
-        return (
-          <Container text>
-            <Message
-              icon="sign-in"
-              header="You are not signed in"
-              content="Please sign in to access your account details"
-              info
-            />
-          </Container>
-        );
 
-      const totalBalanceInETH = web3.utils.fromWei(
-        this.state.certificate.balance.total.toString(),
-        "ether"
-      );
-
-      // checks if mobile version
-      const mobile = this.state.screenWidth <= MIN_SCREEN_WIDTH;
-
+    // the user is logged in but has no certificate
+    if (context.loggedInUser && context.userCertificate === null)
       return (
-        <Container>
-          <Grid columns={2} stackable>
-            <Grid.Row>
-              <Grid.Column width={3} textAlign="center">
-                {!mobile && (
-                  <>
-                    <Transition
-                      visible={activeMenuItem === "send"}
-                      animation="scale"
-                      duration={500}
-                    >
-                      <Image
-                        size="small"
-                        src="/images/undraw_wallet_aym5.svg"
-                        style={{ position: "absolute", right: "0px" }}
-                      />
-                    </Transition>
-                    <Transition
-                      visible={activeMenuItem === "withdraw"}
-                      animation="scale"
-                      duration={500}
-                    >
-                      <Image
-                        size="small"
-                        src="/images/undraw_savings_hjfl.svg"
-                        style={{ position: "absolute", right: "0px" }}
-                      />
-                    </Transition>
-                    <Transition
-                      visible={activeMenuItem === "status"}
-                      animation="scale"
-                      duration={500}
-                    >
-                      <Image
-                        size="small"
-                        src="/images/undraw_synchronize_ccxk.svg"
-                        style={{ position: "absolute", right: "0px" }}
-                      />
-                    </Transition>
-                    <Transition
-                      visible={activeMenuItem === "transactions"}
-                      animation="scale"
-                      duration={500}
-                    >
-                      <Image
-                        size="small"
-                        src="/images/undraw_spreadsheets_xdjy.svg"
-                        style={{ position: "absolute", right: "0px" }}
-                      />
-                    </Transition>
-                  </>
-                )}
-              </Grid.Column>
-              <Grid.Column width={13}>
-                <Grid columns={2} stackable>
-                  <Grid.Column width={7}>
-                    <Message
-                      icon="money"
-                      header={`Total balance: ${totalBalanceInETH} ether (≈ $${Math.round(
-                        parseFloat(totalBalanceInETH) *
-                          this.state.ethToDollarChange
-                      )})`}
-                      list={[
-                        `Joined account: ${web3.utils.fromWei(
-                          this.state.certificate.balance.joined.toString(),
-                          "ether"
-                        )} ether`,
-                        `Savings account: ${web3.utils.fromWei(
-                          this.state.certificate.balance.savings.toString(),
-                          "ether"
-                        )} ether`
-                      ]}
-                      color="blue"
-                      size={!mobile ? "small" : "tiny"}
-                    />
-                  </Grid.Column>
-                  <Grid.Column width={9}>
-                    <Message
-                      icon="address card"
-                      header="Certificate address"
-                      list={[
-                        this.state.certificate.address,
-                        `Created on ${moment
-                          .unix(this.state.certificate.timestamp)
-                          .format("dddd, MMMM Do YYYY, h:mm:ss a")}`
-                      ]}
-                      color="yellow"
-                      size={!mobile ? "small" : "tiny"}
-                    />
-                  </Grid.Column>
-                </Grid>
-              </Grid.Column>
-            </Grid.Row>
-            <Grid.Row>
-              <Grid.Column width={3}>
-                <Menu {...menuAttributes}>
-                  <Menu.Item
-                    name="send"
-                    active={activeMenuItem === "send"}
-                    onClick={this.handleMenuClick}
-                    link
-                  >
-                    <Icon name="paper plane" />
-                    Send
-                  </Menu.Item>
-                  <Menu.Item
-                    name="withdraw"
-                    active={activeMenuItem === "withdraw"}
-                    onClick={this.handleMenuClick}
-                    link
-                  >
-                    <Icon name="shopping cart" />
-                    Withdraw
-                  </Menu.Item>
-                  <Menu.Item
-                    name="status"
-                    active={activeMenuItem === "status"}
-                    onClick={this.handleMenuClick}
-                    link
-                  >
-                    <Icon name="file" />
-                    Status
-                  </Menu.Item>
-                  <Menu.Item
-                    name="transactions"
-                    active={activeMenuItem === "transactions"}
-                    onClick={this.handleMenuClick}
-                    link
-                  >
-                    <Icon name="exchange" />
-                    Transactions
-                  </Menu.Item>
-                </Menu>
-              </Grid.Column>
-              {!spousesAddresses.includes(context.userAddress) ? (
-                <Grid.Column>
-                  <Message
-                    icon="exclamation triangle"
-                    header="You are not allowed to access this page"
-                    content="The two spouses only are allowed to send, desposit and
-                    withdraw money and to change the marriage status"
-                    error
-                  />
-                </Grid.Column>
-              ) : (
-                <Grid.Column width={13}>
-                  {this.state.activeMenuItem === "send" && (
-                    <Deposit
-                      web3={web3}
-                      certificate={certificate.instance}
-                      userAddress={context.userAddress}
-                      updateBalance={this.updateBalance}
-                      gasForTx={context.gasForTx}
-                      ethToDollarChange={ethToDollarChange}
-                    />
-                  )}
-                  {this.state.activeMenuItem === "withdraw" && (
-                    <Withdraw
-                      web3={web3}
-                      certificate={certificate.instance}
-                      updateBalance={this.updateBalance}
-                      gasForTx={context.gasForTx}
-                      ethToDollarChange={ethToDollarChange}
-                      balance={this.state.certificate.balance}
-                    />
-                  )}
-                  {this.state.activeMenuItem === "status" && (
-                    <MarriageStatus
-                      certificate={certificate}
-                      spousesAddresses={spousesAddresses}
-                      userAddress={context.userAddress}
-                      web3={web3}
-                      network={context.network}
-                      gasForTx={context.gasForTx}
-                    />
-                  )}
-                  {this.state.activeMenuItem === "transactions" && (
-                    <TransactionsHistory
-                      web3={web3}
-                      spousesAddresses={spousesAddresses}
-                      certificateAddress={certificate.address}
-                      creationTimestamp={certificate.timestamp}
-                    />
-                  )}
-                </Grid.Column>
-              )}
-            </Grid.Row>
-          </Grid>
+        <Container text>
+          <Message
+            icon="sign-in"
+            header="You do not have a marriage certificate yet."
+            content="Please create a marriage certificate to use your account."
+            info
+          />
         </Container>
       );
-    }
+
+    const totalBalanceInETH = web3.utils.fromWei(
+      this.state.certificate.balance.total.toString(),
+      "ether"
+    );
+
+    // checks if mobile version
+    const mobile = this.state.screenWidth <= MIN_SCREEN_WIDTH;
+
+    return (
+      <Container>
+        <Grid columns={2} stackable>
+          <Grid.Row>
+            <Grid.Column width={3} textAlign="center">
+              {!mobile && (
+                <>
+                  <Transition
+                    visible={activeMenuItem === "send"}
+                    animation="scale"
+                    duration={500}
+                  >
+                    <Image
+                      size="small"
+                      src="/images/undraw_wallet_aym5.svg"
+                      style={{ position: "absolute", right: "0px" }}
+                    />
+                  </Transition>
+                  <Transition
+                    visible={activeMenuItem === "withdraw"}
+                    animation="scale"
+                    duration={500}
+                  >
+                    <Image
+                      size="small"
+                      src="/images/undraw_savings_hjfl.svg"
+                      style={{ position: "absolute", right: "0px" }}
+                    />
+                  </Transition>
+                  <Transition
+                    visible={activeMenuItem === "status"}
+                    animation="scale"
+                    duration={500}
+                  >
+                    <Image
+                      size="small"
+                      src="/images/undraw_synchronize_ccxk.svg"
+                      style={{ position: "absolute", right: "0px" }}
+                    />
+                  </Transition>
+                  <Transition
+                    visible={activeMenuItem === "transactions"}
+                    animation="scale"
+                    duration={500}
+                  >
+                    <Image
+                      size="small"
+                      src="/images/undraw_spreadsheets_xdjy.svg"
+                      style={{ position: "absolute", right: "0px" }}
+                    />
+                  </Transition>
+                </>
+              )}
+            </Grid.Column>
+            <Grid.Column width={13}>
+              <Grid columns={2} stackable>
+                <Grid.Column width={7}>
+                  <Message
+                    icon="money"
+                    header={`Total balance: ${totalBalanceInETH} ether (≈ $${Math.round(
+                      parseFloat(totalBalanceInETH) *
+                        this.state.ethToDollarChange
+                    )})`}
+                    list={[
+                      `Joined account: ${web3.utils.fromWei(
+                        this.state.certificate.balance.joined.toString(),
+                        "ether"
+                      )} ether`,
+                      `Savings account: ${web3.utils.fromWei(
+                        this.state.certificate.balance.savings.toString(),
+                        "ether"
+                      )} ether`
+                    ]}
+                    color="blue"
+                    size={!mobile ? "small" : "tiny"}
+                  />
+                </Grid.Column>
+                <Grid.Column width={9}>
+                  <Message
+                    icon="address card"
+                    header="Certificate address"
+                    list={[
+                      this.state.certificate.address,
+                      `Created on ${moment
+                        .unix(this.state.certificate.timestamp)
+                        .format("dddd, MMMM Do YYYY, h:mm:ss a")}`
+                    ]}
+                    color="yellow"
+                    size={!mobile ? "small" : "tiny"}
+                  />
+                </Grid.Column>
+              </Grid>
+            </Grid.Column>
+          </Grid.Row>
+          <Grid.Row>
+            <Grid.Column width={3}>
+              <Menu {...menuAttributes}>
+                <Menu.Item
+                  name="send"
+                  active={activeMenuItem === "send"}
+                  onClick={this.handleMenuClick}
+                  link
+                >
+                  <Icon name="paper plane" />
+                  Send
+                </Menu.Item>
+                <Menu.Item
+                  name="withdraw"
+                  active={activeMenuItem === "withdraw"}
+                  onClick={this.handleMenuClick}
+                  link
+                >
+                  <Icon name="shopping cart" />
+                  Withdraw
+                </Menu.Item>
+                <Menu.Item
+                  name="status"
+                  active={activeMenuItem === "status"}
+                  onClick={this.handleMenuClick}
+                  link
+                >
+                  <Icon name="file" />
+                  Status
+                </Menu.Item>
+                <Menu.Item
+                  name="transactions"
+                  active={activeMenuItem === "transactions"}
+                  onClick={this.handleMenuClick}
+                  link
+                >
+                  <Icon name="exchange" />
+                  Transactions
+                </Menu.Item>
+              </Menu>
+            </Grid.Column>
+            {!spousesAddresses.includes(context.userAddress) ? (
+              <Grid.Column>
+                <Message
+                  icon="exclamation triangle"
+                  header="You are not allowed to access this page"
+                  content="The two spouses only are allowed to send, desposit and
+                    withdraw money and to change the marriage status"
+                  error
+                />
+              </Grid.Column>
+            ) : (
+              <Grid.Column width={13}>
+                {this.state.activeMenuItem === "send" && (
+                  <Deposit
+                    web3={web3}
+                    certificate={certificate.instance}
+                    userAddress={context.userAddress}
+                    updateBalance={this.updateBalance}
+                    gasForTx={context.gasForTx}
+                    ethToDollarChange={ethToDollarChange}
+                  />
+                )}
+                {this.state.activeMenuItem === "withdraw" && (
+                  <Withdraw
+                    web3={web3}
+                    certificate={certificate.instance}
+                    updateBalance={this.updateBalance}
+                    gasForTx={context.gasForTx}
+                    ethToDollarChange={ethToDollarChange}
+                    balance={this.state.certificate.balance}
+                  />
+                )}
+                {this.state.activeMenuItem === "status" && (
+                  <MarriageStatus
+                    certificate={certificate}
+                    spousesAddresses={spousesAddresses}
+                    userAddress={context.userAddress}
+                    web3={web3}
+                    network={context.network}
+                    gasForTx={context.gasForTx}
+                  />
+                )}
+                {this.state.activeMenuItem === "transactions" && (
+                  <TransactionsHistory
+                    web3={web3}
+                    spousesAddresses={spousesAddresses}
+                    certificateAddress={certificate.address}
+                    creationTimestamp={certificate.timestamp}
+                  />
+                )}
+              </Grid.Column>
+            )}
+          </Grid.Row>
+        </Grid>
+      </Container>
+    );
   }
 }
 

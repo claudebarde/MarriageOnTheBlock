@@ -18,18 +18,21 @@ class BlockchainSwitch extends Component {
     network: NETWORK,
     addressChangeListener: null,
     userAddress: null,
-    userCertificate: null,
+    userCertificate: undefined,
     currentCertificate: null,
-    loggedInUser: false,
+    loggedInUser: undefined,
     screenWidth: 0,
     gasForTx: 1000000,
     signOutUser: () => {
       firebase.auth().signOut();
       this.setState({
         userCertificate: null,
-        currentCertificate: null
+        currentCertificate: null,
+        loggedInUser: false
       });
-    }
+    },
+    registerCertificateAddress: address =>
+      this.setState({ userCertificate: address })
   };
 
   // updates user address in case of change
@@ -73,10 +76,13 @@ class BlockchainSwitch extends Component {
         const userCertificate = await fetchUserCertificate(idToken);
         if (userCertificate.data) {
           this.setState({ userCertificate: userCertificate.data });
+        } else {
+          this.setState({ userCertificate: null });
         }
       } else {
         this.setState({
-          loggedInUser: false
+          loggedInUser: false,
+          userCertificate: null
         });
       }
     });

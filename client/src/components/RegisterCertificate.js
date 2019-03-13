@@ -32,7 +32,9 @@ import {
 } from "../config/config";
 import NumberOfMarriages from "./infoComponents/NumberOfMarriages";
 import MarriagesGraph from "./infoComponents/MarriagesGraph";
+import { TransactionModal, transactionModalData } from "./TransactionModal";
 import UserAuth from "../utils/UserAuth";
+import { estimateTxTime } from "../utils/functions";
 
 import firebase from "firebase/app";
 import "firebase/auth";
@@ -50,17 +52,15 @@ class App extends Component {
       certificatesTotal: 0,
       lastMarriage: { 0: "", 1: "", 2: "" },
       certificate: CERTIFICATE_OBJ,
-      confirmationModal: {
+      transactionModal: {
         open: false,
-        header: (
-          <Icon.Group size="big">
-            <Icon loading size="big" name="circle notch" />
-            <Icon name="edit" size="small" />
-          </Icon.Group>
-        ),
-        headerMessage: "Certificate Pending...",
+        icon: "spinner",
+        loading: true,
+        header: "Waiting for confirmation...",
+        txHash: null,
         message:
-          "Please  wait while your marriage certificate is being confirmed on the blockchain..."
+          "Your transaction is being confirmed on the blockchain, please wait.",
+        estimateTime: null
       },
       screenWidth: window.innerWidth,
       headerMessage: {
@@ -104,6 +104,25 @@ class App extends Component {
       disclaimerModal: { open: false }
     };
   }
+
+  closeTxModal = (status, txHash) => {
+    if (status === true) {
+      this.setState({
+        transactionModal: transactionModalData("confirmed", txHash)
+      });
+      setTimeout(
+        () =>
+          this.setState({
+            transactionModal: transactionModalData("pending", txHash)
+          }),
+        3000
+      );
+    } else {
+      this.setState({
+        transactionModal: transactionModalData("error", txHash)
+      });
+    }
+  };
 
   handleWindowSizeChange = () => {
     this.setState({ screenWidth: window.innerWidth });
@@ -170,7 +189,8 @@ class App extends Component {
     ];
   };
 
-  confirmRegistration = async userAddress => {
+  confirmRegistration = async () => {
+    const userAddress = this.props.context.userAddress;
     try {
       if (
         this.state.spousesDetails.firstSpouseDetails.address.toLowerCase() ===
@@ -178,13 +198,123 @@ class App extends Component {
       ) {
         throw new Error("same_addresses");
       }
-      // modal displayed while the new certificate is created
-      this.setState({
-        confirmationModal: { ...this.state.confirmationModal, open: true }
-      });
       // creating the new certificate
       const fcd = this.formatCertificateDetails();
-      const newCertificateTx = await contractCreator.methods
+      let newCertificateTxHash;
+      const estimateTime = await estimateTxTime();
+
+      await contractCreator.methods
+        .createNewCertificate(
+          fcd[1],
+          fcd[2],
+          this.state.spousesDetails.secondSpouseDetails.address,
+          fcd[0]
+        )
+        .send({
+          from: userAddress,
+          gas: "5000000",
+          value: web3.utils.toWei(this.state.fee)
+        })
+        .on("transactionHash", txHash => {
+          newCertificateTxHash = txHash;
+          console.log("Tx hash: ", txHash);
+          // the state is updated
+          this.setState({
+            transactionModal: {
+              ...this.state.transactionModal,
+              open: true,
+              txHash,
+              estimateTime
+            }
+          });
+        })
+        .on("receipt", async receipt => {
+          // listening to event newCertificateCreated to get contract address
+          const newCertificateAddress =
+            receipt.events.LogNewCertificateCreated.returnValues
+              .newCertificateAddress;
+          console.log("New certificate address: ", newCertificateAddress);
+
+          if (newCertificateAddress) {
+            this.closeTxModal(receipt.status, receipt.transactionHash);
+            // registers new address for redirection to account page
+            this.props.context.registerCertificateAddress(newCertificateAddress);
+            //we update here the state of the app
+            this.setState({
+              certificate: {
+                ...this.state.certificate,
+                address: newCertificateAddress
+              },
+              lastMarriage: {
+                0: fcd[1],
+                1: fcd[2],
+                2: fcd[0]
+              },
+              certificatesTotal: parseInt(this.state.certificatesTotal) + 1,
+              congratulationModalOpen: true,
+              newCertificateTxHash: receipt.transactionHash
+            });
+            // we create a new user in database who can udpdate tx history later
+            try {
+              // we save some of the info from the certificate in the firestore
+              const saveNewCertificate = firebase
+                .functions()
+                .httpsCallable("saveNewCertificate");
+              // if the user is logged in, we will link the certificate to their account
+              let idToken = 0;
+              if (firebase.auth().currentUser)
+                idToken = await firebase.auth().currentUser.getIdToken(true);
+              // we save the new certificate
+              const saveNewCtf = await saveNewCertificate({
+                idToken,
+                address: newCertificateAddress,
+                location: {
+                  city: this.state.city.toLowerCase(),
+                  country: this.state.country.toLowerCase()
+                },
+                firstSpouse: {
+                  firstName: this.state.spousesDetails.firstSpouseDetails
+                    .firstName,
+                  lastName: this.state.spousesDetails.firstSpouseDetails
+                    .lastName,
+                  address: this.state.spousesDetails.firstSpouseDetails.address
+                },
+                secondSpouse: {
+                  firstName: this.state.spousesDetails.secondSpouseDetails
+                    .firstName,
+                  lastName: this.state.spousesDetails.secondSpouseDetails
+                    .lastName,
+                  address: this.state.spousesDetails.secondSpouseDetails.address
+                },
+                timestamp: Date.now(),
+                key: this.state.idEncodingKey.toString()
+              });
+              if (saveNewCtf.data.status !== "OK") {
+                console.log("Error while saving to the database: ", saveNewCtf);
+              }
+            } catch (error) {
+              console.log(error.code, error.message);
+            }
+            // we update the firestore with the country of registration
+            const saveLocation = firebase
+              .functions()
+              .httpsCallable("saveLocation");
+            // we receive the new data
+            const savedLocations = await saveLocation({
+              text: this.state.country.toLowerCase()
+            });
+            // we update the pie chart
+            this.setState({ chartOptions: savedLocations.data });
+          } else {
+            this.closeTxModal("error", newCertificateTxHash);
+          }
+        })
+        .on("error", error => {
+          console.log(error);
+          this.closeTxModal("error", newCertificateTxHash);
+        });
+
+      /*const newCertificateTx = await contractCreator.methods
         .createNewCertificate(
           fcd[1],
           fcd[2],
@@ -293,9 +423,10 @@ class App extends Component {
         });
         // we update the pie chart
         this.setState({ chartOptions: savedLocations.data });
-      }
+      }*/
     } catch (error) {
       console.log(error);
+      this.closeTxModal("error", 0);
       if (error.message === "same_addresses") {
         this.setState({
           headerMessage: {
@@ -306,8 +437,7 @@ class App extends Component {
             iconLoading: false,
             info: false,
             error: true
-          },
-          confirmationModal: { ...this.state.confirmationModal, open: false }
+          }
         });
       }
     }
@@ -499,9 +629,7 @@ class App extends Component {
                             country={this.state.country}
                             currentFee={this.state.fee}
                             gasToUse={this.state.gasToUse}
-                            confirmRegistration={() =>
-                              this.confirmRegistration(context.userAddress)
-                            }
+                            confirmRegistration={this.confirmRegistration}
                             userHasCertificate={!!context.userCertificate}
                           />
                         )}
@@ -591,20 +719,11 @@ class App extends Component {
             </Grid>
           )}
         </Container>
-        <Modal open={this.state.confirmationModal.open} basic size="small">
-          <Header>
-            {this.state.confirmationModal.header}
-            {this.state.confirmationModal.headerMessage}
-          </Header>
-          <Modal.Content>
-            <p>{this.state.confirmationModal.message}</p>
-          </Modal.Content>
-        </Modal>
+        <TransactionModal {...this.state.transactionModal} />
 
         <Modal
           open={this.state.congratulationModalOpen}
           size="small"
-          centered={false}
           onClose={() =>
             this.setState({
               congratulationModalOpen: false
@@ -632,7 +751,18 @@ class App extends Component {
                         {this.state.newCertificateTxHash}
                       </List.Header>
                       <List.Description>
-                        This is the transaction number you can look up here.
+                        This is the transaction number you can look up{" "}
+                        <a
+                          href={`https://${context.network}.etherscan.io/tx/${
+                            this.state.newCertificateTxHash
+                          }`}
+                          alt="certificate-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          here
+                        </a>
+                        .
                       </List.Description>
                     </List.Content>
                   </List.Item>
@@ -671,7 +801,7 @@ class App extends Component {
                     <List.Content>
                       <List.Header>Certificate Control Panel</List.Header>
                       <List.Description>
-                        <Link to={`/check/${this.state.certificate.address}`}>
+                        <Link to="/account">
                           Access you certificate control panel
                         </Link>
                       </List.Description>
@@ -757,11 +887,11 @@ const DisclaimerModal = props => (
             You acknowledge and agree that, to the fullest extent permitted by
             any applicable law, the disclaimers of liability contained herein
             apply to any and all damages or injury whatsoever caused by or
-            related to risks of, use of, or inability to use, ethereum or the
+            related to risks of, use of, or inability to use, Ethereum or the
             Ethereum platform under any cause or action whatsoever of any kind
             in any jurisdiction, including, without limitation, actions for
             breach of warranty, breach of contract or tort (including
-            negligence) and that the present website shall be liable for any
+            negligence) and that the present website shall not be liable for any
             indirect, incidental, special, exemplary or consequential damages,
             including for loss of profits, goodwill or data that occurs as a
             result.

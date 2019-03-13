@@ -20,7 +20,7 @@ import "firebase/firebase-functions";
 
 import { withContext, MIN_SCREEN_WIDTH } from "../../config/config";
 
-import { TransactionModal, transactionModalData } from "./TransactionModal";
+import { TransactionModal, transactionModalData } from "../TransactionModal";
 
 import { estimateTxTime } from "../../utils/functions";
 
@@ -145,7 +145,10 @@ class Withdraw extends Component {
       parseFloat(this.state.ethToWithdraw[_from]) >
       parseFloat(web3.utils.fromWei(balance[_from].toString(), "ether"))
     ) {
-      this.setState({ errorSend: { ...this.state.errorSend, [_from]: true } });
+      this.setState({
+        errorSend: { ...this.state.errorSend, [_from]: true },
+        loadingTx: { ...this.state.loadingTx, [_from]: false }
+      });
       return;
     }
     let withdrawTxHash;
@@ -223,7 +226,8 @@ class Withdraw extends Component {
                 open: false,
                 txHash: null
               },
-              errorSend: { ...this.state.errorSend, [_from]: true }
+              errorSend: { ...this.state.errorSend, [_from]: true },
+              loadingTx: { ...this.state.loadingTx, [_from]: false }
             });
           }
         })

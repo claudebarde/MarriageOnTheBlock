@@ -12,7 +12,9 @@ import moment from "moment";
 import SpouseInfoComponent from "./SpouseInfoComponent";
 
 import { estimateTxTime } from "../../utils/functions";
-import { TransactionModal, transactionModalData } from "./TransactionModal";
+import { TransactionModal, transactionModalData } from "../TransactionModal";
+
+const countries = require("country-data").countries;
 
 class MarriageStatus extends Component {
   state = {
@@ -102,7 +104,9 @@ class MarriageStatus extends Component {
                 icon="globe"
                 header="Place of registration"
                 content={`${certificate.location.city}, ${
-                  certificate.location.country
+                  countries[certificate.location.country]
+                    ? countries[certificate.location.country].name
+                    : "invalid country"
                 }`}
               />
             </Grid.Column>

@@ -59,33 +59,46 @@ class TransactionsHistory extends Component {
         let content = "";
         switch (txHistory[tx].type) {
           case "statusUpdate":
-            const previousState = txHistory[tx].previousState.reduce(
-              (a, b) => a && b
-            );
-            const newState = txHistory[tx].newState.reduce((a, b) => a && b);
-            title = (
-              <Label color="teal">
-                <Icon name="redo" /> Marriage Status Update
-                <Label.Detail>{moment.unix(tx / 1000).from()}</Label.Detail>
-              </Label>
-            );
-            content = (
-              <div>
-                <Segment attached="top">{`On ${moment
-                  .unix(tx / 1000)
-                  .format("MMMM Do YYYY, h:mm:ss a")}`}</Segment>
-                <Segment attached>{`From ${
-                  previousState ? "valid" : "invalid"
-                } status to ${newState ? "valid" : "invalid"} status`}</Segment>
-                <Segment
-                  size="tiny"
-                  style={{ wordBreak: "break-word" }}
-                  attached="bottom"
-                >
-                  {this.txLink(txHistory[tx].txHash)}
-                </Segment>
-              </div>
-            );
+            // checks if data are corrupted
+            if (
+              Array.isArray(txHistory[tx].previousState) &&
+              txHistory[tx].previousState.length === 2 &&
+              Array.isArray(txHistory[tx].newState) &&
+              txHistory[tx].newState.length === 2
+            ) {
+              const previousState = txHistory[tx].previousState.reduce(
+                (a, b) => a && b
+              );
+              const newState = txHistory[tx].newState.reduce((a, b) => a && b);
+              title = (
+                <Label color="teal">
+                  <Icon name="redo" /> Marriage Status Update
+                  <Label.Detail>{moment.unix(tx / 1000).from()}</Label.Detail>
+                </Label>
+              );
+              content = (
+                <div>
+                  <Segment attached="top">{`On ${moment
+                    .unix(tx / 1000)
+                    .format("MMMM Do YYYY, h:mm:ss a")}`}</Segment>
+                  <Segment attached>{`From ${
+                    previousState ? "valid" : "invalid"
+                  } status to ${
+                    newState ? "valid" : "invalid"
+                  } status`}</Segment>
+                  <Segment
+                    size="tiny"
+                    style={{ wordBreak: "break-word" }}
+                    attached="bottom"
+                  >
+                    {this.txLink(txHistory[tx].txHash)}
+                  </Segment>
+                </div>
+              );
+            } else {
+              title = "Error";
+              content = "The transaction data are corrupted.";
+            }
             break;
           case "deposit":
             title = (
