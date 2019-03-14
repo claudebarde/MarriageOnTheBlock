@@ -166,14 +166,7 @@ class Navbar extends Component {
                         </Dropdown.Item>
                       </>
                     ) : (
-                      <>
-                        <UserAuth
-                          certificateAddress=""
-                          currentUserAddress={context.userAddress}
-                          origin="navbar"
-                        />
-                        <SignInModal />
-                      </>
+                      <SignInModal />
                     )}
                   </Dropdown.Menu>
                 </Dropdown>

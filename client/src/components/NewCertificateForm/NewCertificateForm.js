@@ -13,7 +13,7 @@ import {
 } from "semantic-ui-react";
 import _ from "lodash";
 
-import { checkIfDetailsAreValid } from "../utils/functions";
+import { checkIfDetailsAreValid } from "../../utils/functions";
 
 const countries = require("country-data").countries;
 

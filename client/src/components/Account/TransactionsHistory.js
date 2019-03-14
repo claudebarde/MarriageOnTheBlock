@@ -186,7 +186,6 @@ class TransactionsHistory extends Component {
               </div>
             );
             break;
-
           case "approvedRequest":
             title = (
               <Label color="orange">
@@ -203,6 +202,35 @@ class TransactionsHistory extends Component {
                   txHistory[tx].amount.toString()
                 )} ether withdrawn from savings account to ${truncateAddress(
                   txHistory[tx].to
+                )}`}</Segment>
+                <Segment
+                  size="tiny"
+                  style={{ wordBreak: "break-word" }}
+                  attached="bottom"
+                >
+                  {this.txLink(txHistory[tx].txHash)}
+                </Segment>
+              </div>
+            );
+            break;
+          case "sendToExternal":
+            title = (
+              <Label color="green">
+                <Icon name="arrow down" /> New Payment
+                <Label.Detail>{moment.unix(tx / 1000).from()}</Label.Detail>
+              </Label>
+            );
+            content = (
+              <div>
+                <Segment attached="top">{`On ${moment
+                  .unix(tx / 1000)
+                  .format("MMMM Do YYYY, h:mm:ss a")}`}</Segment>
+                <Segment attached>{`${this.props.web3.utils.fromWei(
+                  txHistory[tx].amount.toString()
+                )} ether were paid to ${
+                  txHistory[tx].account
+                } account from ${truncateAddress(
+                  txHistory[tx].from
                 )}`}</Segment>
                 <Segment
                   size="tiny"

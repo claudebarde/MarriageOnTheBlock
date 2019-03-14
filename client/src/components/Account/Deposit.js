@@ -33,7 +33,8 @@ class Deposit extends Component {
       message:
         "Your transaction is being confirmed on the blockchain, please wait.",
       estimateTime: null
-    }
+    },
+    externalAddress: ""
   };
 
   convertEthToDollars = (event, account) => {
@@ -166,6 +167,93 @@ class Deposit extends Component {
     }
   };
 
+  sendToExternal = async () => {
+    // the user address must be locked to avoid tempering during tx process
+    const { web3, certificate, userAddress, gasForTx } = this.props;
+    const externalAddress = this.state.externalAddress;
+    // we estimate tx time according to past blocks
+    const estimateTime = await estimateTxTime();
+    // we set the button to show loading icon
+    this.setState({ loadingTx: { ...this.state.loadingTx, external: true } });
+    let sendToExternalTxHash;
+    // we start the transaction process
+    try {
+      const funds = web3.utils.toWei(
+        this.state.ethToTransfer.external.toString(),
+        "ether"
+      );
+
+      await certificate.methods
+        .pay(externalAddress, funds)
+        .send({
+          from: userAddress,
+          gas: gasForTx,
+          value: funds
+        })
+        .on("transactionHash", txHash => {
+          console.log("Tx hash: ", txHash);
+          sendToExternalTxHash = txHash;
+          this.setState({
+            transactionModal: {
+              ...this.state.transactionModal,
+              txHash,
+              open: true,
+              estimateTime
+            },
+            loadingTx: { ...this.state.loadingTx, external: false }
+          });
+        })
+        .on("receipt", async receipt => {
+          if (receipt.status) {
+            // when the tx is processed, we display a message to the user and close the modal
+            this.closeTxModal(receipt.status, receipt.transactionHash);
+            // we update transactions log in firestore
+            if (firebase.auth().currentUser) {
+              const idToken = await firebase
+                .auth()
+                .currentUser.getIdToken(true);
+              const data = {
+                idToken,
+                address: certificate.options.address,
+                tx: {
+                  type: "sendToExternal",
+                  from: userAddress,
+                  amount: funds,
+                  account: externalAddress,
+                  txHash: receipt.transactionHash
+                }
+              };
+              await this.updateTxHistory(data);
+            }
+            this.setState({
+              convertEthToDollars: {
+                ...this.state.convertEthToDollars,
+                external: 0
+              },
+              ethToTransfer: { ...this.state.ethToTransfer, external: "" }
+            });
+          } else {
+            this.setState({
+              errorSend: { ...this.state.errorSend, external: true },
+              loadingTx: { ...this.state.loadingTx, external: false }
+            });
+            this.closeTxModal("error", receipt.transactionHash);
+          }
+        })
+        .on("error", error => {
+          console.log(error);
+          this.closeTxModal("error", sendToExternalTxHash);
+        });
+    } catch (error) {
+      console.log(error);
+      this.closeTxModal("error", sendToExternalTxHash);
+      this.setState({
+        errorSend: { ...this.state.errorSend, external: true },
+        loadingTx: { ...this.state.loadingTx, external: false }
+      });
+    }
+  };
+
   render() {
     return (
       <Segment secondary padded>
@@ -262,7 +350,19 @@ class Deposit extends Component {
                   error
                 />
               )}
-              <Input placeholder="Address..." fluid />
+              <Input
+                placeholder="Address..."
+                fluid
+                error={
+                  !this.props.web3.utils.isAddress(
+                    this.state.externalAddress
+                  ) && this.state.externalAddress.length > 0
+                }
+                onChange={event =>
+                  this.setState({ externalAddress: event.target.value.trim() })
+                }
+                value={this.state.externalAddress}
+              />
             </Grid.Column>
             <Grid.Column width={7} verticalAlign="bottom">
               <Input
@@ -280,11 +380,11 @@ class Deposit extends Component {
                 <input />
                 <Button
                   color="teal"
-                  onClick={async () => await this.deposit("external")}
+                  onClick={async () => await this.sendToExternal()}
                   disabled={!this.state.ethToTransfer.external}
                   loading={this.state.loadingTx.external}
                 >
-                  Send
+                  Pay
                 </Button>
               </Input>
             </Grid.Column>

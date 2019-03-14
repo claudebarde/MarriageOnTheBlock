@@ -23,6 +23,14 @@ class DetailsValidation extends Component {
   };
 
   render() {
+    const {
+      city,
+      country,
+      spousesDetails,
+      currentFee,
+      userHasCertificate,
+      userAddress
+    } = this.props;
     return (
       <Modal
         trigger={
@@ -62,36 +70,35 @@ class DetailsValidation extends Component {
                 <List.Icon name="globe" />
                 <List.Content>
                   <List.Header>
-                    {this.props.city},{" "}
-                    {countries[this.props.country.toUpperCase()].name}
+                    {city}, {countries[country.toUpperCase()].name}
                   </List.Header>
                 </List.Content>
               </List.Item>
-              {Object.keys(this.props.spousesDetails)
+              {Object.keys(spousesDetails)
                 .slice(0, 2)
                 .map((spouse, index) => (
                   <List.Item key={spouse}>
                     <List.Icon name="user" />
                     <List.Content>
                       <List.Header>{`${_.upperFirst(
-                        this.props.spousesDetails[spouse].firstName
+                        spousesDetails[spouse].firstName
                       )} ${_.upperFirst(
-                        this.props.spousesDetails[spouse].lastName
+                        spousesDetails[spouse].lastName
                       )}`}</List.Header>
                       <List.Description>Spouse {index + 1}</List.Description>
                       <List.List>
                         <List.Item>
                           <List.Icon name="id card" />
                           <List.Content>{`${_.upperFirst(
-                            this.props.spousesDetails[spouse].idType
+                            spousesDetails[spouse].idType
                           )} Number: ${
-                            this.props.spousesDetails[spouse].idNumber
+                            spousesDetails[spouse].idNumber
                           }`}</List.Content>
                         </List.Item>
                         <List.Item>
                           <List.Icon name="linkify" />
                           <List.Content>{`Address: ${
-                            this.props.spousesDetails[spouse].address
+                            spousesDetails[spouse].address
                           }`}</List.Content>
                         </List.Item>
                       </List.List>
@@ -102,16 +109,22 @@ class DetailsValidation extends Component {
                 <List.Icon name="ethereum" />
                 <List.Content>
                   <List.Header>
-                    {`Certificate Fee: ${parseFloat(
-                      this.props.currentFee
-                    )} ether`}
+                    {`Certificate Fee: ${parseFloat(currentFee)} ether`}
                   </List.Header>
                 </List.Content>
               </List.Item>
             </List>
-            {this.props.userHasCertificate ? (
+            {userHasCertificate ? (
               <Segment inverted tertiary color="red" textAlign="center">
                 You already have a marriage certificate!
+              </Segment>
+            ) : ![
+                spousesDetails.firstSpouseDetails.address.toLowerCase(),
+                spousesDetails.secondSpouseDetails.address.toLowerCase()
+              ].includes(userAddress.toLowerCase()) ? (
+              <Segment inverted tertiary color="red" textAlign="center">
+                The address to create the new certificate must be one of the two
+                spouses registering the marriage certificate.
               </Segment>
             ) : (
               <>

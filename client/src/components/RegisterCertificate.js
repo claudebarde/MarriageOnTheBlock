@@ -19,8 +19,8 @@ import { Link } from "react-router-dom";
 import getWeb3 from "../utils/getWeb3";
 
 import compiledContract from "../utils/contractCreator";
-import NewCertificateForm from "../NewCertificateForm/NewCertificateForm";
-import DetailsValidation from "../DetailsValidation/DetailsValidation";
+import NewCertificateForm from "./NewCertificateForm/NewCertificateForm";
+import DetailsValidation from "./DetailsValidation/DetailsValidation";
 import {
   checkIfDetailsAreValid,
   lastMarriageDisplay
@@ -42,7 +42,6 @@ import "firebase/firebase-functions";
 
 let web3 = null;
 let contractCreator;
-
 class App extends Component {
   constructor(props) {
     super(props);
@@ -190,14 +189,24 @@ class App extends Component {
   };
 
   confirmRegistration = async () => {
+    const {
+      firstSpouseDetails,
+      secondSpouseDetails
+    } = this.state.spousesDetails;
     const userAddress = this.props.context.userAddress;
     try {
       if (
-        this.state.spousesDetails.firstSpouseDetails.address.toLowerCase() ===
-        this.state.spousesDetails.secondSpouseDetails.address.toLowerCase()
-      ) {
+        firstSpouseDetails.address.toLowerCase() ===
+        secondSpouseDetails.address.toLowerCase()
+      )
         throw new Error("same_addresses");
-      }
+
+      if (
+        userAddress.toLowerCase() !==
+          firstSpouseDetails.address.toLowerCase() &&
+        userAddress.toLowerCase() !== secondSpouseDetails.address.toLowerCase()
+      )
+        throw new Error("non_spouse");
       // creating the new certificate
       const fcd = this.formatCertificateDetails();
       let newCertificateTxHash;
@@ -238,7 +247,9 @@ class App extends Component {
           if (newCertificateAddress) {
             this.closeTxModal(receipt.status, receipt.transactionHash);
             // registers new address for redirection to account page
-            this.props.context.registerCertificateAddress(newCertificateAddress);
+            this.props.context.registerCertificateAddress(
+              newCertificateAddress
+            );
             //we update here the state of the app
             this.setState({
               certificate: {
@@ -313,117 +324,6 @@ class App extends Component {
           console.log(error);
           this.closeTxModal("error", newCertificateTxHash);
         });
-
-      /*const newCertificateTx = await contractCreator.methods
-        .createNewCertificate(
-          fcd[1],
-          fcd[2],
-          this.state.spousesDetails.secondSpouseDetails.address,
-          fcd[0]
-        )
-        .send(
-          {
-            from: userAddress,
-            gas: "5000000",
-            value: web3.utils.toWei(this.state.fee)
-          },
-          (error, txHash) => {
-            if (error) {
-              this.setState({
-                confirmationModal: {
-                  ...this.state.confirmationModal,
-                  open: false
-                },
-                headerMessage: {
-                  open: true,
-                  header: "An error has occurred",
-                  content: "Please try again later",
-                  icon: "exclamation triangle",
-                  iconLoading: false,
-                  info: false,
-                  error: true
-                }
-              });
-            } else {
-              this.setState({
-                newCertificateTxHash: txHash
-              });
-            }
-          }
-        );
-      // listening to event newCertificateCreated to get contract address
-      const newCertificateAddress =
-        newCertificateTx.events.LogNewCertificateCreated.returnValues
-          .newCertificateAddress;
-      console.log("New certificate address: ", newCertificateAddress);
-
-      if (newCertificateAddress) {
-        //we update here the state of the app
-        this.setState({
-          certificate: {
-            ...this.state.certificate,
-            address: newCertificateAddress
-          },
-          lastMarriage: {
-            0: fcd[1],
-            1: fcd[2],
-            2: fcd[0]
-          },
-          certificatesTotal: parseInt(this.state.certificatesTotal) + 1,
-          confirmationModal: {
-            ...this.state.confirmationModal,
-            open: false
-          },
-          congratulationModalOpen: true
-        });
-        // we create a new user in database who can udpdate tx history later
-        try {
-          // we save some of the info from the certificate in the firestore
-          const saveNewCertificate = firebase
-            .functions()
-            .httpsCallable("saveNewCertificate");
-          // if the user is logged in, we will link the certificate to their account
-          let idToken = 0;
-          if (firebase.auth().currentUser)
-            idToken = await firebase.auth().currentUser.getIdToken(true);
-          // we save the new certificate
-          const saveNewCtf = await saveNewCertificate({
-            idToken,
-            address: newCertificateAddress,
-            location: {
-              city: this.state.city.toLowerCase(),
-              country: this.state.country.toLowerCase()
-            },
-            firstSpouse: {
-              firstName: this.state.spousesDetails.firstSpouseDetails.firstName,
-              lastName: this.state.spousesDetails.firstSpouseDetails.lastName,
-              address: this.state.spousesDetails.firstSpouseDetails.address
-            },
-            secondSpouse: {
-              firstName: this.state.spousesDetails.secondSpouseDetails
-                .firstName,
-              lastName: this.state.spousesDetails.secondSpouseDetails.lastName,
-              address: this.state.spousesDetails.secondSpouseDetails.address
-            },
-            timestamp: Date.now(),
-            key: this.state.idEncodingKey.toString()
-          });
-          console.log(saveNewCtf);
-          if (saveNewCtf.data.status !== "OK") {
-            console.log("Error while saving to the database: ", saveNewCtf);
-          }
-        } catch (error) {
-          console.log(error.code, error.message);
-        }
-        // we update the firestore with the country of registration
-        const saveLocation = firebase.functions().httpsCallable("saveLocation");
-        // we receive the new data
-        const savedLocations = await saveLocation({
-          text: this.state.country.toLowerCase()
-        });
-        // we update the pie chart
-        this.setState({ chartOptions: savedLocations.data });
-      }*/
     } catch (error) {
       console.log(error);
       this.closeTxModal("error", 0);
@@ -631,6 +531,7 @@ class App extends Component {
                             gasToUse={this.state.gasToUse}
                             confirmRegistration={this.confirmRegistration}
                             userHasCertificate={!!context.userCertificate}
+                            userAddress={context.userAddress}
                           />
                         )}
                     </>

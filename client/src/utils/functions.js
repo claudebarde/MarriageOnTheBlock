@@ -1,6 +1,8 @@
 import _ from "lodash";
 import getWeb3 from "./getWeb3";
 
+const countries = require("country-data").countries;
+
 const newCertificateAbi = require("../contracts/MarriageCertificate.json").abi;
 
 export const truncateAddress = address => {
@@ -80,9 +82,9 @@ export const lastMarriageDisplay = lastMarriage => {
     spouse1.lastName
   )} and ${_.upperFirst(spouse2.firstName)} ${_.upperFirst(
     spouse2.lastName
-  )} got married in ${_.upperFirst(location.city)}, ${_.upperFirst(
-    location.country
-  )}.`;
+  )} got married in ${_.upperFirst(location.city)}, ${
+    countries[location.country].name
+  }.`;
 };
 
 export const isMarriageValid = marriageValidityData => {
