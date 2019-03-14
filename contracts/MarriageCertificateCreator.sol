@@ -236,7 +236,7 @@ contract MarriageCertificate {
     }
     
     /// @notice allows spouses to use the deposit account for payments
-    function pay(address payable _address, uint amount) public onlySpouses {
+    function pay(address payable _address, uint amount) public payable onlySpouses {
         require(amount <= accounts["joined"], "There are not enough funds to proceed with transaction");
         
         accounts["joined"] -= amount;
