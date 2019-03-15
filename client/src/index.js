@@ -8,37 +8,34 @@ import RegisterCertificate from "./components/RegisterCertificate";
 import CheckCertificate from "./components/CheckCertificate/CheckCertificate";
 import ViewCertificate from "./components/ViewCertificate";
 import Navbar from "./components/Navbar";
-import BlockchainSwitch from "./components/BlockchainSwitch";
+import GlobalContext from "./components/GlobalContext";
 import Account from "./components/Account/Account";
+import Donations from "./components/Donations";
 import "./App.css";
 import * as serviceWorker from "./serviceWorker";
 import "./config/firebaseConfig";
 
 const routing = (
   <Router>
-    <>
-      <BlockchainSwitch>
-        <Navbar />
-        <Switch>
-          <Route exact path="/" component={App} />
-          <Route
-            path="/register/:blockchain?"
-            component={RegisterCertificate}
-          />
-          <Route
-            path="/check/:blockchain?/:address"
-            component={CheckCertificate}
-          />
-          <Route path="/check/:blockchain?" component={CheckCertificate} />
-          <Route
-            path="/certificate/:blockchain?/:address"
-            component={ViewCertificate}
-          />
-          <Route path="/account" component={Account} />
-          <Route component={App} />
-        </Switch>
-      </BlockchainSwitch>
-    </>
+    <GlobalContext>
+      <Navbar />
+      <Switch>
+        <Route exact path="/" component={App} />
+        <Route path="/register/:blockchain?" component={RegisterCertificate} />
+        <Route
+          path="/check/:blockchain?/:address"
+          component={CheckCertificate}
+        />
+        <Route path="/check/:blockchain?" component={CheckCertificate} />
+        <Route
+          path="/certificate/:blockchain?/:address"
+          component={ViewCertificate}
+        />
+        <Route path="/account" component={Account} />
+        <Route component={App} />
+      </Switch>
+      <Donations />
+    </GlobalContext>
   </Router>
 );
 

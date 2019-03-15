@@ -53,6 +53,9 @@ class Navbar extends Component {
 
     const { context } = this.props;
 
+    // checks if mobile version
+    const mobile = this.state.screenWidth <= MIN_SCREEN_WIDTH;
+
     return (
       <>
         <Menu
@@ -64,15 +67,27 @@ class Navbar extends Component {
           secondary={!this.state.onScrollDetected}
         >
           <Container>
-            <Menu.Item
-              className={
-                !this.state.onScrollDetected ? "title" : "title-scroll"
-              }
-            >
-              <Link to="/" className="router-link">
-                Marriage On The Block
-              </Link>
-            </Menu.Item>
+            {mobile ? (
+              <Menu.Item
+                className={
+                  !this.state.onScrollDetected ? "title-mobile" : "title-scroll"
+                }
+              >
+                <Link to="/" className="router-link">
+                  Marriage On The Block
+                </Link>
+              </Menu.Item>
+            ) : (
+              <Menu.Item
+                className={
+                  !this.state.onScrollDetected ? "title" : "title-scroll"
+                }
+              >
+                <Link to="/" className="router-link">
+                  Marriage On The Block
+                </Link>
+              </Menu.Item>
+            )}
             <Menu.Menu position="right">
               {context.loggedInUser && context.userAddress && (
                 <Popup

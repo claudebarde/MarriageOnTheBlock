@@ -23,6 +23,8 @@ import {
 import getWeb3 from "../../utils/getWeb3";
 let web3 = null;
 
+const countries = require("country-data").countries;
+
 class CheckCertificate extends Component {
   state = {
     minScreenWidth: MIN_SCREEN_WIDTH,
@@ -206,7 +208,9 @@ class CheckCertificate extends Component {
                       icon="globe"
                       header="Place of registration"
                       content={`${certificate.location.city}, ${
-                        certificate.location.country
+                        countries[certificate.location.country]
+                          ? countries[certificate.location.country].name
+                          : "invalid country"
                       }`}
                     />
                   </Grid.Column>

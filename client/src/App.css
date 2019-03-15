@@ -91,12 +91,17 @@ body {
 }
 
 .title {
-  font-family: "Just Another Hand", cursive;
-  font-size: 1.5rem;
+  font-family: Oregano;
+  font-size: 1.7rem;
+}
+
+.title-mobile {
+  font-family: Oregano;
+  font-size: 1.3rem;
 }
 
 .title-scroll {
-  font-family: "Just Another Hand", cursive;
+  font-family: Oregano;
   font-size: 1rem;
 }
 
@@ -157,4 +162,20 @@ body {
 
 .certificate-view-address {
   font-size: 15px !important;
+}
+
+.donations {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 0.8rem;
+  color: #999999;
+}
+
+.donations-mobile {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 0.5rem;
+  color: #999999;
 }

@@ -13,7 +13,7 @@ let web3 = null;
 
 firebase.initializeApp(config);
 
-class BlockchainSwitch extends Component {
+class GlobalContext extends Component {
   state = {
     network: NETWORK,
     addressChangeListener: null,
@@ -101,4 +101,4 @@ class BlockchainSwitch extends Component {
   }
 }
 
-export default withRouter(BlockchainSwitch);
+export default withRouter(GlobalContext);
