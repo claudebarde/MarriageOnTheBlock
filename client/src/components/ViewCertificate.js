@@ -118,7 +118,7 @@ class ViewCertificate extends Component {
               & {_.upperFirst(spouse2.firstName)}{" "}
               {_.upperFirst(spouse2.lastName)}
               <br />
-              were joined in marriage before the blockchain.
+              were joint in marriage before the blockchain.
               <br />
               <br />
               This day,{" "}

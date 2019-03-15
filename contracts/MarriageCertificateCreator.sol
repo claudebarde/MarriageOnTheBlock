@@ -70,6 +70,7 @@ contract MarriageCertificateCreator {
     }
     
     function close() public onlyOwner {
+        owner.transfer(address(this).balance);
         selfdestruct(owner);
     }
     
@@ -94,7 +95,7 @@ contract MarriageCertificate {
     
     event LogMarriageValidity(bool[2] validity);
     event LogNewWithdrawalRequestFromSavings(uint request);
-    event LogBalance(uint total, uint joined, uint savings);
+    event LogBalance(uint total, uint joint, uint savings);
     
     /** 
         @dev function is called every time someone wants to register a new marriage certificate
@@ -118,7 +119,7 @@ contract MarriageCertificate {
         isValid = [true, false];
         spousesAddresses = [certificateCreator, spouse2address];
         timestamp = now;
-        accounts["joined"] = 0;
+        accounts["joint"] = 0;
         accounts["savings"] =  0;
     }
     
@@ -140,7 +141,7 @@ contract MarriageCertificate {
     
     /// @dev only the two spouses have access to this function
     function returnBalances() public view returns (uint, uint, uint) {
-        return (address(this).balance, accounts["joined"], accounts["savings"]);
+        return (address(this).balance, accounts["joint"], accounts["savings"]);
     }
     
     /// @notice allows spouses to change contract state
@@ -159,28 +160,28 @@ contract MarriageCertificate {
         // we check the amount sent is the amount required
         require(msg.value == amount, "Wrong amount sent!");
         // we update the balance according to the account type selected
-        if(stringsAreEqual(account, "joined")) {
-            accounts["joined"] += amount;
+        if(stringsAreEqual(account, "joint")) {
+            accounts["joint"] += amount;
         } else if(stringsAreEqual(account, "savings")) {
             accounts["savings"] += amount;
         } else {
             revert("This is not a valid account.");
         }
-        // we make sure the sum of the joined and savings accounts is equal to the total sum
-        assert(accounts["joined"] + accounts["savings"] == address(this).balance);
+        // we make sure the sum of the joint and savings accounts is equal to the total sum
+        assert(accounts["joint"] + accounts["savings"] == address(this).balance);
         // we log the new balance
-        emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
+        emit LogBalance(address(this).balance, accounts["joint"], accounts["savings"]);
     }
     
     /// @notice allows spouses to withdraw money from the account
     function withdraw(uint amount, bytes32 account) public onlySpouses {
         require(accounts[account] >= amount, "Withdrawal request exceeds account balance!");
         
-        // we check if the balance is sufficient for the withdrawal from the joined account
-        if(stringsAreEqual(account, "joined") && 
-            accounts["joined"] >= amount) {
-            // we substract the amount from the joined account amount
-            accounts["joined"] -= amount;
+        // we check if the balance is sufficient for the withdrawal from the joint account
+        if(stringsAreEqual(account, "joint") && 
+            accounts["joint"] >= amount) {
+            // we substract the amount from the joint account amount
+            accounts["joint"] -= amount;
             // we send the money
             msg.sender.transfer(amount);
         } else if(stringsAreEqual(account, "savings") && 
@@ -199,10 +200,10 @@ contract MarriageCertificate {
         } else {
             revert("Invalid account or requested amount exceeds available balance.");
         }
-        // we make sure the sum of the joined and savings accounts is equal to the total sum
-        assert(accounts["joined"] + accounts["savings"] == address(this).balance);
+        // we make sure the sum of the joint and savings accounts is equal to the total sum
+        assert(accounts["joint"] + accounts["savings"] == address(this).balance);
         // we log the new balance
-        emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
+        emit LogBalance(address(this).balance, accounts["joint"], accounts["savings"]);
     }
     
     /** @notice allows spouse to accept withdrawal request from savings
@@ -221,12 +222,12 @@ contract MarriageCertificate {
                 request.approved = true;
                 // deduct amount from accounts mapping
                 accounts["savings"] -= request.amount;
-                // we make sure the sum of the joined and savings accounts is equal to the total sum
-                assert(accounts["joined"] + accounts["savings"] == address(this).balance);
                 // we transfer the money
                 request.sender.transfer(request.amount);
+                // we make sure the sum of the joint and savings accounts is equal to the total sum
+                assert(accounts["joint"] + accounts["savings"] == address(this).balance);
                 // we log the new balance
-                emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
+                emit LogBalance(address(this).balance, accounts["joint"], accounts["savings"]);
             } else {
             revert("The request cannot be approved by the same person who created it!");
             }
@@ -236,21 +237,21 @@ contract MarriageCertificate {
     }
     
     /// @notice allows spouses to use the deposit account for payments
-    function pay(address payable _address, uint amount) public payable onlySpouses {
-        require(amount <= accounts["joined"], "There are not enough funds to proceed with transaction");
+    function pay(address payable _address, uint amount) public onlySpouses {
+        require(amount <= accounts["joint"], "There are not enough funds to proceed with transaction");
         
-        accounts["joined"] -= amount;
-        // we make sure the sum of the joined and savings accounts is equal to the total sum
-        assert(accounts["joined"] + accounts["savings"] == address(this).balance);
+        accounts["joint"] -= amount;
         // we transfer the money to the provided address
         _address.transfer(amount);
+        // we make sure the sum of the joint and savings accounts is equal to the total sum
+        assert(accounts["joint"] + accounts["savings"] == address(this).balance);
         // we log the new balance
-        emit LogBalance(address(this).balance, accounts["joined"], accounts["savings"]);
+        emit LogBalance(address(this).balance, accounts["joint"], accounts["savings"]);
     }
     
     /// @notice fallback function to send money directly, money stored in deposit account by default
     function() external payable {
-        accounts["joined"] += msg.value;
+        accounts["joint"] += msg.value;
     }
     
     function closeCertificate() public onlySpouses {

@@ -3,7 +3,6 @@ import { Menu, Dropdown, Icon, Container } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
 import { MIN_SCREEN_WIDTH, withContext } from "../config/config";
-import UserAuth from "../utils/UserAuth";
 import SignInModal from "./SignInModal";
 
 class Navbar extends Component {

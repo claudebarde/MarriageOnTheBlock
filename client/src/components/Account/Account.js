@@ -91,28 +91,28 @@ class Account extends Component {
     }
   };
 
-  updateBalance = (txType, newTxAmount, account) => {
+  /*updateBalance = (txType, newTxAmount, account) => {
     let newBalance = { ...this.state.certificate.balance };
     // if deposit, we add values
     if (txType === "deposit") {
       // update the total balance
       newBalance.total = parseInt(newBalance.total) + parseInt(newTxAmount);
-      if (account === "joined") {
-        // update the joined account
-        newBalance.joined = parseInt(newBalance.joined) + parseInt(newTxAmount);
+      if (account === "joint") {
+        // update the joint account
+        newBalance.joint = parseInt(newBalance.joint) + parseInt(newTxAmount);
       } else if (account === "savings") {
-        // update the joined account
+        // update the joint account
         newBalance.savings =
           parseInt(newBalance.savings) + parseInt(newTxAmount);
       }
     } else if (txType === "withdrawal") {
       // update the total balance
       newBalance.total = parseInt(newBalance.total) - parseInt(newTxAmount);
-      if (account === "joined") {
-        // update the joined account
-        newBalance.joined = parseInt(newBalance.joined) - parseInt(newTxAmount);
+      if (account === "joint") {
+        // update the joint account
+        newBalance.joint = parseInt(newBalance.joint) - parseInt(newTxAmount);
       } else if (account === "savings") {
-        // update the joined account
+        // update the joint account
         newBalance.savings =
           parseInt(newBalance.savings) - parseInt(newTxAmount);
       }
@@ -123,7 +123,7 @@ class Account extends Component {
         balance: newBalance
       }
     });
-  };
+  };*/
 
   handleMenuClick = (e, { name }) => this.setState({ activeMenuItem: name });
 
@@ -147,31 +147,31 @@ class Account extends Component {
               result.topics.slice(1)
             );
             //console.log(`New ${eventName}!`, eventObj);
-            // we log the update in the firestore
-            if (firebase.auth().currentUser) {
-              const updateTxHistory = firebase
-                .functions()
-                .httpsCallable("updateTxHistory");
-              const idToken = await firebase
-                .auth()
-                .currentUser.getIdToken(true);
-              await updateTxHistory({
-                idToken,
-                address: contract.options.address,
-                tx: {
-                  type: "statusUpdate",
-                  from: web3.eth.accounts.currentProvider.selectedAddress,
-                  previousState: [
-                    this.state.certificate.isMarriageValid[0],
-                    this.state.certificate.isMarriageValid[1]
-                  ],
-                  newState: eventObj.validity,
-                  txHash: result.transactionHash
-                }
-              });
-            }
             // we update the state with new contract state
             if (eventName === "LogMarriageValidity") {
+              // we log the update in the firestore
+              if (firebase.auth().currentUser) {
+                const updateTxHistory = firebase
+                  .functions()
+                  .httpsCallable("updateTxHistory");
+                const idToken = await firebase
+                  .auth()
+                  .currentUser.getIdToken(true);
+                await updateTxHistory({
+                  idToken,
+                  address: contract.options.address,
+                  tx: {
+                    type: "statusUpdate",
+                    from: web3.eth.accounts.currentProvider.selectedAddress,
+                    previousState: [
+                      this.state.certificate.isMarriageValid[0],
+                      this.state.certificate.isMarriageValid[1]
+                    ],
+                    newState: eventObj.validity,
+                    txHash: result.transactionHash
+                  }
+                });
+              }
               this.setState({
                 certificate: {
                   ...this.state.certificate,
@@ -182,7 +182,14 @@ class Account extends Component {
                 }
               });
             } else if (eventName === "LogBalance") {
-              console.log(eventObj.total, eventObj.joined, eventObj.savings);
+              const { total, joint, savings } = eventObj;
+              console.log(eventObj.total, eventObj.joint, eventObj.savings);
+              this.setState({
+                certificate: {
+                  ...this.state.certificate,
+                  balance: { total, joint, savings }
+                }
+              });
             }
           }
         }
@@ -373,8 +380,8 @@ class Account extends Component {
                         this.state.ethToDollarChange
                     )})`}
                     list={[
-                      `Joined account: ${web3.utils.fromWei(
-                        this.state.certificate.balance.joined.toString(),
+                      `joint account: ${web3.utils.fromWei(
+                        this.state.certificate.balance.joint.toString(),
                         "ether"
                       )} ether`,
                       `Savings account: ${web3.utils.fromWei(

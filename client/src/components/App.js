@@ -64,7 +64,7 @@ class App extends Component {
                 <List.Header>Become your own bank!</List.Header>
                 <List.Description>
                   The smart contract keeps tract of two different accounts: a
-                  "joined account" where you can both deposit and withdraw money
+                  "joint account" where you can both deposit and withdraw money
                   and a "savings account" where you can both deposit money but
                   must both agree before a withdrawal.
                 </List.Description>

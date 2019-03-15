@@ -20,10 +20,10 @@ import { estimateTxTime } from "../../utils/functions";
 
 class Deposit extends Component {
   state = {
-    convertEthToDollars: { joined: 0, savings: 0, external: 0 },
-    ethToTransfer: { joined: "", savings: "", external: "" },
-    loadingTx: { joined: false, savings: false, external: false },
-    errorSend: { joined: false, savings: false, external: false },
+    convertEthToDollars: { joint: 0, savings: 0, external: 0 },
+    ethToTransfer: { joint: "", savings: "", external: "" },
+    loadingTx: { joint: false, savings: false, external: false },
+    errorSend: { joint: false, savings: false, external: false },
     transactionModal: {
       open: false,
       icon: "spinner",
@@ -75,13 +75,7 @@ class Deposit extends Component {
 
   deposit = async _to => {
     // the user address must be locked to avoid tempering during tx process
-    const {
-      web3,
-      certificate,
-      userAddress,
-      updateBalance,
-      gasForTx
-    } = this.props;
+    const { web3, certificate, userAddress, gasForTx } = this.props;
     // we estimate tx time according to past blocks
     const estimateTime = await estimateTxTime();
     // we set the button to show loading icon
@@ -118,8 +112,6 @@ class Deposit extends Component {
           if (receipt.status) {
             // when the tx is processed, we display a message to the user and close the modal
             this.closeTxModal(receipt.status, receipt.transactionHash);
-            // we update the data in the state
-            updateBalance("deposit", funds, _to);
             // we update transactions log in firestore
             if (firebase.auth().currentUser) {
               const idToken = await firebase
@@ -187,8 +179,7 @@ class Deposit extends Component {
         .pay(externalAddress, funds)
         .send({
           from: userAddress,
-          gas: gasForTx,
-          value: funds
+          gas: gasForTx
         })
         .on("transactionHash", txHash => {
           console.log("Tx hash: ", txHash);
@@ -265,8 +256,8 @@ class Deposit extends Component {
         <Grid columns={3} stackable>
           <Grid.Row>
             <Grid.Column width={7} verticalAlign="bottom">
-              <Header as="h3">Deposit ETH to joined account</Header>
-              {this.state.errorSend.joined && (
+              <Header as="h3">Deposit ETH to joint account</Header>
+              {this.state.errorSend.joint && (
                 <Message
                   header="An error has occurred"
                   content="There was an error transferring the funds."
@@ -277,21 +268,21 @@ class Deposit extends Component {
               <Input
                 placeholder="Amount..."
                 type="number"
-                id="input-transfer-joined"
-                value={this.state.ethToTransfer.joined}
-                onChange={event => this.convertEthToDollars(event, "joined")}
+                id="input-transfer-joint"
+                value={this.state.ethToTransfer.joint}
+                onChange={event => this.convertEthToDollars(event, "joint")}
                 labelPosition="left"
                 autoComplete="off"
                 fluid
                 action
               >
-                <Label>{`≈ $${this.state.convertEthToDollars.joined}`}</Label>
+                <Label>{`≈ $${this.state.convertEthToDollars.joint}`}</Label>
                 <input />
                 <Button
                   color="teal"
-                  onClick={async () => await this.deposit("joined")}
-                  disabled={!this.state.ethToTransfer.joined}
-                  loading={this.state.loadingTx.joined}
+                  onClick={async () => await this.deposit("joint")}
+                  disabled={!this.state.ethToTransfer.joint}
+                  loading={this.state.loadingTx.joint}
                 >
                   Deposit
                 </Button>
@@ -338,7 +329,7 @@ class Deposit extends Component {
                 <Header.Content>
                   Send ETH to external address
                   <Header.Subheader>
-                    This will be sent from your joined account
+                    This will be sent from your joint account
                   </Header.Subheader>
                 </Header.Content>
               </Header>

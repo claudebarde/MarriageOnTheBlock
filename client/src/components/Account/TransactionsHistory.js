@@ -229,9 +229,7 @@ class TransactionsHistory extends Component {
                   txHistory[tx].amount.toString()
                 )} ether were paid to ${
                   txHistory[tx].account
-                } account from ${truncateAddress(
-                  txHistory[tx].from
-                )}`}</Segment>
+                } from ${truncateAddress(txHistory[tx].from)}`}</Segment>
                 <Segment
                   size="tiny"
                   style={{ wordBreak: "break-word" }}

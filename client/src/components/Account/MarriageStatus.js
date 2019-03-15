@@ -19,7 +19,7 @@ const countries = require("country-data").countries;
 class MarriageStatus extends Component {
   state = {
     loading: false,
-    errorSend: { joined: false, savings: false, external: false },
+    errorSend: { joint: false, savings: false, external: false },
     transactionModal: {
       open: false,
       icon: "spinner",

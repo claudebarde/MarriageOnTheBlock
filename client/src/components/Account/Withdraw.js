@@ -26,10 +26,10 @@ import { estimateTxTime } from "../../utils/functions";
 
 class Withdraw extends Component {
   state = {
-    convertEthToDollars: { joined: 0, savings: 0 },
-    ethToWithdraw: { joined: "", savings: "" },
-    loadingTx: { joined: false, savings: false },
-    errorSend: { joined: false, savings: false },
+    convertEthToDollars: { joint: 0, savings: 0 },
+    ethToWithdraw: { joint: "", savings: "" },
+    loadingTx: { joint: false, savings: false },
+    errorSend: { joint: false, savings: false },
     transactionModal: {
       open: false,
       icon: "spinner",
@@ -137,7 +137,7 @@ class Withdraw extends Component {
     // we set the button to show loading icon
     this.setState({ loadingTx: { ...this.state.loadingTx, [_from]: true } });
     // the user address must be locked to avoid tempering during tx process
-    const { web3, certificate, updateBalance, gasForTx, balance } = this.props;
+    const { web3, certificate, gasForTx, balance } = this.props;
     const userAddress = this.props.context.userAddress;
     // we estimate tx time according to past blocks
     const estimateTime = await estimateTxTime();
@@ -204,7 +204,6 @@ class Withdraw extends Component {
                 }
               });
             } else {
-              updateBalance("withdrawal", funds, _from);
               // updates transactions history in firestore
               this.withdrawTxHistoryUpdate({
                 type: "withdrawal",
@@ -215,8 +214,8 @@ class Withdraw extends Component {
                 userAddress
               });
               this.setState({
-                convertEthToDollars: { joined: 0, savings: 0 },
-                ethToWithdraw: { joined: "", savings: "" }
+                convertEthToDollars: { joint: 0, savings: 0 },
+                ethToWithdraw: { joint: "", savings: "" }
               });
             }
           } else {
@@ -352,12 +351,6 @@ class Withdraw extends Component {
                 error: ""
               }
             });
-            // we update balances
-            this.props.updateBalance(
-              "withdrawal",
-              this.state.fetchWithdrawRequest.amount,
-              "savings"
-            );
           }
         })
         .on("error", error => {
@@ -393,13 +386,13 @@ class Withdraw extends Component {
             <Grid.Column width={7} verticalAlign="bottom">
               <Header as="h3">
                 <Header.Content>
-                  Withdraw ETH from joined account
+                  Withdraw ETH from joint account
                   <Header.Subheader>
                     This will be withdrawn immediately
                   </Header.Subheader>
                 </Header.Content>
               </Header>
-              {this.state.errorSend.joined && (
+              {this.state.errorSend.joint && (
                 <Message
                   header="An error has occurred"
                   content="There was an error withdrawing the funds."
@@ -410,21 +403,21 @@ class Withdraw extends Component {
               <Input
                 placeholder="Amount..."
                 type="number"
-                id="input-withdraw-joined"
-                value={this.state.ethToWithdraw.joined}
-                onChange={event => this.convertEthToDollars(event, "joined")}
+                id="input-withdraw-joint"
+                value={this.state.ethToWithdraw.joint}
+                onChange={event => this.convertEthToDollars(event, "joint")}
                 labelPosition="left"
                 autoComplete="off"
                 fluid
                 action
               >
-                <Label>{`≈ $${this.state.convertEthToDollars.joined}`}</Label>
+                <Label>{`≈ $${this.state.convertEthToDollars.joint}`}</Label>
                 <input />
                 <Button
                   color="teal"
-                  onClick={async () => await this.withdraw("joined")}
-                  disabled={!this.state.ethToWithdraw.joined}
-                  loading={this.state.loadingTx.joined}
+                  onClick={async () => await this.withdraw("joint")}
+                  disabled={!this.state.ethToWithdraw.joint}
+                  loading={this.state.loadingTx.joint}
                 >
                   Withdraw
                 </Button>
