@@ -320,6 +320,34 @@ class TransactionsHistory extends Component {
         </Segment>
       );
 
+    if (this.props.mobile)
+      return (
+        <Accordion fluid styled>
+          {this.displayTransactions()}
+          <Accordion.Title
+            active={activeIndex === Object.keys(transactionsHistory).length + 1}
+            index={Object.keys(transactionsHistory).length + 1}
+            onClick={this.txSwitch}
+          >
+            <Icon name="dropdown" />
+            <Label color="blue">
+              <Icon name="calendar check" /> Certificate Creation
+              <Label.Detail>
+                {moment.unix(this.props.creationTimestamp).from()}
+              </Label.Detail>
+            </Label>
+          </Accordion.Title>
+          <Accordion.Content
+            active={activeIndex === Object.keys(transactionsHistory).length + 1}
+          >
+            On{" "}
+            {moment
+              .unix(this.props.creationTimestamp)
+              .format("MMMM Do YYYY, h:mm:ss a")}
+          </Accordion.Content>
+        </Accordion>
+      );
+
     return (
       <Segment
         secondary

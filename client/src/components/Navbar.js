@@ -1,9 +1,11 @@
 import React, { Component } from "react";
-import { Menu, Dropdown, Icon, Container } from "semantic-ui-react";
+import { Menu, Dropdown, Icon, Container, Popup } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
 import { MIN_SCREEN_WIDTH, withContext } from "../config/config";
 import SignInModal from "./SignInModal";
+
+const Blockies = require("blockies-identicon/react-component");
 
 class Navbar extends Component {
   state = {
@@ -72,6 +74,28 @@ class Navbar extends Component {
               </Link>
             </Menu.Item>
             <Menu.Menu position="right">
+              {context.loggedInUser && context.userAddress && (
+                <Popup
+                  trigger={
+                    <Menu.Item disabled>
+                      <Blockies
+                        opts={{
+                          seed: context.userAddress,
+                          color: "#ff6347",
+                          bgcolor: "#ffa599",
+                          size: 9,
+                          scale: 3,
+                          spotcolor: "#000"
+                        }}
+                        style={{ borderRadius: "5px" }}
+                      />
+                    </Menu.Item>
+                  }
+                  content={context.userAddress}
+                  position="bottom center"
+                  size="mini"
+                />
+              )}
               <Menu.Item>
                 <Dropdown
                   icon="bars"

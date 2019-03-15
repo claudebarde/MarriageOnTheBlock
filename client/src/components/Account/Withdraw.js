@@ -374,6 +374,22 @@ class Withdraw extends Component {
   };
 
   render() {
+    const jointInputExceedsBalance =
+      parseInt(
+        this.props.web3.utils.toWei(
+          (this.state.ethToWithdraw.joint || 0).toString(),
+          "ether"
+        )
+      ) > this.props.balance.joint;
+
+    const savingsInputExceedsBalance =
+      parseInt(
+        this.props.web3.utils.toWei(
+          (this.state.ethToWithdraw.savings || 0).toString(),
+          "ether"
+        )
+      ) > this.props.balance.savings;
+
     return (
       <Segment secondary padded>
         <Header as="h1">
@@ -408,6 +424,7 @@ class Withdraw extends Component {
                 onChange={event => this.convertEthToDollars(event, "joint")}
                 labelPosition="left"
                 autoComplete="off"
+                error={jointInputExceedsBalance}
                 fluid
                 action
               >
@@ -416,7 +433,9 @@ class Withdraw extends Component {
                 <Button
                   color="teal"
                   onClick={async () => await this.withdraw("joint")}
-                  disabled={!this.state.ethToWithdraw.joint}
+                  disabled={
+                    !this.state.ethToWithdraw.joint || jointInputExceedsBalance
+                  }
                   loading={this.state.loadingTx.joint}
                 >
                   Withdraw
@@ -459,6 +478,7 @@ class Withdraw extends Component {
                 onChange={event => this.convertEthToDollars(event, "savings")}
                 labelPosition="left"
                 autoComplete="off"
+                error={savingsInputExceedsBalance}
                 fluid
                 action
               >
@@ -467,7 +487,10 @@ class Withdraw extends Component {
                 <Button
                   color="teal"
                   onClick={async () => await this.withdraw("savings")}
-                  disabled={!this.state.ethToWithdraw.savings}
+                  disabled={
+                    !this.state.ethToWithdraw.savings ||
+                    savingsInputExceedsBalance
+                  }
                   loading={this.state.loadingTx.savings}
                 >
                   Withdraw

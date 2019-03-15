@@ -183,7 +183,6 @@ class Account extends Component {
               });
             } else if (eventName === "LogBalance") {
               const { total, joint, savings } = eventObj;
-              console.log(eventObj.total, eventObj.joint, eventObj.savings);
               this.setState({
                 certificate: {
                   ...this.state.certificate,
@@ -380,7 +379,7 @@ class Account extends Component {
                         this.state.ethToDollarChange
                     )})`}
                     list={[
-                      `joint account: ${web3.utils.fromWei(
+                      `Joint account: ${web3.utils.fromWei(
                         this.state.certificate.balance.joint.toString(),
                         "ether"
                       )} ether`,
@@ -468,7 +467,6 @@ class Account extends Component {
                     web3={web3}
                     certificate={certificate.instance}
                     userAddress={context.userAddress}
-                    updateBalance={this.updateBalance}
                     gasForTx={context.gasForTx}
                     ethToDollarChange={ethToDollarChange}
                   />
@@ -477,7 +475,6 @@ class Account extends Component {
                   <Withdraw
                     web3={web3}
                     certificate={certificate.instance}
-                    updateBalance={this.updateBalance}
                     gasForTx={context.gasForTx}
                     ethToDollarChange={ethToDollarChange}
                     balance={this.state.certificate.balance}
@@ -499,6 +496,7 @@ class Account extends Component {
                     spousesAddresses={spousesAddresses}
                     certificateAddress={certificate.address}
                     creationTimestamp={certificate.timestamp}
+                    mobile={mobile}
                   />
                 )}
               </Grid.Column>
