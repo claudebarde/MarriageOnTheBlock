@@ -92,6 +92,7 @@ contract MarriageCertificate {
         bool approved;
     }
     mapping(uint => withdrawRequestFromSavings) public withdrawRequests;
+    uint public version;
     
     event LogMarriageValidity(bool[2] validity);
     event LogNewWithdrawalRequestFromSavings(uint request);
@@ -121,6 +122,7 @@ contract MarriageCertificate {
         timestamp = now;
         accounts["joint"] = 0;
         accounts["savings"] =  0;
+        version = 1;
     }
     
     /// @dev some functions can only be accessed by one of the two spouses
