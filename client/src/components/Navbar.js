@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { MIN_SCREEN_WIDTH, withContext } from "../config/config";
 import SignInModal from "./SignInModal";
+import UserAuth from "../utils/UserAuth";
 
 const Blockies = require("blockies-identicon/react-component");
 
@@ -204,7 +205,10 @@ class Navbar extends Component {
                         </Dropdown.Item>
                       </>
                     ) : (
-                      <SignInModal />
+                      <>
+                        <UserAuth origin="navbar" />
+                        <SignInModal />
+                      </>
                     )}
                   </Dropdown.Menu>
                 </Dropdown>

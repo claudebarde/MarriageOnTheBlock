@@ -213,6 +213,8 @@ contract MarriageCertificate {
     **/
     function approveWithdrawRequestFromSavings(uint requestID) public onlySpouses {
         withdrawRequestFromSavings storage request = withdrawRequests[requestID];
+        // we test if the request exists
+        require(request.timestamp > 0 && request.amount > 0, "The request does not exist.");
         // code makes sure there are enough funds to withdraw
         require(request.amount <= accounts["savings"], "There are not enough funds to process the request.");
         // the request cannot have been approved before
