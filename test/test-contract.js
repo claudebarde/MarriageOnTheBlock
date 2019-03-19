@@ -32,18 +32,34 @@ contract("MarriageCertificateCreator", async accounts => {
   });
 
   it("Should update the fee", async () => {
-    const newFee = web3.eth.abi.encodeParameter("uint256", "50000000000000000");
+    const newFee = web3.eth.abi.encodeParameter(
+      "uint256",
+      "110000000000000000"
+    );
     try {
       await contract.updateFee(newFee, { from: accounts[0] });
       const fee = await contract.certificateFee.call();
-      assert.equal(fee, 50000000000000000);
+      assert.equal(fee, 110000000000000000);
     } catch (error) {
       console.log(error);
     }
   });
 
   it("Should create a new marriage certificate", async () => {
-    const fee = web3.eth.abi.encodeParameter("uint256", "150000000000000000");
+    // sends wrong fee to certificate creator
+    try {
+      const fee = web3.eth.abi.encodeParameter("uint256", "100000000000000000");
+      await contract.createNewCertificate(
+        `{"firstName":"Ted","lastName":"Mosby","idNumber":"55555","idType":"passport","address":${firstSpouseAccount}}`,
+        `{"firstName":"Tracy","lastName":"McConnell","idNumber":"666666","idType":"id","address":${secondSpouseAccount}}`,
+        secondSpouseAccount,
+        '{"city":"New York","country":"USA"}',
+        { from: firstSpouseAccount, value: fee }
+      );
+    } catch (error) {
+      assert("error", error);
+    }
+    const fee = web3.eth.abi.encodeParameter("uint256", "110000000000000000");
     const certificate = await contract.createNewCertificate(
       `{"firstName":"Ted","lastName":"Mosby","idNumber":"55555","idType":"passport","address":${firstSpouseAccount}}`,
       `{"firstName":"Tracy","lastName":"McConnell","idNumber":"666666","idType":"id","address":${secondSpouseAccount}}`,
@@ -322,5 +338,22 @@ contract("MarriageCertificateCreator", async accounts => {
     } catch (error) {
       console.log(error);
     }
+  });
+
+  it("Should return balance of factory contract to owner", async () => {
+    const balance = await web3.eth.getBalance(accounts[0]);
+    // try to withdraw from incorrect address
+    try {
+      await contract.withdraw({ from: accounts[1], gas: gasForTx });
+    } catch (error) {
+      //console.log("Pass: ", error.message);
+      assert("error", error);
+    }
+    // try to withdraw from owner's address
+    await contract.withdraw({ from: accounts[0] });
+    const newBalance = await web3.eth.getBalance(accounts[0]);
+    const contractBalance = await web3.eth.getBalance(contract.address);
+    assert.isAbove(parseInt(newBalance), parseInt(balance));
+    assert.equal(contractBalance, 0);
   });
 });
