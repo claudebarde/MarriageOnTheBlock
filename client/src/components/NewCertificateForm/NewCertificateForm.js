@@ -189,6 +189,7 @@ class NewCertificateForm extends Component {
 
   componentDidUpdate() {
     if (
+      this.state.firstSpouseDetails.address &&
       this.props.userAddress !== this.state.firstSpouseDetails.address &&
       this.state.firstSpouseDetails.address.length === 0
     ) {

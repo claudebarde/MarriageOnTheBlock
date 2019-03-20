@@ -98,7 +98,7 @@ class Navbar extends Component {
                         opts={{
                           seed: context.userAddress,
                           color: "#ff6347",
-                          bgcolor: "#ffa599",
+                          bgcolor: `#${context.userAddress.substring(2, 8)}`,
                           size: 9,
                           scale: 3,
                           spotcolor: "#000"
@@ -206,7 +206,10 @@ class Navbar extends Component {
                       </>
                     ) : (
                       <>
-                        <UserAuth origin="navbar" />
+                        <UserAuth
+                          origin="navbar"
+                          currentUserAddress={context.userAddress}
+                        />
                         <SignInModal />
                       </>
                     )}

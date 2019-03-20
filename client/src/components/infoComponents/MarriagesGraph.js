@@ -18,7 +18,7 @@ const countries = require("country-data").countries;
 class MarriagesGraph extends Component {
   state = {
     locations: { animationEnabled: true, data: [] },
-    chartOptions: { data: [] },
+    chartOptions: undefined,
     screenWidth: this.props.screenWidth
   };
 
@@ -70,6 +70,8 @@ class MarriagesGraph extends Component {
           locations: locations.data,
           chartOptions
         });
+      } else {
+        this.setState({ chartOptions: { data: "" } });
       }
     } catch (error) {
       console.log(error);
@@ -101,10 +103,7 @@ class MarriagesGraph extends Component {
   };
 
   render() {
-    if (
-      this.state.chartOptions.data.length === 0 ||
-      this.state.chartOptions.data[0].dataPoints.length === 0
-    ) {
+    if (this.state.chartOptions === undefined) {
       return (
         <Segment>
           <Dimmer active inverted>
@@ -122,6 +121,8 @@ class MarriagesGraph extends Component {
     } else {
       chartOptions = this.state.chartOptions;
     }
+
+    if (this.state.chartOptions.data.length === 0) return null;
 
     return (
       <Segment textAlign="center">

@@ -40,7 +40,7 @@ import firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/firebase-functions";
 
-let web3 = null;
+let web3 = undefined;
 let contractCreator;
 class App extends Component {
   constructor(props) {
@@ -71,7 +71,7 @@ class App extends Component {
         info: true,
         error: false
       },
-      congratulationModalOpen: false,
+      congratulationModalOpen: true,
       newCertificateTxHash: "",
       idEncodingKey:
         Math.random()
@@ -280,7 +280,7 @@ class App extends Component {
                 idToken,
                 address: newCertificateAddress,
                 location: {
-                  city: this.state.city.toLowerCase(),
+                  city: this.state.city,
                   country: this.state.country.toLowerCase()
                 },
                 firstSpouse: {
@@ -399,6 +399,18 @@ class App extends Component {
   };
 
   render() {
+    if (web3 === null)
+      return (
+        <Container text>
+          <Message
+            icon="exclamation triangle"
+            header="No web3 detected!"
+            content="You must use Metamask, Mist or a similar application to connect to the blockchain"
+            error
+          />
+        </Container>
+      );
+
     const { context } = this.props;
     return (
       <Container fluid>
@@ -733,11 +745,13 @@ class App extends Component {
                           allow="encrypted-media"
                         />
                         <a
+                          href="https://twitter.com/share?ref_src=twsrc%5Etfw"
                           className="twitter-share-button"
-                          href="https://twitter.com/intent/tweet"
-                          text="Get Married on the Blockchain!"
-                          url="https://www.getmarriedontheblockchain.com"
-                          hashtags="ethereum,blockchain,crypto"
+                          data-text="I got married on the blockchain!"
+                          data-url={`https://www.marriageontheblock.com/certificate/${
+                            this.state.certificate.address
+                          }`}
+                          data-show-count="false"
                         >
                           Tweet
                         </a>

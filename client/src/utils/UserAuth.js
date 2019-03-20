@@ -26,60 +26,70 @@ class UserAuth extends Component {
     this.setState(
       { authLoading: true, authError: { open: false, message: "" } },
       async () => {
-        const { email, password, certificateAddress } = this.state;
+        const { email, password, certificateAddress, secretKey } = this.state;
         let { currentUserAddress } = this.props;
 
-        const firebaseAuth = firebase
-          .functions()
-          .httpsCallable("authenticateUser");
-        try {
-          // we check if user is already linked to this certificate
-          const authResult = await firebaseAuth({
-            certificateAddress,
-            currentUserAddress,
-            email,
-            password,
-            secretKey: this.state.secretKey
-          });
-          // sign in user id everything is ok
-          if (authResult.data.status === "OK") {
-            try {
-              // we sign in the new user
-              await firebase.auth().signInWithEmailAndPassword(email, password);
-            } catch (error) {
-              this.setState({
-                authLoading: false,
-                authError: {
-                  open: true,
-                  message: `${error.code}: ${error.message}`
-                }
-              });
-            }
-          } else {
-            if (authResult.data.message) {
-              this.setState({
-                authLoading: false,
-                authError: {
-                  open: true,
-                  message: authResult.data.message.errorInfo.message
-                }
-              });
+        if (
+          certificateAddress &&
+          currentUserAddress &&
+          email &&
+          password &&
+          secretKey
+        ) {
+          const firebaseAuth = firebase
+            .functions()
+            .httpsCallable("authenticateUser");
+          try {
+            // we check if user is already linked to this certificate
+            const authResult = await firebaseAuth({
+              certificateAddress,
+              currentUserAddress,
+              email,
+              password,
+              secretKey
+            });
+            // sign in user id everything is ok
+            if (authResult.data.status === "OK") {
+              try {
+                // we sign in the new user
+                await firebase
+                  .auth()
+                  .signInWithEmailAndPassword(email, password);
+              } catch (error) {
+                this.setState({
+                  authLoading: false,
+                  authError: {
+                    open: true,
+                    message: `${error.code}: ${error.message}`
+                  }
+                });
+              }
             } else {
-              this.setState({
-                authLoading: false,
-                authError: { open: true, message: authResult.data.status }
-              });
+              if (authResult.data.message) {
+                this.setState({
+                  authLoading: false,
+                  authError: {
+                    open: true,
+                    message: authResult.data.message.errorInfo.message
+                  }
+                });
+              } else {
+                this.setState({
+                  authLoading: false,
+                  authError: { open: true, message: authResult.data.status }
+                });
+              }
             }
+          } catch (error) {
+            console.log(error);
+            this.setState({
+              authLoading: false,
+              authError: {
+                open: true,
+                message: error
+              }
+            });
           }
-        } catch (error) {
-          console.log(error);
-          this.setState({
-            authLoading: false,
-            authError: {
-              open: true,
-              message: error
-            }
-          });
         }
       }
     );
