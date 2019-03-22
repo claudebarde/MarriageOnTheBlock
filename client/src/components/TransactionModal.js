@@ -9,8 +9,14 @@ export const transactionModalData = (status, txHash) => {
       loading: true,
       header: "Waiting for confirmation...",
       txHash,
-      message:
-        "Your transaction is being confirmed on the blockchain, please wait.",
+      message: (
+        <div>
+          <p>
+            Your transaction is being confirmed on the blockchain, please wait.
+          </p>
+          <p>Do not refresh or close the page.</p>
+        </div>
+      ),
       estimateTime: null
     };
   } else if (status === "confirmed") {

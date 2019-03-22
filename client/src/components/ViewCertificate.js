@@ -16,6 +16,8 @@ import domtoimage from "dom-to-image";
 
 import { checkCertificate, isMarriageValid } from "../utils/functions";
 
+const countries = require("country-data").countries;
+
 class ViewCertificate extends Component {
   state = {
     address: "",
@@ -130,7 +132,8 @@ class ViewCertificate extends Component {
                 .unix(this.state.certificate.timestamp)
                 .format("h:mm:ss a")}
               <br />
-              In {city}, {country}.
+              In {city}, {countries[country] ? countries[country].name : "?"}
+              .
               <br />
               <br />
               The marriage certificate is{" "}

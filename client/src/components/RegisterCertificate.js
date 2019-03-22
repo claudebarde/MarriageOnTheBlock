@@ -57,8 +57,15 @@ class App extends Component {
         loading: true,
         header: "Waiting for confirmation...",
         txHash: null,
-        message:
-          "Your transaction is being confirmed on the blockchain, please wait.",
+        message: (
+          <div>
+            <p>
+              Your transaction is being confirmed on the blockchain, please
+              wait.
+            </p>
+            <p>Do not refresh or close the page.</p>
+          </div>
+        ),
         estimateTime: null
       },
       screenWidth: window.innerWidth,
@@ -71,7 +78,7 @@ class App extends Component {
         info: true,
         error: false
       },
-      congratulationModalOpen: true,
+      congratulationModalOpen: false,
       newCertificateTxHash: "",
       idEncodingKey:
         Math.random()
@@ -221,7 +228,7 @@ class App extends Component {
         )
         .send({
           from: userAddress,
-          gas: "5000000",
+          gas: this.props.context.gasForTx * 5,
           value: web3.utils.toWei(this.state.fee)
         })
         .on("transactionHash", txHash => {
@@ -524,6 +531,7 @@ class App extends Component {
                                   }
                                 })
                               }
+                              currentUserAddress={context.userAddress}
                             />
                           </Segment>
                         )}
@@ -666,9 +674,15 @@ class App extends Component {
                       <List.Description>
                         This is the transaction number you can look up{" "}
                         <a
-                          href={`https://${context.network}.etherscan.io/tx/${
-                            this.state.newCertificateTxHash
-                          }`}
+                          href={
+                            context.network === "main"
+                              ? `https://etherscan.io/tx/${
+                                  this.state.newCertificateTxHash
+                                }`
+                              : `https://${context.network}.etherscan.io/tx/${
+                                  this.state.newCertificateTxHash
+                                }`
+                          }
                           alt="certificate-link"
                           target="_blank"
                           rel="noopener noreferrer"
@@ -818,7 +832,10 @@ const DisclaimerModal = props => (
       <Button onClick={props.closeDisclaimer} primary>
         I changed my mind!
       </Button>
-      <UserAuth origin="register-page" />
+      <UserAuth
+        origin="register-page"
+        currentUserAddress={props.currentUserAddress}
+      />
     </Modal.Actions>
   </Modal>
 );

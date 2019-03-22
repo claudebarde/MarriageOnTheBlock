@@ -39,7 +39,11 @@ class TransactionsHistory extends Component {
       Transaction Hash:
       <br />
       <a
-        href={`https://${this.props.context.network}.etherscan.io/tx/${txHash}`}
+        href={
+          this.props.context.network === "main"
+            ? `https://etherscan.io/tx/${txHash}`
+            : `https://${this.props.context.network}.etherscan.io/tx/${txHash}`
+        }
         alt="certificate-link"
         target="_blank"
         rel="noopener noreferrer"

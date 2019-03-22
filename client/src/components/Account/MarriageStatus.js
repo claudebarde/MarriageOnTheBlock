@@ -84,7 +84,7 @@ class MarriageStatus extends Component {
   };
 
   render() {
-    const { certificate, spousesAddresses, userAddress } = this.props;
+    const { certificate, spousesAddresses, userAddress, network } = this.props;
     // we arrange spouses choices in an array
     const spousesChoices = {};
     spousesChoices[spousesAddresses[0]] = certificate.isMarriageValid[0];
@@ -140,9 +140,13 @@ class MarriageStatus extends Component {
                 header="Certificate Link"
                 content={
                   <a
-                    href={`https://${this.props.network}.etherscan.io/address/${
-                      certificate.address
-                    }`}
+                    href={
+                      network === "main"
+                        ? `https://etherscan.io/address/${certificate.address}`
+                        : `https://${network}.etherscan.io/address/${
+                            certificate.address
+                          }`
+                    }
                     alt="certificate-link"
                     target="_blank"
                     rel="noopener noreferrer"

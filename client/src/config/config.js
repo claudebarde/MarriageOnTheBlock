@@ -29,7 +29,8 @@ export const CERTIFICATE_OBJ = {
 
 export const etherescan_APIKEY = "S2IHBR3AZ3JFGMARDPSKJBU2FSJKG3FQUK";
 
-export const NETWORK = "ropsten";
+//export const NETWORK = "ropsten";
+export const NETWORK = "main";
 
 const GlobalState = React.createContext();
 export const GlobalStateProvider = GlobalState.Provider;

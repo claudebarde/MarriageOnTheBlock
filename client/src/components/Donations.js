@@ -14,7 +14,7 @@ const Donations = props => {
     >
       Donations: <Icon name="bitcoin" fitted />{" "}
       1F3cwLKsxeRkSp4LBLppfhFvmXssiioKUi / <Icon name="ethereum" fitted />{" "}
-      0x90Ce1FbAECee174e42654D83a918BFD99bf4C14a
+      0x9EA34bcbc7F0B4F64a97A221Ca717cF0011db650
     </Container>
   );
 };
